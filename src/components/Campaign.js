@@ -11,9 +11,9 @@ class Campaign extends React.Component {
                     src='https://react.semantic-ui.com/images/avatar/large/steve.jpg'
                 />
                 <Card.Content>
-                    <div className="header">Help Save Baltimore Restaurants & Bars!</div>
+                    <div className="header">{this.props.tagline}</div>
 
-                    <div className='description'>Baltimore City restaurants are dying a slow, inevitable death due to the mayor's indoor & outdoor dining ban. These establishments were not able to open their doors during Christmas, New Year's, the Ravens playoff run - and many more events. Over 20,000 employees have lost their source of income as a result of the ban.</div>
+                    <div className='description'>{this.props.description}</div>
                 </Card.Content>
                 <Card.Content extra>
                     <div className="ui progress" data-percent="44">
