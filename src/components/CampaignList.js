@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import {Item, Label, Progress} from 'semantic-ui-react'
-import HEOCampaignRegistry from "../remote/HEOCampaignRegistry";
-import HEOCampaign from "../remote/HEOCampaign";
+import HEOCampaignRegistry from "../remote/binance-testnet/HEOCampaignRegistry";
+import HEOCampaign from "../remote/binance-testnet/HEOCampaign";
 import web3 from "../ethereum/web3";
 import config from 'react-global-configuration';
 
