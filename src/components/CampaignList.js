@@ -1,16 +1,5 @@
 import React, { Component } from 'react';
-import CampaignCard from "./CampaignCard";
-import {
-    Container,
-    Grid,
-    Header, Image,
-    Item,
-    Label,
-    Menu,
-    Segment,
-    Step,
-    Card,
-} from 'semantic-ui-react'
+import {Item, Label, Progress} from 'semantic-ui-react'
 import HEOCampaignRegistry from "../remote/HEOCampaignRegistry";
 import HEOCampaign from "../remote/HEOCampaign";
 import web3 from "../ethereum/web3";
@@ -72,20 +61,43 @@ class CampaignList extends Component {
         console.log(this.state.campaigns);
         for(let i in this.state.campaigns) {
             let campaign = this.state.campaigns[i];
-            items.push(<CampaignCard key={campaign.address} tagline={campaign.title} description={campaign.description}
-                                     coinName={campaign.coinName} maxAmount={campaign.maxAmount}
-                                     raisedAmount={campaign.raisedAmount} percentRaised={campaign.percentRaised}
-                                     mainImage={campaign.mainImage} reward={campaign.reward} address={campaign.address} />);
-        };
+            items.push(
+                <Item>
+                    <Item.Image src={ campaign.mainImage.url } as='a' href={'/campaign/' + campaign.address} />
+                    <Item.Content>
+                        <Item.Header as='a'>{campaign.tagline}</Item.Header>
+                        <Item.Description>{campaign.description}</Item.Description>
+                    </Item.Content>
+                </Item>
 
+            )
+            items.push(<Item>
+                <Item.Content>
+                    <Progress color='olive' percent={campaign.percentRaised}>{campaign.raisedAmount} {campaign.coinName} raised out of {campaign.maxAmount} goal</Progress>
+                </Item.Content>
+            </Item>)
+            items.push(
+                <Item>
+                    <Item.Content>
+                        <Label basic color='green' as='a' href={'/campaign/' + campaign.address}>
+                            Accepting: {campaign.coinName}
+                        </Label>
+                        <Label basic color='red' as='a' href={'/campaign/' + campaign.address}>
+                            Rewards: {campaign.reward}
+                        </Label>
+                        <Label basic color='blue' as='a' href={'/campaign/' + campaign.address}>See more details</Label>
+                    </Item.Content>
+                </Item>
+            )
+        };
         return items;
     }
 
     render() {
         return (
-            <Card.Group>
+            <Item.Group relaxed>
                 {this.renderCampaigns()}
-            </Card.Group>
+            </Item.Group>
         );
     }
 }
