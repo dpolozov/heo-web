@@ -13,7 +13,7 @@ class CampaignPage extends React.Component {
             address: "0x0",
             title:"Title of the campaign",
             description:"Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor.",
-            coinName:"NEAR",
+            coinName:"BNB",
             maxAmount:10000,
             raisedAmount:6000,
             percentRaised: "60%",
@@ -74,7 +74,7 @@ class CampaignPage extends React.Component {
                                         color: 'teal',
                                         labelPosition: 'right',
                                         icon: 'gift',
-                                        content: 'Donate' + this.state.coinName,
+                                        content: 'Donate ' + this.state.coinName,
                                         onClick: this.handleDonateClick
                                     }}
                                     name='donationAmount'
@@ -105,7 +105,7 @@ class CampaignPage extends React.Component {
         let maxAmount = parseInt(web3.utils.fromWei(await campaignInstance.methods.maxAmount().call()));
         let raisedAmount = parseInt(web3.utils.fromWei(await campaignInstance.methods.raisedAmount().call()));
         let coinAddress = await campaignInstance.methods.currency().call();
-        let coinName = config.get("currencies")[coinAddress];
+        let coinName = config.get("binance")["testnet"]["currencies"][coinAddress];
         let donationYield = await campaignInstance.methods.donationYield().call();
         let y = web3.utils.fromWei(donationYield.toString());
         let reward = `${y * 100}%`;
