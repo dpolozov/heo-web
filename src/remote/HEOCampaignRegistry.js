@@ -1,5 +1,5 @@
 import web3 from "../ethereum/web3";
-const address = "0x25fBB7B50361746563FB2ed75D60D6F1d3E18C19";
+const address = "0x9B9f1CBFB14CcF4D9223da69a84d5cA224B7db3c";
 const abi = [
   {
     "inputs": [],

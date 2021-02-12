@@ -1,15 +1,12 @@
+import web3 from "../ethereum/web3";
+const address = "0x79CAAaf21A5a345e79B9901E8F223698Db154d00";
 const abi = [
     {
         "inputs": [
             {
                 "internalType": "uint256",
-                "name": "maxAmount",
+                "name": "serviceFee",
                 "type": "uint256"
-            },
-            {
-                "internalType": "address",
-                "name": "beneficiary",
-                "type": "address"
             },
             {
                 "internalType": "uint256",
@@ -18,28 +15,18 @@ const abi = [
             },
             {
                 "internalType": "uint256",
-                "name": "burntHeo",
+                "name": "rewardPeriod",
                 "type": "uint256"
             },
             {
                 "internalType": "uint256",
-                "name": "heoPrice",
+                "name": "maxRewardPeriods",
                 "type": "uint256"
             },
             {
-                "internalType": "address",
-                "name": "currency",
+                "internalType": "contract HEOToken",
+                "name": "heoToken",
                 "type": "address"
-            },
-            {
-                "internalType": "uint256",
-                "name": "serviceFee",
-                "type": "uint256"
-            },
-            {
-                "internalType": "string",
-                "name": "metaDataUrl",
-                "type": "string"
             }
         ],
         "stateMutability": "nonpayable",
@@ -75,7 +62,8 @@ const abi = [
             }
         ],
         "stateMutability": "view",
-        "type": "function"
+        "type": "function",
+        "constant": true
     },
     {
         "inputs": [],
@@ -98,25 +86,14 @@ const abi = [
         "type": "function"
     },
     {
-        "stateMutability": "payable",
-        "type": "receive"
-    },
-    {
-        "inputs": [],
-        "name": "donateNative",
-        "outputs": [],
-        "stateMutability": "payable",
-        "type": "function"
-    },
-    {
         "inputs": [
             {
                 "internalType": "uint256",
-                "name": "burntHeo",
+                "name": "serviceFee",
                 "type": "uint256"
             }
         ],
-        "name": "increaseYield",
+        "name": "setServiceFee",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
@@ -124,66 +101,53 @@ const abi = [
     {
         "inputs": [
             {
-                "internalType": "string",
-                "name": "metaDataUrl",
-                "type": "string"
+                "internalType": "uint256",
+                "name": "profitabilityCoefficient",
+                "type": "uint256"
             }
         ],
-        "name": "updateMetaDataUrl",
+        "name": "setProfitabilityCoefficient",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
     },
     {
-        "inputs": [],
-        "name": "currency",
-        "outputs": [
-            {
-                "internalType": "address",
-                "name": "",
-                "type": "address"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "maxAmount",
-        "outputs": [
+        "inputs": [
             {
                 "internalType": "uint256",
-                "name": "",
+                "name": "globalRewardStart",
                 "type": "uint256"
             }
         ],
-        "stateMutability": "view",
+        "name": "setGlobalRewardStart",
+        "outputs": [],
+        "stateMutability": "nonpayable",
         "type": "function"
     },
     {
-        "inputs": [],
-        "name": "raisedAmount",
-        "outputs": [
+        "inputs": [
             {
                 "internalType": "uint256",
-                "name": "",
+                "name": "rewardPeriod",
                 "type": "uint256"
             }
         ],
-        "stateMutability": "view",
+        "name": "setRewardPeriod",
+        "outputs": [],
+        "stateMutability": "nonpayable",
         "type": "function"
     },
     {
-        "inputs": [],
-        "name": "donationYield",
-        "outputs": [
+        "inputs": [
             {
                 "internalType": "uint256",
-                "name": "",
+                "name": "maxRewardPeriods",
                 "type": "uint256"
             }
         ],
-        "stateMutability": "view",
+        "name": "setMaxRewardPeriods",
+        "outputs": [],
+        "stateMutability": "nonpayable",
         "type": "function"
     },
     {
@@ -197,33 +161,8 @@ const abi = [
             }
         ],
         "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "getZ",
-        "outputs": [
-            {
-                "internalType": "uint256",
-                "name": "",
-                "type": "uint256"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "heoPrice",
-        "outputs": [
-            {
-                "internalType": "uint256",
-                "name": "",
-                "type": "uint256"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
+        "type": "function",
+        "constant": true
     },
     {
         "inputs": [],
@@ -236,37 +175,12 @@ const abi = [
             }
         ],
         "stateMutability": "view",
-        "type": "function"
+        "type": "function",
+        "constant": true
     },
     {
         "inputs": [],
-        "name": "isActive",
-        "outputs": [
-            {
-                "internalType": "bool",
-                "name": "",
-                "type": "bool"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "beneficiary",
-        "outputs": [
-            {
-                "internalType": "address",
-                "name": "",
-                "type": "address"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "burntHeo",
+        "name": "rewardPeriod",
         "outputs": [
             {
                 "internalType": "uint256",
@@ -275,21 +189,56 @@ const abi = [
             }
         ],
         "stateMutability": "view",
-        "type": "function"
+        "type": "function",
+        "constant": true
     },
     {
         "inputs": [],
-        "name": "metaDataUrl",
+        "name": "maxRewardPeriods",
         "outputs": [
             {
-                "internalType": "string",
+                "internalType": "uint256",
                 "name": "",
-                "type": "string"
+                "type": "uint256"
             }
         ],
         "stateMutability": "view",
-        "type": "function"
+        "type": "function",
+        "constant": true
+    },
+    {
+        "inputs": [],
+        "name": "globalRewardStart",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function",
+        "constant": true
+    },
+    {
+        "inputs": [],
+        "name": "heoToken",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function",
+        "constant": true
     }
 ];
 
-export default abi;
+const instance = new web3.eth.Contract(
+    abi,
+    address
+);
+
+export default instance;

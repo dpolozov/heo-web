@@ -1,5 +1,7 @@
 const config = {
-    HEOCampaignRegistryAddress: "0x7346ad23f85daD6B71FAD986E58caE49352a4187"
+    currencies:{
+        "0x0000000000000000000000000000000000000000":"ETH"
+    }
 };
 
 export default config;
