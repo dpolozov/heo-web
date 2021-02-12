@@ -2,13 +2,14 @@ import React, { useState } from 'react';
 import logo from '../images/heo-logo.png';
 import HEOCampaign from "../remote/HEOCampaign";
 import web3 from "../ethereum/web3";
-import {Menu, Button, Card, Image, Label, Progress, Container, Header, Segment, Grid} from "semantic-ui-react";
+import {Input, Image, Label, Progress, Container, Header, Segment, Grid} from "semantic-ui-react";
 import config from "react-global-configuration";
 
 class CampaignPage extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
+            donationAmount:"10",
             address: "0x0",
             title:"Title of the campaign",
             description:"Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor.",
@@ -19,6 +20,31 @@ class CampaignPage extends React.Component {
             mainImage: "https://ksr-ugc.imgix.net/assets/032/126/819/b2ada0fe85aff53a51778ebd27db7b95_original.jpg",
             reward: "200%"
         };
+    }
+    handleChange = (e, { name, value }) => this.setState({ [name]: value })
+
+    handleDonateClick = async event => {
+        var campaignInstance = this.state.campaign;
+        if (typeof window.ethereum !== 'undefined') {
+            var ethereum = window.ethereum;
+            try {
+                const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+                console.log(accounts);
+                console.log(campaignInstance);
+                await campaignInstance.methods.donateNative().send({
+                    from:accounts[0],
+                    value: web3.utils.toWei(this.state.donationAmount)
+                });
+                let raisedAmount = parseInt(web3.utils.fromWei(await campaignInstance.methods.raisedAmount().call()));
+                this.setState({raisedAmount:raisedAmount});
+            } catch (err) {
+                console.log(err);
+                alert(err);
+            }
+        } else {
+            alert("Please install metamask");
+        }
+
     }
 
     render() {
@@ -43,6 +69,21 @@ class CampaignPage extends React.Component {
                                 <Label basic color='red'>
                                     Rewards: {this.state.reward}
                                 </Label>
+                                <Input
+                                    action={{
+                                        color: 'teal',
+                                        labelPosition: 'right',
+                                        icon: 'gift',
+                                        content: 'Donate' + this.state.coinName,
+                                        onClick: this.handleDonateClick
+                                    }}
+                                    name='donationAmount'
+                                    actionPosition='right'
+                                    placeholder='Amount'
+                                    defaultValue='10'
+                                    size='mini'
+                                    onChange={this.handleChange}
+                                />
                             </Segment>
                         </Grid.Column>
                     </Grid.Row>
@@ -70,7 +111,7 @@ class CampaignPage extends React.Component {
         let reward = `${y * 100}%`;
         this.setState({title:metaData.title, isActive:isActive, maxAmount:maxAmount, raisedAmount:raisedAmount,
             coinAddress:coinAddress, coinName:coinName, donationYield:donationYield, reward:reward,
-            description:metaData.description, mainImage:metaData.main_image});
+            description:metaData.description, mainImage:metaData.main_image, address:address, campaign:campaignInstance});
     }
 }
 

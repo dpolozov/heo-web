@@ -47,7 +47,7 @@ class CampaignList extends Component {
                 coinName:coinName,
                 maxAmount:maxAmount,
                 raisedAmount:raisedAmount,
-                percentRaised: (raisedAmount > 0 ? (100 * raisedAmount/maxAmount) : 50),
+                percentRaised: (raisedAmount > 0 ? (100 * raisedAmount/maxAmount) : 0),
                 mainImage: metaData.main_image,
                 reward: reward
             });
