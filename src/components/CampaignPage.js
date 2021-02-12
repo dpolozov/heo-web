@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import logo from '../images/heo-logo.png';
 import HEOCampaign from "../remote/binance-testnet/HEOCampaign";
-import web3 from "../ethereum/web3";
+import web3 from "../remote/binance-testnet/web3";
 import {Input, Image, Label, Progress, Container, Header, Segment, Grid} from "semantic-ui-react";
 import config from "react-global-configuration";
 

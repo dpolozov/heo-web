@@ -1,4 +1,4 @@
-import web3 from "../../ethereum/web3";
+import web3 from './web3';
 const address = "0x9B9f1CBFB14CcF4D9223da69a84d5cA224B7db3c";
 const abi = [
   {
