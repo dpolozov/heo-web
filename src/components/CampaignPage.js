@@ -1,13 +1,12 @@
-import React, { useState } from 'react';
+import React, {lazy, useState} from 'react';
 import logo from '../images/heo-logo.png';
-import HEOCampaign from "../remote/binance-testnet/HEOCampaign";
-import web3 from "../remote/binance-testnet/web3";
 import {Input, Image, Label, Progress, Container, Header, Segment, Grid} from "semantic-ui-react";
 import config from "react-global-configuration";
-
+var HEOCampaign, web3, CHAIN;
 class CampaignPage extends React.Component {
     constructor(props) {
         super(props);
+        CHAIN = config.get("chain");
         this.state = {
             donationAmount:"10",
             address: "0x0",
@@ -96,6 +95,8 @@ class CampaignPage extends React.Component {
     }
 
     async componentDidMount() {
+        HEOCampaign = (await import("../remote/"+ CHAIN + "/HEOCampaign")).default;
+        web3 = (await import("../remote/"+ CHAIN + "/web3")).default;
         let toks = this.props.location.pathname.split("/");
         let address = toks[toks.length -1];
         let campaignInstance = new web3.eth.Contract(HEOCampaign, address);
@@ -105,7 +106,7 @@ class CampaignPage extends React.Component {
         let maxAmount = parseInt(web3.utils.fromWei(await campaignInstance.methods.maxAmount().call()));
         let raisedAmount = parseInt(web3.utils.fromWei(await campaignInstance.methods.raisedAmount().call()));
         let coinAddress = await campaignInstance.methods.currency().call();
-        let coinName = config.get("binance")["testnet"]["currencies"][coinAddress];
+        let coinName = config.get("chainconfigs")[CHAIN]["currencies"][coinAddress];
         let donationYield = await campaignInstance.methods.donationYield().call();
         let y = web3.utils.fromWei(donationYield.toString());
         let reward = `${y * 100}%`;

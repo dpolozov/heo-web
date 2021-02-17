@@ -1,13 +1,13 @@
-import React, { Component } from 'react';
+import React, { Component, lazy } from 'react';
 import {Item, Label, Progress} from 'semantic-ui-react'
-import HEOCampaignRegistry from "../remote/binance-testnet/HEOCampaignRegistry";
-import HEOCampaign from "../remote/binance-testnet/HEOCampaign";
-import web3 from "../remote/binance-testnet/web3";
 import config from 'react-global-configuration';
+var CHAIN, HEOCampaignRegistry, HEOCampaign, web3;
 
 class CampaignList extends Component {
     constructor(props) {
         super(props);
+        CHAIN = config.get("chain");
+
         this.state = {
             campaigns: [],
         };
@@ -20,6 +20,9 @@ class CampaignList extends Component {
     }
 
     async getCampaigns() {
+        HEOCampaignRegistry = (await import("../remote/"+ CHAIN + "/HEOCampaignRegistry")).default;
+        HEOCampaign = (await import("../remote/"+ CHAIN + "/HEOCampaign")).default;
+        web3 = (await import("../remote/"+ CHAIN + "/web3")).default;
         let HEOCampaigns = await HEOCampaignRegistry.methods.allCampaigns().call();
         var campaigns = [];
         for(let i in HEOCampaigns) {
@@ -34,7 +37,7 @@ class CampaignList extends Component {
             let maxAmount = parseInt(web3.utils.fromWei(await campaignInstance.methods.maxAmount().call()));
             let raisedAmount = parseInt(web3.utils.fromWei(await campaignInstance.methods.raisedAmount().call()));
             let coinAddress = await campaignInstance.methods.currency().call();
-            let coinName = config.get("binance")["testnet"]["currencies"][coinAddress];
+            let coinName = config.get("chainconfigs")[CHAIN]["currencies"][coinAddress];
             let donationYield = await campaignInstance.methods.donationYield().call();
             let y = web3.utils.fromWei(donationYield.toString());
             let reward = `${y * 100}%`;

@@ -1,5 +1,6 @@
 import React from 'react';
 import CampaignPage from './CampaignPage';
+import CreateCampaign from './CreateCampaign';
 import logo from '../images/heo-logo.png';
 import {Menu, Image, Container} from "semantic-ui-react";
 import Home from "./Home";
@@ -15,14 +16,17 @@ class App extends React.Component {
             <main>
                 <Menu fixed='top'>
                     <Container>
-                        <Menu.Item as='a' header><Image size='mini' src={logo} style={{ marginRight: '1.5em' }} />
+                        <Menu.Item as='a' href='/' header><Image size='mini' src={logo} style={{ marginRight: '1.5em' }} />
                             Help Each Other
                         </Menu.Item>
+                        <Menu.Item as='a' href='/'>Browse campains</Menu.Item>
+                        <Menu.Item as='a' href='/new'>Start a fundraiser</Menu.Item>
                     </Container>
                 </Menu>
                 <Container  style={{ marginTop: '7em' }}>
                     <Switch>
                         <Route path="/campaign" component={CampaignPage} />
+                        <Route path="/new" component={CreateCampaign} />
                         <Route path="/" component={Home} />
                         <Route component={Error} />
                     </Switch>
