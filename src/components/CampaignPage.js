@@ -2,7 +2,7 @@ import React, {lazy, useState} from 'react';
 import logo from '../images/heo-logo.png';
 import {Input, Image, Label, Progress, Container, Header, Segment, Grid} from "semantic-ui-react";
 import config from "react-global-configuration";
-var HEOCampaign, web3, CHAIN;
+var HEOCampaign, ERC20Coin, web3, CHAIN;
 class CampaignPage extends React.Component {
     constructor(props) {
         super(props);
@@ -13,6 +13,7 @@ class CampaignPage extends React.Component {
             title:"Title of the campaign",
             description:"Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor.",
             coinName:"BNB",
+            coinAddress:"",
             maxAmount:10000,
             raisedAmount:6000,
             percentRaised: "60%",
@@ -28,12 +29,11 @@ class CampaignPage extends React.Component {
             var ethereum = window.ethereum;
             try {
                 const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
-                console.log(accounts);
-                console.log(campaignInstance);
-                await campaignInstance.methods.donateNative().send({
-                    from:accounts[0],
-                    value: web3.utils.toWei(this.state.donationAmount)
-                });
+                let coinInstance = new web3.eth.Contract(ERC20Coin, this.state.coinAddress);
+                await coinInstance.methods.approve(this.state.address,
+                    web3.utils.toWei(this.state.donationAmount)).send({from:accounts[0]});
+                await campaignInstance.methods.donateERC20(
+                    web3.utils.toWei(this.state.donationAmount)).send({from:accounts[0]});
                 let raisedAmount = parseInt(web3.utils.fromWei(await campaignInstance.methods.raisedAmount().call()));
                 this.setState({raisedAmount:raisedAmount});
             } catch (err) {
@@ -96,6 +96,7 @@ class CampaignPage extends React.Component {
 
     async componentDidMount() {
         HEOCampaign = (await import("../remote/"+ CHAIN + "/HEOCampaign")).default;
+        ERC20Coin = (await import("../remote/"+ CHAIN + "/ERC20Coin")).default;
         web3 = (await import("../remote/"+ CHAIN + "/web3")).default;
         let toks = this.props.location.pathname.split("/");
         let address = toks[toks.length -1];

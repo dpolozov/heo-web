@@ -1,5 +1,5 @@
 const config = {
-    "chain":"binancetestnet",
+    "chain":"ganache",
     "chainconfigs":{
         "binancetestnet":{
             "currencies": {
@@ -20,8 +20,19 @@ const config = {
             }
         },
         "ganache":{
-            "currencies":{"0x0000000000000000000000000000000000000000":"ETH"},
-            "contracts":{}
+            "currencies":{
+                "0x0000000000000000000000000000000000000000":"ETH",
+                "0x869911D9a3f42DDdb94B10Aee034a0B491405145":"TUSD"
+            },
+            "contracts":{
+                "HEOToken":"0xE15aBCb7e4C8aB5a96Fd093A460d07E0A12A5f5F",
+                "HEOManualDistribution":"0x5313Dfd68d74A6dfe5b0Ed8D7589D04c300b337e",
+                "HEOCampaignRegistry": "0x0aB6B9A68C619CDe89C3B32B25ac80c02991e033",
+                "HEOGlobalParameters": "0x79CAAaf21A5a345e79B9901E8F223698Db154d00",
+                "HEOPriceOracle": "0x2E0acE81E37eBB787E741Ec65BAE53E4E930Bb58",
+                "HEORewardFarm": "0xa49135e8643D69e37cF5D7Cb8faD125E3f49c771",
+                "HEOCampaignFactory" :"0x288FC5B322A33f1886238b702E2D744E15A189A9"
+            }
         }
     }
 };
