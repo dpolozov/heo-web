@@ -19,7 +19,7 @@ var HEOCampaign, ERC20Coin, web3, CHAIN;
 class CampaignPage extends React.Component {
     constructor(props) {
         super(props);
-        CHAIN = config.get("chain");
+        CHAIN = config.get("chain")["id"];
         this.state = {
             donationAmount:"10",
             address: "0x0",

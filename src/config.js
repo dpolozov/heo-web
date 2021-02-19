@@ -1,5 +1,5 @@
 const config = {
-    "chain":"ganache",
+    "chain":{"id":"ganache", "name":"Local Dev network"},
     "chainconfigs":{
         "binancetestnet":{
             "currencies": {

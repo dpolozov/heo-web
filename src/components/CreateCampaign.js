@@ -3,7 +3,7 @@ import logo from '../images/heo-logo.png';
 
 import {Input, Image, Label, Progress, Container, Header, Segment, Grid, Step, Form} from "semantic-ui-react";
 import config from "react-global-configuration";
-
+var CHAIN;
 const countries = [
     {
         key: 'Jenny Hess',
@@ -23,6 +23,7 @@ class CreateCampaign extends React.Component {
 
     constructor(props) {
         super(props);
+        CHAIN = config.get("chain")["id"];
         this.state = {
             step:1,
             fn:"",
