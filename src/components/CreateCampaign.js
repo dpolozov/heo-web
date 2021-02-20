@@ -20,7 +20,7 @@ import {
 } from "semantic-ui-react";
 import config from "react-global-configuration";
 import uuid from 'react-uuid';
-var CHAIN, HEOCampaignFactory, HEOGlobalParameters, HEOPriceOracle, ACCOUNTS, web3;
+var HEOCampaignFactory, HEOGlobalParameters, HEOPriceOracle, ACCOUNTS, web3;
 const AWS_CONFIG_IMAGES = {
         bucketName: process.env.REACT_APP_BUCKET_NAME,
         region: process.env.REACT_APP_REGION,
@@ -32,15 +32,16 @@ const AWS_CONFIG_IMAGES = {
 const AWS_CONFIG_META = {
     bucketName: process.env.REACT_APP_BUCKET_NAME,
     region: process.env.REACT_APP_REGION,
-    dirName:process.env.REACT_APP_IMG_META_NAME,
+    dirName:process.env.REACT_APP_META_DIR_NAME,
     accessKeyId: process.env.REACT_APP_ACCESS_ID,
     secretAccessKey: process.env.REACT_APP_ACCESS_KEY,
     //s3Url: 'https://heowebmeta.s3.us-east-1.amazonaws.com'
 };
+const CHAIN = process.env.REACT_APP_CHAIN_ID;
+const CHAIN_NAME = process.env.REACT_APP_CHAIN_NAME;
 class CreateCampaign extends React.Component {
     constructor(props) {
         super(props);
-        CHAIN = config.get("chain")["id"];
         this.state = {
             step:1,
             showLoader:false,
@@ -176,7 +177,11 @@ class CreateCampaign extends React.Component {
         that.setState({showLoader:true, loaderMessage:"Please wait. Uploading metadata."});
         let data = JSON.stringify({title:that.state.title,
             description:that.state.description,
-            mainImageURL:that.state.mainImageURL
+            mainImageURL:that.state.mainImageURL,
+            fn:that.state.fn,
+            ln:that.state.ln,
+            org:that.state.org,
+            cn:that.state.cn
         });
         const ReactS3Client = new S3(AWS_CONFIG_META);
         return ReactS3Client.uploadDataFile(data, "application/json", `${metaID}.json`).then(response => {

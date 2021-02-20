@@ -1,12 +1,13 @@
 import React, { Component, lazy } from 'react';
 import {Button, Item, Label, Modal, Progress, Header} from 'semantic-ui-react'
 import config from 'react-global-configuration';
-var CHAIN, HEOCampaignRegistry, HEOCampaign, web3;
+const CHAIN = process.env.REACT_APP_CHAIN_ID;
+const CHAIN_NAME = process.env.REACT_APP_CHAIN_NAME;
+var HEOCampaignRegistry, HEOCampaign, web3;
 
 class CampaignList extends Component {
     constructor(props) {
         super(props);
-        CHAIN = config.get("chain")["id"];
 
         this.state = {
             campaigns: [],
@@ -63,7 +64,7 @@ class CampaignList extends Component {
             this.setState({
                 showError:true,
                 errorMessage:"Failed to connect to blockchain network. If you are using a browser wallet like MetaMask, " +
-                    "please make sure that it is configured for " + config.get("chain")["name"]
+                    "please make sure that it is configured for " + CHAIN_NAME
             })
         }
 

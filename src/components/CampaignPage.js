@@ -15,11 +15,12 @@ import {
     Button
 } from "semantic-ui-react";
 import config from "react-global-configuration";
-var HEOCampaign, ERC20Coin, web3, CHAIN;
+var HEOCampaign, ERC20Coin, web3;
+const CHAIN = process.env.REACT_APP_CHAIN_ID;
+const CHAIN_NAME = process.env.REACT_APP_CHAIN_NAME;
 class CampaignPage extends React.Component {
     constructor(props) {
         super(props);
-        CHAIN = config.get("chain")["id"];
         this.state = {
             donationAmount:"10",
             address: "0x0",
@@ -91,7 +92,11 @@ class CampaignPage extends React.Component {
                 that.setState({showDimmer:true});
             } catch (err) {
                 console.log(err);
-                alert(err);
+                this.setState({
+                    showModal:true,
+                    modalMessage:"Failed to connect to blockchain network. If you are using a browser wallet like MetaMask, " +
+                        "please make sure that it is configured for " + CHAIN_NAME
+                });
             }
         } else {
             alert("Please install metamask");

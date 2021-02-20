@@ -1,12 +1,13 @@
 const config = {
-    "chain":{"id":"ganache", "name":"Local Dev network"},
     "chainconfigs":{
         "binancetestnet":{
+            "currencyOptions":[
+                {"text":"BUSD", "value":"0xed24fc36d5ee211ea25a80239fb8c4cfd80f12ee"},
+                {"text":"BNB", "value":"0x0000000000000000000000000000000000000000"}
+            ],
             "currencies": {
                 "0x0000000000000000000000000000000000000000":"BNB",
-                "0x8301F2213c0eeD49a7E28Ae4c3e91722919B8B47":"BUSD",
-                "0x64544969ed7EBf5f083679233325356EbE738930":"USDC",
-                "0xEC5dCb5Dbf4B114C9d0F65BcCAb49EC54F6A0867":"DAI",
+                "0xed24fc36d5ee211ea25a80239fb8c4cfd80f12ee":"BUSD",
                 "0x337610d27c682E347C9cD60BD4b3b107C9d34dDd":"USDT"
             },
             "contracts":{
