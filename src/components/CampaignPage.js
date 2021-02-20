@@ -28,8 +28,8 @@ class CampaignPage extends React.Component {
             description:"Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor.",
             coinName:"BNB",
             coinAddress:"",
-            maxAmount:10000,
-            raisedAmount:6000,
+            maxAmount:0,
+            raisedAmount:0,
             percentRaised: "60%",
             mainImageURL: "",
             reward: "200%",
@@ -176,7 +176,7 @@ class CampaignPage extends React.Component {
         let metaData = await (await fetch(metaDataUrl)).json();
         let maxAmount = parseInt(web3.utils.fromWei(await campaignInstance.methods.maxAmount().call()));
         let raisedAmount = parseInt(web3.utils.fromWei(await campaignInstance.methods.raisedAmount().call()));
-        let coinAddress = (await campaignInstance.methods.currency().call()).toUpperCase();
+        let coinAddress = (await campaignInstance.methods.currency().call()).toLowerCase();
         let coinName = config.get("chainconfigs")[CHAIN]["currencies"][coinAddress];
         let donationYield = await campaignInstance.methods.donationYield().call();
         let y = web3.utils.fromWei(donationYield.toString());

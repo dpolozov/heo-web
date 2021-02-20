@@ -2,13 +2,13 @@ const config = {
     "chainconfigs":{
         "binancetestnet":{
             "currencyOptions":[
-                {"text":"BUSD", "value":"0xED24FC36D5EE211EA25A80239FB8C4CFD80F12EE"},
+                {"text":"BUSD", "value":"0xed24fc36d5ee211ea25a80239fb8c4cfd80f12ee"},
                 {"text":"BNB", "value":"0x0000000000000000000000000000000000000000"}
             ],
             "currencies": {
                 "0x0000000000000000000000000000000000000000":"BNB",
-                "0xED24FC36D5EE211EA25A80239FB8C4CFD80F12EE":"BUSD",
-                "0x337610D27C682E347C9CD60BD4B3B107C9D34DDD":"USDT"
+                "0xed24fc36d5ee211ea25a80239fb8c4cfd80f12ee":"BUSD",
+                "0x337610d27c682e347c9cd60bd4b3b107c9d34ddd":"USDT"
             },
             "contracts":{
                 "HEOToken":"0x6d231B36831c971cFCeBf7263103E2710EbD9B10",

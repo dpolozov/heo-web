@@ -42,7 +42,7 @@ class CampaignList extends Component {
                 let metaData = await (await fetch(metaDataUrl)).json();
                 let maxAmount = parseInt(web3.utils.fromWei(await campaignInstance.methods.maxAmount().call()));
                 let raisedAmount = parseInt(web3.utils.fromWei(await campaignInstance.methods.raisedAmount().call()));
-                let coinAddress = (await campaignInstance.methods.currency().call()).toUpperCase();
+                let coinAddress = (await campaignInstance.methods.currency().call()).toLowerCase();
                 let coinName = CURRENCY_MAP[coinAddress];
                 let donationYield = await campaignInstance.methods.donationYield().call();
                 let y = web3.utils.fromWei(donationYield.toString());
