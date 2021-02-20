@@ -21,6 +21,8 @@ class App extends React.Component {
                         </Menu.Item>
                         <Menu.Item as='a' href='/'>Browse fundraisers</Menu.Item>
                         <Menu.Item as='a' href='/new'>Start a fundraiser</Menu.Item>
+                        <Menu.Item as='a' target='_blank' href='https://heo.finance'>About HEO</Menu.Item>
+                        <Menu.Item as='a' target='_blank' href='https://heo.finance'>Buy HEO tokens</Menu.Item>
                     </Container>
                 </Menu>
                 <Container  style={{ marginTop: '7em' }}>
