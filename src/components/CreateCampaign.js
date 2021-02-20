@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
 import logo from '../images/heo-logo.png';
 import countries from '../countries';
-import axios from 'axios';
-import {serialize, deserialize} from 'bson';
-import S3 from 'react-aws-s3';
+import S3 from 'react-aws-s3-grishick';
 import {
     Input,
     Image,

@@ -81,7 +81,7 @@ class CampaignList extends Component {
                 <Item>
                     <Item.Image src={ campaign.mainImage } as='a' href={'/campaign/' + campaign.address} />
                     <Item.Content>
-                        <Item.Header as='a'>{campaign.tagline}</Item.Header>
+                        <Item.Header as='a'>{campaign.title}</Item.Header>
                         <Item.Description>{campaign.description}</Item.Description>
                     </Item.Content>
                 </Item>
