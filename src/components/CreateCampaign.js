@@ -58,14 +58,13 @@ class CreateCampaign extends React.Component {
             x:20,
             title:"Title of the campaign",
             description:"Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor.",
-            coinName:"BNB",
-            raisedAmount:6000,
-            tokensToBurn:10,
+            raisedAmount:0,
+            tokensToBurn:0,
             percentRaised: "0%",
             mainImageURL: "",
             metaDataURL:"",
             mainImageFile:"",
-            reward: "2",
+            reward:0,
             currencyAddress:"",
             currencyName:""
         };
@@ -121,6 +120,16 @@ class CreateCampaign extends React.Component {
         console.log(`Button clicked ${target.name}`);
         switch(target.name) {
             case "ff1":
+                if(!this.state.currencyAddress) {
+                    this.setState({showLoader:false, showError:true,
+                        errorMessage:`Please select a coin that your fundraiser will accept.`});
+                    return;
+                }
+                if(!this.state.fn || !this.state.ln) {
+                    this.setState({showLoader:false, showError:true,
+                        errorMessage:`Please enter your first and last name.`});
+                    return;
+                }
                 this.setState({step:2});
                 break;
             case "ff2":
@@ -241,10 +250,10 @@ class CreateCampaign extends React.Component {
                                         value={this.state.org} onChange={this.handleChange} />
                             <Form.Group widths='equal'>
                                 <Form.Dropdown placeholder="Select your country" name='cn' options={countries}
-                                               value={this.state.cn} onChange={this.handleChange} />
+                                               onChange={this.handleChange} />
                                 <Form.Dropdown required placeholder="Select coin" name='currencyAddress'
                                                options={config.get("chainconfigs")[CHAIN]["currencyOptions"]}
-                                               value={this.state.currencyAddress} onChange={this.handleChange} />
+                                               onChange={this.handleChange} />
                                 <Form.Button name='ff1' onClick={this.handleClick}>Next</Form.Button>
                             </Form.Group>
                         </div>
