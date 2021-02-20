@@ -1,9 +1,10 @@
 import React, { Component, lazy } from 'react';
-import {Button, Item, Label, Modal, Progress, Header} from 'semantic-ui-react'
 import config from 'react-global-configuration';
+import {Button, Item, Label, Modal, Progress, Header} from 'semantic-ui-react'
+
 const CHAIN = process.env.REACT_APP_CHAIN_ID;
 const CHAIN_NAME = process.env.REACT_APP_CHAIN_NAME;
-var HEOCampaignRegistry, HEOCampaign, web3;
+var HEOCampaignRegistry, HEOCampaign, web3, CURRENCY_MAP;
 
 class CampaignList extends Component {
     constructor(props) {
@@ -17,6 +18,7 @@ class CampaignList extends Component {
     }
 
     async componentDidMount() {
+        CURRENCY_MAP = config.get("chainconfigs")[CHAIN]["currencies"];
         this.setState({
             campaigns: (await this.getCampaigns()),
         });
@@ -40,8 +42,8 @@ class CampaignList extends Component {
                 let metaData = await (await fetch(metaDataUrl)).json();
                 let maxAmount = parseInt(web3.utils.fromWei(await campaignInstance.methods.maxAmount().call()));
                 let raisedAmount = parseInt(web3.utils.fromWei(await campaignInstance.methods.raisedAmount().call()));
-                let coinAddress = await campaignInstance.methods.currency().call();
-                let coinName = config.get("chainconfigs")[CHAIN]["currencies"][coinAddress];
+                let coinAddress = (await campaignInstance.methods.currency().call()).toUpperCase();
+                let coinName = CURRENCY_MAP[coinAddress];
                 let donationYield = await campaignInstance.methods.donationYield().call();
                 let y = web3.utils.fromWei(donationYield.toString());
                 let reward = `${y * 100}%`;

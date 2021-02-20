@@ -1,5 +1,5 @@
 import React, {lazy, useState} from 'react';
-import logo from '../images/heo-logo.png';
+import config from "react-global-configuration";
 import {
     Input,
     Image,
@@ -14,7 +14,7 @@ import {
     Dimmer,
     Button
 } from "semantic-ui-react";
-import config from "react-global-configuration";
+
 var HEOCampaign, ERC20Coin, web3;
 const CHAIN = process.env.REACT_APP_CHAIN_ID;
 const CHAIN_NAME = process.env.REACT_APP_CHAIN_NAME;
@@ -176,7 +176,7 @@ class CampaignPage extends React.Component {
         let metaData = await (await fetch(metaDataUrl)).json();
         let maxAmount = parseInt(web3.utils.fromWei(await campaignInstance.methods.maxAmount().call()));
         let raisedAmount = parseInt(web3.utils.fromWei(await campaignInstance.methods.raisedAmount().call()));
-        let coinAddress = await campaignInstance.methods.currency().call();
+        let coinAddress = (await campaignInstance.methods.currency().call()).toUpperCase();
         let coinName = config.get("chainconfigs")[CHAIN]["currencies"][coinAddress];
         let donationYield = await campaignInstance.methods.donationYield().call();
         let y = web3.utils.fromWei(donationYield.toString());
