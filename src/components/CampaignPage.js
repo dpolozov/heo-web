@@ -30,7 +30,7 @@ class CampaignPage extends React.Component {
             maxAmount:10000,
             raisedAmount:6000,
             percentRaised: "60%",
-            mainImage: "https://ksr-ugc.imgix.net/assets/032/126/819/b2ada0fe85aff53a51778ebd27db7b95_original.jpg",
+            mainImageURL: "",
             reward: "200%",
             modalMessage:"Please confirm the transaction in MetaMask",
             showDimmer:false,
@@ -50,12 +50,18 @@ class CampaignPage extends React.Component {
                 var that = this;
                 coinInstance.methods.approve(this.state.address, toDonate).send({from:accounts[0]}).on(
                     'receipt', function(receipt) {
-                        console.log("Received receipt from approval transaction")
+                        console.log("Received receipt from approval transaction");
                         campaignInstance.methods.donateERC20(toDonate).send({from:accounts[0]}).on('receipt',
                             function(receipt) {
                                     console.log("Received receipt from donation transaction");
                                 campaignInstance.methods.raisedAmount().call({from:accounts[0]}, function(err, result) {
-                                    that.setState({raisedAmount:parseInt(web3.utils.fromWei(result))});
+                                    if(!err) {
+                                        that.setState({raisedAmount:parseInt(web3.utils.fromWei(result))});
+                                    } else {
+                                        console.log("Failed to update raised amount.")
+                                        console.log(err);
+                                    }
+
                                 });
                                 that.setState({showDimmer:false});
                                 that.setState({showModal:true});
@@ -102,7 +108,7 @@ class CampaignPage extends React.Component {
                         </Grid.Row>
 
                         <Grid.Row>
-                            <Grid.Column><Image src={this.state.mainImage.url} /></Grid.Column>
+                            <Grid.Column><Image src={this.state.mainImageURL} /></Grid.Column>
                             <Grid.Column>
                                 <Segment vertical>
                                     <Progress color='olive' percent={this.state.percentRaised}>{this.state.raisedAmount} {this.state.coinName} raised out of {this.state.maxAmount} goal</Progress>
@@ -172,7 +178,7 @@ class CampaignPage extends React.Component {
         let reward = `${y * 100}%`;
         this.setState({title:metaData.title, isActive:isActive, maxAmount:maxAmount, raisedAmount:raisedAmount,
             coinAddress:coinAddress, coinName:coinName, donationYield:donationYield, reward:reward,
-            description:metaData.description, mainImage:metaData.main_image, address:address, campaign:campaignInstance});
+            description:metaData.description, mainImageURL:metaData.mainImageURL, address:address, campaign:campaignInstance});
     }
 }
 

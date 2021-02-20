@@ -10,8 +10,8 @@ class CampaignList extends Component {
 
         this.state = {
             campaigns: [],
-            showModal:false,
-            modalMessage:""
+            showError:false,
+            errorMessage:""
         };
     }
 
@@ -54,15 +54,15 @@ class CampaignList extends Component {
                     maxAmount:maxAmount,
                     raisedAmount:raisedAmount,
                     percentRaised: (raisedAmount > 0 ? (100 * raisedAmount/maxAmount) : 0),
-                    mainImage: metaData.main_image,
+                    mainImage: metaData.mainImageURL,
                     reward: reward
                 });
             }
         } catch(err) {
             console.log(err);
             this.setState({
-                showModal:true,
-                modalMessage:"Failed to connect to blockchain network. If you are using a browser wallet like MetaMask, " +
+                showError:true,
+                errorMessage:"Failed to connect to blockchain network. If you are using a browser wallet like MetaMask, " +
                     "please make sure that it is configured for " + config.get("chain")["name"]
             })
         }
@@ -78,7 +78,7 @@ class CampaignList extends Component {
             let campaign = this.state.campaigns[i];
             items.push(
                 <Item>
-                    <Item.Image src={ campaign.mainImage.url } as='a' href={'/campaign/' + campaign.address} />
+                    <Item.Image src={ campaign.mainImage } as='a' href={'/campaign/' + campaign.address} />
                     <Item.Content>
                         <Item.Header as='a'>{campaign.tagline}</Item.Header>
                         <Item.Description>{campaign.description}</Item.Description>
@@ -114,11 +114,11 @@ class CampaignList extends Component {
                 <Item.Group relaxed>
                     {this.renderCampaigns()}
                 </Item.Group>
-                <Modal open={this.state.showModal}>
+                <Modal open={this.state.showError}>
                     <Header icon='warning sign' content='Failed to connect to network!' />
-                    <Modal.Content>{this.state.modalMessage}</Modal.Content>
+                    <Modal.Content>{this.state.errorMessage}</Modal.Content>
                     <Modal.Actions>
-                        <Button positive onClick={ () => {this.setState({showModal:false})}}>
+                        <Button positive onClick={ () => {this.setState({showError:false})}}>
                             OK
                         </Button>
                     </Modal.Actions>

@@ -19,7 +19,7 @@ class App extends React.Component {
                         <Menu.Item as='a' href='/' header><Image size='mini' src={logo} style={{ marginRight: '1.5em' }} />
                             Help Each Other
                         </Menu.Item>
-                        <Menu.Item as='a' href='/'>Browse campains</Menu.Item>
+                        <Menu.Item as='a' href='/'>Browse fundraisers</Menu.Item>
                         <Menu.Item as='a' href='/new'>Start a fundraiser</Menu.Item>
                     </Container>
                 </Menu>

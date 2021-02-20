@@ -20,9 +20,13 @@ const config = {
             }
         },
         "ganache":{
+            "currencyOptions":[
+                {"text":"TUSD", "value":"0xcE1b4A4Df30b42e9387A701BeaB2CDF29FfF904F"},
+                {"text":"ETH", "value":"0x0000000000000000000000000000000000000000"}
+            ],
             "currencies":{
-                "0x0000000000000000000000000000000000000000":"ETH",
-                "0x869911D9a3f42DDdb94B10Aee034a0B491405145":"TUSD"
+                "0x869911D9a3f42DDdb94B10Aee034a0B491405145":"TUSD",
+                "0x0000000000000000000000000000000000000000":"ETH"
             },
             "contracts":{
                 "HEOToken":"0xE15aBCb7e4C8aB5a96Fd093A460d07E0A12A5f5F",
