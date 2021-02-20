@@ -201,8 +201,8 @@ class CreateCampaign extends React.Component {
         console.log(`Uploading ${this.state.mainImageFile.name} of type ${this.state.mainImageFile.type} to S3`);
         that.setState({showLoader:true, loaderMessage:"Please wait. Uploading image file."});
         const ReactS3Client = new S3(AWS_CONFIG_IMAGES);
-
-        return ReactS3Client.uploadFile(this.state.mainImageFile, imgID).then(response => {
+        let fileType = this.state.mainImageFile.type.split("/")[1];
+        return ReactS3Client.uploadFile(this.state.mainImageFile, `${imgID}.${fileType}`).then(response => {
             console.log("S3 callback");
             console.log(response);
             if(response.status == 204) {
