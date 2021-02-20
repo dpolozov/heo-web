@@ -250,10 +250,10 @@ class CreateCampaign extends React.Component {
                                         value={this.state.org} onChange={this.handleChange} />
                             <Form.Group widths='equal'>
                                 <Form.Dropdown placeholder="Select your country" name='cn' options={countries}
-                                               onChange={this.handleChange} />
+                                               value={this.state.cn} onChange={this.handleChange} />
                                 <Form.Dropdown required placeholder="Select coin" name='currencyAddress'
                                                options={config.get("chainconfigs")[CHAIN]["currencyOptions"]}
-                                               onChange={this.handleChange} />
+                                               value={this.state.currencyAddress} onChange={this.handleChange} />
                                 <Form.Button name='ff1' onClick={this.handleClick}>Next</Form.Button>
                             </Form.Group>
                         </div>
