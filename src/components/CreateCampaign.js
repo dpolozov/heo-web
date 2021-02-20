@@ -21,7 +21,7 @@ import uuid from 'react-uuid';
 var HEOCampaignFactory, HEOGlobalParameters, HEOPriceOracle, ACCOUNTS, web3;
 const AWS_CONFIG_IMAGES = {
         bucketName: process.env.REACT_APP_BUCKET_NAME,
-        region: process.env.REACT_APP_REGION,
+        region: process.env.REACT_APP_REGION || "us-east-1",
         dirName:process.env.REACT_APP_IMG_DIR_NAME,
         accessKeyId: process.env.REACT_APP_ACCESS_ID,
         secretAccessKey: process.env.REACT_APP_ACCESS_KEY,
@@ -29,7 +29,7 @@ const AWS_CONFIG_IMAGES = {
 };
 const AWS_CONFIG_META = {
     bucketName: process.env.REACT_APP_BUCKET_NAME,
-    region: process.env.REACT_APP_REGION,
+    region: process.env.REACT_APP_REGION || "us-east-1",
     dirName:process.env.REACT_APP_META_DIR_NAME,
     accessKeyId: process.env.REACT_APP_ACCESS_ID,
     secretAccessKey: process.env.REACT_APP_ACCESS_KEY,
