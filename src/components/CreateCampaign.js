@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import logo from '../images/heo-logo.png';
 import countries from '../countries';
-import S3 from 'react-aws-s3-grishick';
+import S3 from '../util/s3/react-aws-s3'
 import {
     Input,
     Image,
@@ -139,7 +139,11 @@ class CreateCampaign extends React.Component {
                 this.uploadImageS3(that, imgID).then(() => {
                     that.uploadMetaS3(that, imgID).then(() => {
                         that.createCampaign(that);
-                    } );
+                    }).catch((error) => {
+                        console.log(error);
+                    });
+                }).catch((error) => {
+                    console.log(error);
                 });
 
                 break;
@@ -168,7 +172,6 @@ class CreateCampaign extends React.Component {
                     loaderMessage:`Waiting for the network to confirm transaction.`});
             });
         that.setState({showLoader:true, loaderMessage:"Please confirm transaction in MetaMask."})
-
     }
     async uploadMetaS3(that, metaID) {
         console.log(`Generating metadata file ${metaID}`);
@@ -190,10 +193,12 @@ class CreateCampaign extends React.Component {
                 that.setState({showLoader:false, metaDataURL:response.location});
             } else {
                 that.setState({showLoader:false, showError:true, errorMessage:`Failed to upload metadata.`});
+                throw new Error(`Failed to upload metadata.`);
             }
         }).catch(err => {
             console.error(err);
             that.setState({showLoader:false, showError:true, errorMessage:`Failed to upload metadata.`});
+            throw new Error(`Failed to upload metadata.`);
         });
     }
 
@@ -210,10 +215,12 @@ class CreateCampaign extends React.Component {
                 that.setState({showLoader:false, mainImageURL:response.location});
             } else {
                 that.setState({showLoader:false, showError:true, errorMessage:`Failed to upload image file.`});
+                throw new Error(`Failed to upload image file.`);
             }
         }).catch(err => {
             console.error(err);
             that.setState({showLoader:false, showError:true, errorMessage:`Failed to upload image file.`});
+            throw new Error(`Failed to upload image file.`);
         });
     }
 
