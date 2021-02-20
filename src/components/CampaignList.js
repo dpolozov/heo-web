@@ -64,7 +64,9 @@ class CampaignList extends Component {
             this.setState({
                 showError:true,
                 errorMessage:"Failed to connect to blockchain network. If you are using a browser wallet like MetaMask, " +
-                    "please make sure that it is configured for " + CHAIN_NAME
+                    "please make sure that it is configured for " + CHAIN_NAME + ". " +
+                    "You can read more about connecting to BSC Testnet here: " +
+                    "https://academy.binance.com/en/articles/connecting-metamask-to-binance-smart-chain"
             })
         }
 
