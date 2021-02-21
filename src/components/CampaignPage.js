@@ -78,10 +78,6 @@ class CampaignPage extends React.Component {
                             } else {
                                 that.setState({modalMessage:"Donation transaction has failed"});
                             }
-                            /*
-                            "Error: [ethjs-query] while formatting outputs from RPC '{"value":{"code":-32603,"data":{"message":"VM Exception while processing transaction: revert HEOCampaign: cannot donate to yourself.","code":-32000,"data":{"0xfb3d421c90383839148814b889844767fb17a48e2fe43cbc88e7879695e3d1ef":{"error":"revert","program_counter":4218,"return":"0x08c379a00000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000002748454f43616d706169676e3a2063616e6e6f7420646f6e61746520746f20796f757273656c662e00000000000000000000000000000000000000000000000000","reason":"HEOCampaign: cannot donate to yourself."},"stack":"RuntimeError: VM Exception while processing transaction: revert HEOCampaign: cannot donate to yourself.\n    at Function.RuntimeError.fromResults (/Applications/Ganache.app/Contents/Resources/static/node/node_modules/ganache-core/lib/utils/runtimeerror.js:94:13)\n    at BlockchainDouble.processBlock (/Applications/Ganache.app/Contents/Resources/static/node/node_modules/ganache-core/lib/blockchain_double.js:627:24)\n    at runMicrotasks (<anonymous>)\n    at processTicksAndRejections (internal/process/task_queues.js:93:5)","name":"RuntimeError"}}}}'"
-                             */
-
                         }).on('transactionHash', function(transactionHash){
                             that.setState({modalMessage:"Waiting for the network to confirm transaction."})
                         })
@@ -160,14 +156,13 @@ class CampaignPage extends React.Component {
                     <Loader>{this.state.modalMessage}</Loader>
                 </Dimmer>
                 <Modal open={this.state.showModal}>
-                           <Modal.Content>{this.state.modalMessage}</Modal.Content>
-                           <Modal.Actions>
-                               <Button positive onClick={ () => {this.setState({showModal:false})}}>
-                                   OK
-                               </Button>
-                           </Modal.Actions>
+                   <Modal.Content>{this.state.modalMessage}</Modal.Content>
+                   <Modal.Actions>
+                       <Button positive onClick={ () => {this.setState({showModal:false})}}>
+                           OK
+                       </Button>
+                   </Modal.Actions>
                 </Modal>
-
             </div>
         );
     }
