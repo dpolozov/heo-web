@@ -73,10 +73,10 @@ class CampaignPage extends React.Component {
                             that.setState({showModal:true});
                             console.log("donateERC20 transaction failed");
                             console.log(error);
-                            if(error.toString().indexOf("cannot donate to yourself")) {
+                            if(error.toString().indexOf("cannot donate to yourself") > -1) {
                                 that.setState({modalMessage:"As the creator of this fundraiser, you cannot donate to yourself."});
                             } else {
-                                that.setState({modalMessage:"Donation transaction has failed"});
+                                that.setState({modalMessage:"Donation transaction has failed. Please check MetaMask for details."});
                             }
                         }).on('transactionHash', function(transactionHash){
                             that.setState({modalMessage:"Waiting for the network to confirm transaction."})
