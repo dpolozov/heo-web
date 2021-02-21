@@ -87,7 +87,7 @@ class CampaignList extends Component {
         for(let i in this.state.campaigns) {
             let campaign = this.state.campaigns[i];
             items.push(
-                <Item>
+                <Item key={`${campaign.address}-main`}>
                     <Item.Image src={ campaign.mainImage } as='a' href={'/campaign/' + campaign.address} />
                     <Item.Content>
                         <Item.Header as='a'>{campaign.title}</Item.Header>
@@ -96,13 +96,13 @@ class CampaignList extends Component {
                 </Item>
 
             )
-            items.push(<Item>
+            items.push(<Item key={`${campaign.address}-progress`} >
                 <Item.Content>
                     <Progress color='olive' percent={campaign.percentRaised}>{campaign.raisedAmount} {campaign.coinName} raised out of {campaign.maxAmount} goal</Progress>
                 </Item.Content>
             </Item>)
             items.push(
-                <Item>
+                <Item key={`${campaign.address}-actions`}>
                     <Item.Content>
                         <Label basic color='green' as='a' href={'/campaign/' + campaign.address}>
                             Accepting: {campaign.coinName}
