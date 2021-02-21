@@ -22,11 +22,11 @@ const config = {
         },
         "ganache":{
             "currencyOptions":[
-                {"text":"TUSD", "value":"0xcE1b4A4Df30b42e9387A701BeaB2CDF29FfF904F"},
+                {"text":"TUSD", "value":"0xce1b4a4df30b42e9387a701beab2cdf29fff904f"},
                 {"text":"ETH", "value":"0x0000000000000000000000000000000000000000"}
             ],
             "currencies":{
-                "0xcE1b4A4Df30b42e9387A701BeaB2CDF29FfF904F":"TUSD",
+                "0xce1b4a4df30b42e9387a701beab2cdf29fff904f":"TUSD",
                 "0x0000000000000000000000000000000000000000":"ETH"
             },
             "contracts":{
