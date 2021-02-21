@@ -4,7 +4,7 @@ import {Button, Dimmer, Form, Header, Item, Loader, Modal, Segment} from "semant
 const CHAIN = process.env.REACT_APP_CHAIN_ID;
 const CHAIN_NAME = process.env.REACT_APP_CHAIN_NAME;
 
-var HEOCampaignFactory, ERC20Coin, HEOGlobalParameters, HEOPriceOracle, HEOPublicSale, ACCOUNTS, web3;
+var HEOCampaignFactory, ERC20Coin, HEOGlobalParameters, HEOPriceOracle, HEOPublicSale, ACCOUNTS, web3, CURRENCY_MAP;
 class PublicSale extends React.Component {
     constructor(props) {
         super(props);
@@ -36,7 +36,7 @@ class PublicSale extends React.Component {
         var that = this;
         coinInstance.methods.approve(HEOPublicSale.options.address, toPay).send({from:ACCOUNTS[0]}).on('error',
             function(error) {
-                that.setState({showDimmer:false});
+                that.setState({showLoader:false});
                 that.setState({showError:true});
                 console.log("Approval transaction failed");
                 console.log(error);
@@ -47,7 +47,7 @@ class PublicSale extends React.Component {
             console.log("Received receipt from approval transaction");
             HEOPublicSale.methods.sellTokens(amount).send({from:ACCOUNTS[0]}).on('error',
                 function(error) {
-                    that.setState({showDimmer:false});
+                    that.setState({showLoader:false});
                     that.setState({showError:true});
                     console.log("Buy transaction failed");
                     console.log(error);
@@ -55,14 +55,14 @@ class PublicSale extends React.Component {
             }).on('transactionHash', function(transactionHash){
                 that.setState({loaderMessage:"Waiting for the network to confirm transaction."})
             }).on('receipt',  function(receipt) {
-                that.setState({showDimmer:false, showModal:true,
+                that.setState({showLoader:false, showModal:true,
                 modalMessage:"Congratulations! You should see purchased HEO in your wallet now."});
             });
             that.setState({loaderMessage:"Please confirm transaction in MetaMask."})
-            that.setState({showDimmer:true});
+            that.setState({showLoader:true});
         })
         that.setState({loaderMessage:"Please confirm transaction in MetaMask."})
-        that.setState({showDimmer:true});
+        that.setState({showLoader:true});
     }
     render() {
         return (
@@ -73,7 +73,7 @@ class PublicSale extends React.Component {
                         <Form.Group widths='equal'>
                             <Form.Input required fluid label='How much HEO you would like to buy' placeholder='10'
                                         name='amount' value={this.state.amount} onChange={this.handleAmountChange} />
-                            <Form.Input fluid readonly label={`${this.state.currencyName} to pay:`} placeholder='10'
+                            <Form.Input fluid readOnly label={`${this.state.currencyName} to pay:`} placeholder='10'
                                         name='cost' value={this.state.cost} />
                             <Form.Button name='buy' onClick={this.handleBuy}>Buy HEO</Form.Button>
                         </Form.Group>
@@ -104,6 +104,7 @@ class PublicSale extends React.Component {
     }
 
     async componentDidMount() {
+        CURRENCY_MAP = config.get("chainconfigs")[CHAIN]["currencies"];
         if (typeof window.ethereum !== 'undefined') {
             HEOPublicSale = (await import("../remote/" + CHAIN + "/HEOPublicSale")).default;
             HEOPriceOracle = (await import("../remote/" + CHAIN + "/HEOPriceOracle")).default;
@@ -115,7 +116,7 @@ class PublicSale extends React.Component {
             web3 = (await import("../remote/" + CHAIN + "/web3")).default;
             let currencyAddress = (await HEOPublicSale.methods.currency().call()).toLowerCase();
             let heoPrice = web3.utils.fromWei(await HEOPriceOracle.methods.getPrice(currencyAddress).call());
-            let currencyName = config.get("chainconfigs")[CHAIN]["currencies"][currencyAddress];
+            let currencyName = CURRENCY_MAP[currencyAddress];
             this.setState({currencyAddress: currencyAddress, heoPrice:heoPrice, currencyName:currencyName});
         } else {
             this.setState({
