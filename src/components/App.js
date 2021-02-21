@@ -2,6 +2,7 @@ import React from 'react';
 import CampaignPage from './CampaignPage';
 import CreateCampaign from './CreateCampaign';
 import PublicSale from './PublicSale';
+import MyDonations from "./MyDonations";
 import logo from '../images/heo-logo.png';
 import {Menu, Image, Container} from "semantic-ui-react";
 import Home from "./Home";
@@ -22,6 +23,7 @@ class App extends React.Component {
                         </Menu.Item>
                         <Menu.Item as='a' href='/'>Browse fundraisers</Menu.Item>
                         <Menu.Item as='a' href='/new'>Start a fundraiser</Menu.Item>
+                        <Menu.Item as='a' href='/rewards'>My rewards</Menu.Item>
                         <Menu.Item as='a' href='/buyheo'>Buy HEO tokens</Menu.Item>
                         <Menu.Item as='a' target='_blank' href='https://heo.finance'>About HEO</Menu.Item>
                     </Container>
@@ -31,6 +33,7 @@ class App extends React.Component {
                         <Route path="/campaign" component={CampaignPage} />
                         <Route path="/new" component={CreateCampaign} />
                         <Route path="/buyheo" component={PublicSale} />
+                        <Route path="/rewards" component={MyDonations} />
                         <Route path="/" component={Home} />
                         <Route component={Error} />
                     </Switch>
