@@ -25,54 +25,59 @@ class CampaignList extends Component {
     }
 
     async getCampaigns() {
-        HEOCampaignRegistry = (await import("../remote/"+ CHAIN + "/HEOCampaignRegistry")).default;
-        HEOCampaign = (await import("../remote/"+ CHAIN + "/HEOCampaign")).default;
-        web3 = (await import("../remote/"+ CHAIN + "/web3")).default;
-        try {
-            let HEOCampaigns = await HEOCampaignRegistry.methods.allCampaigns().call();
-            var campaigns = [];
-            for(let i in HEOCampaigns) {
-                let campaignAddress = HEOCampaigns[i];
-                let campaignInstance = new web3.eth.Contract(HEOCampaign, campaignAddress);
-                let isActive = await campaignInstance.methods.isActive().call();
-                if(!isActive) {
-                    continue;
+        if (typeof window.ethereum !== 'undefined') {
+            HEOCampaignRegistry = (await import("../remote/" + CHAIN + "/HEOCampaignRegistry")).default;
+            HEOCampaign = (await import("../remote/" + CHAIN + "/HEOCampaign")).default;
+            web3 = (await import("../remote/" + CHAIN + "/web3")).default;
+            try {
+                let HEOCampaigns = await HEOCampaignRegistry.methods.allCampaigns().call();
+                var campaigns = [];
+                for (let i in HEOCampaigns) {
+                    let campaignAddress = HEOCampaigns[i];
+                    let campaignInstance = new web3.eth.Contract(HEOCampaign, campaignAddress);
+                    let isActive = await campaignInstance.methods.isActive().call();
+                    if (!isActive) {
+                        continue;
+                    }
+                    let metaDataUrl = await campaignInstance.methods.metaDataUrl().call();
+                    let metaData = await (await fetch(metaDataUrl)).json();
+                    let maxAmount = parseInt(web3.utils.fromWei(await campaignInstance.methods.maxAmount().call()));
+                    let raisedAmount = parseInt(web3.utils.fromWei(await campaignInstance.methods.raisedAmount().call()));
+                    let coinAddress = (await campaignInstance.methods.currency().call()).toLowerCase();
+                    let coinName = CURRENCY_MAP[coinAddress];
+                    let donationYield = await campaignInstance.methods.donationYield().call();
+                    let y = web3.utils.fromWei(donationYield.toString());
+                    let reward = `${y * 100}%`;
+                    console.log(`Found campaign at ${campaignAddress} for ${maxAmount} of ${coinName}. Raised ${raisedAmount}.
+                 donationYield = ${donationYield.toString()}, y = ${y}, reward = ${reward}`);
+                    campaigns.push({
+                        address: campaignAddress,
+                        description: metaData.description,
+                        title: metaData.title,
+                        coinName: coinName,
+                        maxAmount: maxAmount,
+                        raisedAmount: raisedAmount,
+                        percentRaised: (raisedAmount > 0 ? (100 * raisedAmount / maxAmount) : 0),
+                        mainImage: metaData.mainImageURL,
+                        reward: reward
+                    });
                 }
-                let metaDataUrl = await campaignInstance.methods.metaDataUrl().call();
-                let metaData = await (await fetch(metaDataUrl)).json();
-                let maxAmount = parseInt(web3.utils.fromWei(await campaignInstance.methods.maxAmount().call()));
-                let raisedAmount = parseInt(web3.utils.fromWei(await campaignInstance.methods.raisedAmount().call()));
-                let coinAddress = (await campaignInstance.methods.currency().call()).toLowerCase();
-                let coinName = CURRENCY_MAP[coinAddress];
-                let donationYield = await campaignInstance.methods.donationYield().call();
-                let y = web3.utils.fromWei(donationYield.toString());
-                let reward = `${y * 100}%`;
-                console.log(`Found campaign at ${campaignAddress} for ${maxAmount} of ${coinName}. Raised ${raisedAmount}.
-             donationYield = ${donationYield.toString()}, y = ${y}, reward = ${reward}`);
-                campaigns.push({
-                    address:campaignAddress,
-                    description : metaData.description,
-                    title: metaData.title,
-                    coinName:coinName,
-                    maxAmount:maxAmount,
-                    raisedAmount:raisedAmount,
-                    percentRaised: (raisedAmount > 0 ? (100 * raisedAmount/maxAmount) : 0),
-                    mainImage: metaData.mainImageURL,
-                    reward: reward
+            } catch (err) {
+                console.log(err);
+                this.setState({
+                    showError: true,
+                    errorMessage: "Failed to connect to blockchain network. If you are using a browser wallet like MetaMask, " +
+                        "please make sure that it is configured for " + CHAIN_NAME + ". " +
+                        "You can read more about connecting to BSC Testnet here: " +
+                        "https://academy.binance.com/en/articles/connecting-metamask-to-binance-smart-chain"
                 });
             }
-        } catch(err) {
-            console.log(err);
+        } else {
             this.setState({
-                showError:true,
-                errorMessage:"Failed to connect to blockchain network. If you are using a browser wallet like MetaMask, " +
-                    "please make sure that it is configured for " + CHAIN_NAME + ". " +
-                    "You can read more about connecting to BSC Testnet here: " +
-                    "https://academy.binance.com/en/articles/connecting-metamask-to-binance-smart-chain"
-            })
+                showError: true,
+                errorMessage: "Please install MetaMask and connect it to Binance Smart Chain Testnet"
+            });
         }
-
-
         return campaigns;
     }
 
