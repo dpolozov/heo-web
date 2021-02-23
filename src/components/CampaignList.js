@@ -92,18 +92,23 @@ class CampaignList extends Component {
                     <Item.Content>
                         <Item.Header as='a'>{campaign.title}</Item.Header>
                         <Item.Description>{campaign.description}</Item.Description>
+                        <Item.Meta>
+                            <Label basic color='green' as='a' href={'/campaign/' + campaign.address}>
+                                Accepting: {campaign.coinName}
+                            </Label>
+                            <Label basic color='red' as='a' href={'/campaign/' + campaign.address}>
+                                Rewards: {campaign.reward}
+                            </Label>
+                            <Label basic color='blue' as='a' href={'/campaign/' + campaign.address}>See more details</Label>
+                        </Item.Meta>
                     </Item.Content>
                 </Item>
 
             )
-            items.push(<Item key={`${campaign.address}-progress`} >
-                <Item.Content>
-                    <Progress color='olive' percent={campaign.percentRaised}>{campaign.raisedAmount} {campaign.coinName} raised out of {campaign.maxAmount} goal</Progress>
-                </Item.Content>
-            </Item>)
-            items.push(
+            /*items.push(
                 <Item key={`${campaign.address}-actions`}>
                     <Item.Content>
+
                         <Label basic color='green' as='a' href={'/campaign/' + campaign.address}>
                             Accepting: {campaign.coinName}
                         </Label>
@@ -111,9 +116,16 @@ class CampaignList extends Component {
                             Rewards: {campaign.reward}
                         </Label>
                         <Label basic color='blue' as='a' href={'/campaign/' + campaign.address}>See more details</Label>
+
                     </Item.Content>
                 </Item>
-            )
+            )*/
+            items.push(<Item key={`${campaign.address}-progress`} >
+                <Item.Content>
+                    <Progress color='olive' content={'test'} percent={campaign.percentRaised}>{campaign.raisedAmount} {campaign.coinName} raised out of {campaign.maxAmount} goal</Progress>
+                </Item.Content>
+            </Item>)
+
         };
         return items;
     }
