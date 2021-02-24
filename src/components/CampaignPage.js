@@ -40,33 +40,63 @@ class CampaignPage extends React.Component {
     }
     handleChange = (e, { name, value }) => this.setState({ [name]: value })
 
+    updateRaisedAmount = async (accounts) => {
+        var campaignInstance = this.state.campaign;
+        var that = this;
+        campaignInstance.methods.raisedAmount().call({from:accounts[0]}, function(err, result) {
+            if(!err) {
+                that.setState({raisedAmount:parseInt(web3.utils.fromWei(result))});
+            } else {
+                console.log("Failed to update raised amount.")
+                console.log(err);
+            }
+        });
+    }
+
     handleDonateClick = async event => {
         var campaignInstance = this.state.campaign;
         if (typeof window.ethereum !== 'undefined') {
             var ethereum = window.ethereum;
             try {
                 var accounts = await ethereum.request({ method: 'eth_requestAccounts' });
-                var coinInstance = new web3.eth.Contract(ERC20Coin, this.state.coinAddress);
                 var toDonate = web3.utils.toWei(this.state.donationAmount);
                 var that = this;
-                coinInstance.methods.approve(this.state.address, toDonate).send({from:accounts[0]}).on(
+                //for native donations
+                if(this.state.coinAddress == "0x0000000000000000000000000000000000000000") {
+                    campaignInstance.methods.donateNative().send({from:accounts[0], value:toDonate}).on(
                     'receipt', function(receipt) {
+                            console.log("Received receipt from donation transaction");
+                            that.updateRaisedAmount(accounts);
+                            that.setState({showDimmer:false});
+                            that.setState({showModal:true});
+                            that.setState({modalMessage:"Thank you for your donation!"});
+                    }).on('error', function(error) {
+                            that.setState({showDimmer:false});
+                            that.setState({showModal:true});
+                            console.log("donateNative transaction failed");
+                            console.log(error);
+                            if(error.toString().indexOf("cannot donate to yourself") > -1) {
+                                that.setState({modalMessage:"As the creator of this fundraiser, you cannot donate to yourself."});
+                            } else {
+                                that.setState({modalMessage:"Donation transaction has failed. Please check MetaMask for details."});
+                            }
+                    }).on('transactionHash', function(transactionHash){
+                        that.setState({modalMessage:"Waiting for the network to confirm transaction."})
+                    })
+                    that.setState({modalMessage:"Please confirm transaction in MetaMask."});
+                } else {
+                    //for ERC20 donations
+                    var coinInstance = new web3.eth.Contract(ERC20Coin, this.state.coinAddress);
+                    coinInstance.methods.approve(this.state.address, toDonate).send({from:accounts[0]}).on(
+                        'receipt', function(receipt) {
                         console.log("Received receipt from approval transaction");
                         campaignInstance.methods.donateERC20(toDonate).send({from:accounts[0]}).on('receipt',
                             function(receipt) {
-                                    console.log("Received receipt from donation transaction");
-                                campaignInstance.methods.raisedAmount().call({from:accounts[0]}, function(err, result) {
-                                    if(!err) {
-                                        that.setState({raisedAmount:parseInt(web3.utils.fromWei(result))});
-                                    } else {
-                                        console.log("Failed to update raised amount.")
-                                        console.log(err);
-                                    }
-
-                                });
+                                console.log("Received receipt from donation transaction");
+                                that.updateRaisedAmount(accounts);
                                 that.setState({showDimmer:false});
                                 that.setState({showModal:true});
-                                that.setState({modalMessage:"Thank you for your donation!"})
+                                that.setState({modalMessage:"Thank you for your donation!"});
                             }
                         ).on('error', function(error) {
                             that.setState({showDimmer:false});
@@ -82,16 +112,16 @@ class CampaignPage extends React.Component {
                             that.setState({modalMessage:"Waiting for the network to confirm transaction."})
                         })
                         that.setState({modalMessage:"Please confirm transaction in MetaMask."});
-                    }
-                ).on('error', function(error) {
-                    that.setState({showDimmer:false});
-                    that.setState({showModal:true});
-                    console.log("Approval transaction failed");
-                    console.log(error);
-                    that.setState({modalMessage:"Transaction failed"});
-                }).on('transactionHash', function(transactionHash){
-                    that.setState({modalMessage:"Waiting for the network to confirm transaction."})
-                });
+                    }).on('error', function(error) {
+                        that.setState({showDimmer:false});
+                        that.setState({showModal:true});
+                        console.log("Approval transaction failed");
+                        console.log(error);
+                        that.setState({modalMessage:"Transaction failed"});
+                    }).on('transactionHash', function(transactionHash){
+                        that.setState({modalMessage:"Waiting for the network to confirm transaction."})
+                    });
+                }
                 that.setState({modalMessage:"Please confirm transaction in MetaMask."})
                 that.setState({showDimmer:true});
             } catch (err) {
