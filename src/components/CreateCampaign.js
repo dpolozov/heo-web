@@ -248,6 +248,8 @@ class CreateCampaign extends React.Component {
                             </Form.Group>
                             <Form.Input fluid label='Organization' placeholder='Organization name (optional)' name='org'
                                         value={this.state.org} onChange={this.handleChange} />
+                            <Form.Input fluid label='Promotional Video' placeholder='Link to YouTube Video (optional)' name='org'
+                                        value={this.state.org} onChange={this.handleChange} />
                             <Form.Group widths='equal'>
                                 <Form.Dropdown placeholder="Select your country" name='cn' options={countries}
                                                value={this.state.cn} onChange={this.handleChange} />
