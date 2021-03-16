@@ -196,7 +196,6 @@ class CreateCampaign extends React.Component {
             org:that.state.org,
             cn:that.state.cn,
             vl:that.state.vl
-
         });
         const ReactS3Client = new S3(AWS_CONFIG_META);
         return ReactS3Client.uploadDataFile(data, "application/json", `${metaID}.json`).then(response => {
