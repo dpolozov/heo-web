@@ -148,7 +148,7 @@ class CampaignPage extends React.Component {
                             <Grid.Column><Header as='h2'>{this.state.title}</Header></Grid.Column>
                         </Grid.Row>
                         <Grid.Row>
-                            <Grid.Column><Image src={this.state.mainImageURL} /></Grid.Column>      
+                            <Grid.Column><Image src={this.state.mainImageURL}/></Grid.Column>      
                             <Grid.Column>
                                 <Segment vertical>
                                     <Progress color='olive' percent={this.state.percentRaised}>{this.state.raisedAmount} {this.state.coinName} raised out of {this.state.maxAmount} goal</Progress>
@@ -188,7 +188,6 @@ class CampaignPage extends React.Component {
                                         />
                                 }
                         </Grid.Row>
-
                     </Grid>
                 </Dimmer.Dimmable>
                 <Dimmer active={this.state.showDimmer}>
@@ -226,7 +225,6 @@ class CampaignPage extends React.Component {
         this.setState({title:metaData.title, isActive:isActive, maxAmount:maxAmount, raisedAmount:raisedAmount,
             coinAddress:coinAddress, coinName:coinName, donationYield:donationYield, reward:reward,
             description:metaData.description, mainImageURL:metaData.mainImageURL, address:address, campaign:campaignInstance, vl:metaData.vl});
-            console.log(this.state.vl + " wtf");
     }
 }
 
