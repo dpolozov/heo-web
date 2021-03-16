@@ -51,6 +51,7 @@ class CreateCampaign extends React.Component {
             fn:"",
             ln:"",
             cn:"",
+            vl:"",
             heoPrice:"",
             maxAmount:10000,
             donorsEarnPerDollar:1,
@@ -182,6 +183,8 @@ class CreateCampaign extends React.Component {
             });
         that.setState({showLoader:true, loaderMessage:"Please confirm transaction in MetaMask."})
     }
+
+    //vl - video link(youtube)
     async uploadMetaS3(that, metaID) {
         console.log(`Generating metadata file ${metaID}`);
         that.setState({showLoader:true, loaderMessage:"Please wait. Uploading metadata."});
@@ -191,7 +194,8 @@ class CreateCampaign extends React.Component {
             fn:that.state.fn,
             ln:that.state.ln,
             org:that.state.org,
-            cn:that.state.cn
+            cn:that.state.cn,
+            vl:that.state.vl
         });
         const ReactS3Client = new S3(AWS_CONFIG_META);
         return ReactS3Client.uploadDataFile(data, "application/json", `${metaID}.json`).then(response => {
@@ -281,6 +285,8 @@ class CreateCampaign extends React.Component {
                             <Form.Field label='Select cover image' control='input' type='file' onChange={this.fileSelected}
                                 name='imageFile' accept='.jpg,.png,.jpeg,.gif' />
                             <Image src={this.state.mainImageURL}/>
+                            <Form.Input fluid label='Promotional Video' placeholder='Link to YouTube Video (optional)' name='vl'
+                                        value={this.state.vl} onChange={this.handleChange} />
                             <Form.Input required fluid label='Title' placeholder='Headline for your campaign' name='title'
                                         value={this.state.title} onChange={this.handleChange} />
                             <Form.Field label='An HTML <textarea>' control='textarea' rows='3' name='description'
