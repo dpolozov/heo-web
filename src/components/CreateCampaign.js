@@ -18,6 +18,7 @@ import {
 } from "semantic-ui-react";
 import config from "react-global-configuration";
 import uuid from 'react-uuid';
+import axios from 'axios';
 var HEOCampaignFactory, HEOGlobalParameters, HEOPriceOracle, ACCOUNTS, web3;
 const AWS_CONFIG_IMAGES = {
         bucketName: process.env.REACT_APP_BUCKET_NAME,
@@ -214,22 +215,34 @@ class CreateCampaign extends React.Component {
     async uploadImageS3 (that, imgID) {
         console.log(`Uploading ${this.state.mainImageFile.name} of type ${this.state.mainImageFile.type} to S3`);
         that.setState({showLoader:true, loaderMessage:"Please wait. Uploading image file."});
-        const ReactS3Client = new S3(AWS_CONFIG_IMAGES);
         let fileType = this.state.mainImageFile.type.split("/")[1];
-        return ReactS3Client.uploadFile(this.state.mainImageFile, `${imgID}.${fileType}`).then(response => {
-            console.log("S3 callback");
-            console.log(response);
-            if(response.status == 204) {
-                console.log("Success");
-                that.setState({showLoader:false, mainImageURL:response.location});
-            } else {
-                that.setState({showLoader:false, showError:true, errorMessage:`Failed to upload image file.`});
-                throw new Error(`Failed to upload image file.`);
-            }
+        let newName = `${imgID}.${fileType}`;
+        const formData = new FormData();
+        formData.append(
+            "myFile",
+            this.state.mainImageFile,
+            newName,
+        );
+            
+        return axios.post('http://localhost:3002/awsUpload', formData)
+        .then(res => {
+            console.log("Success uploading main image");
+            that.setState({showLoader:false, mainImageURL:res.data});
         }).catch(err => {
-            console.error(err);
-            that.setState({showLoader:false, showError:true, errorMessage:`Failed to upload image file.`});
-            throw new Error(`Failed to upload image file.`);
+            if (err.response) { 
+                console.log('response error in uploading main image- ' + err.response.status);
+                that.setState({showLoader:false, showError:true, 
+                    errorMessage:`Failed to upload image file.  We are having technical difficulties`});
+            } else if (err.request) { 
+                console.log('No response in uploading main image' + err.message);
+                that.setState({showLoader:false, showError:true, 
+                    errorMessage:`Failed to upload image file. Please check your connection.`}); 
+            } else { 
+                console.log('error uploading image ' + err.message);
+                that.setState({showLoader:false, showError:true, 
+                    errorMessage:`Failed to upload image file.`});
+            }           
+            throw new Error(`Failed to upload image file.`); 
         });
     }
 
