@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import logo from '../images/heo-logo.png';
 import countries from '../countries';
-import S3 from '../util/s3/react-aws-s3'
+
 import {
     Input,
     Image,
@@ -20,27 +19,11 @@ import config from "react-global-configuration";
 import uuid from 'react-uuid';
 import axios from 'axios';
 var HEOCampaignFactory, HEOGlobalParameters, HEOPriceOracle, ACCOUNTS, web3;
-const AWS_CONFIG_IMAGES = {
-        bucketName: process.env.REACT_APP_BUCKET_NAME,
-        region: process.env.REACT_APP_REGION || "us-east-1",
-        dirName:process.env.REACT_APP_IMG_DIR_NAME,
-        accessKeyId: process.env.REACT_APP_ACCESS_ID,
-        secretAccessKey: process.env.REACT_APP_ACCESS_KEY,
-        //s3Url: 'https://heowebmeta.s3.us-east-1.amazonaws.com'
-};
-const AWS_CONFIG_META = {
-    bucketName: process.env.REACT_APP_BUCKET_NAME,
-    region: process.env.REACT_APP_REGION || "us-east-1",
-    dirName:process.env.REACT_APP_META_DIR_NAME,
-    accessKeyId: process.env.REACT_APP_ACCESS_ID,
-    secretAccessKey: process.env.REACT_APP_ACCESS_KEY,
-    //s3Url: 'https://heowebmeta.s3.us-east-1.amazonaws.com'
-};
-const CHAIN = process.env.REACT_APP_CHAIN_ID;
-const CHAIN_NAME = process.env.REACT_APP_CHAIN_NAME;
+
 class CreateCampaign extends React.Component {
     constructor(props) {
         super(props);
+
         this.state = {
             step:1,
             showLoader:false,
@@ -77,7 +60,7 @@ class CreateCampaign extends React.Component {
     handleChange = (e, { name, value }) => {
         this.setState({ [name]: value })
         if(name == "currencyAddress") {
-            let currencyName = config.get("chainconfigs")[CHAIN]["currencies"][value];
+            let currencyName = config.get("chainconfigs")[config.get("CHAIN")]["currencies"][value];
             this.setState({currencyName:currencyName});
             if(value) {
                 var that = this;
@@ -189,7 +172,7 @@ class CreateCampaign extends React.Component {
     async uploadMetaS3(that, metaID) {
         console.log(`Generating metadata file ${metaID}`);
         that.setState({showLoader:true, loaderMessage:"Please wait. Uploading metadata."});
-        let data = JSON.stringify({title:that.state.title,
+        let data = new Blob([JSON.stringify({title:that.state.title,
             description:that.state.description,
             mainImageURL:that.state.mainImageURL,
             fn:that.state.fn,
@@ -197,22 +180,38 @@ class CreateCampaign extends React.Component {
             org:that.state.org,
             cn:that.state.cn,
             vl:that.state.vl
+        })], {
+            type: 'applicaton/json'
         });
-        const ReactS3Client = new S3(AWS_CONFIG_META);
-        return ReactS3Client.uploadDataFile(data, "application/json", `${metaID}.json`).then(response => {
-            console.log("S3 callback");
-            console.log(response);
-            if(response.status == 204) {
-                console.log("Success");
-                that.setState({showLoader:false, metaDataURL:response.location});
-            } else {
-                that.setState({showLoader:false, showError:true, errorMessage:`Failed to upload metadata.`});
-                throw new Error(`Failed to upload metadata.`);
-            }
+        const formData = new FormData();
+        formData.append(
+            "myFile",
+            data,
+            `${metaID}.json`
+        );
+        var options = {
+            header: { 'Content-Type': 'multipart/form-data' }
+        };
+
+        return axios.post('/api/uploadmeta', formData)
+        .then(res => {
+            console.log("Success uploading meta data");
+            that.setState({showLoader:false, metaDataURL:res.data});
         }).catch(err => {
-            console.error(err);
-            that.setState({showLoader:false, showError:true, errorMessage:`Failed to upload metadata.`});
-            throw new Error(`Failed to upload metadata.`);
+            if (err.response) { 
+                console.log('response error in uploading meta data- ' + err.response.status);
+                that.setState({showLoader:false, showError:true, 
+                    errorMessage:`Failed to upload compaign informaion.  We are having technical difficulties`});
+            } else if (err.request) { 
+                console.log('No response in uploading meta data' + err.message);
+                that.setState({showLoader:false, showError:true, 
+                    errorMessage:`Failed to upload compaign information. Please check your connection.`}); 
+            } else { 
+                console.log('error uploading image ' + err.message);
+                that.setState({showLoader:false, showError:true, 
+                    errorMessage:`Failed to upload compaign information.`});
+            }           
+            throw new Error(`Failed to upload compaign information.`); 
         });
     }
 
@@ -228,7 +227,7 @@ class CreateCampaign extends React.Component {
             newName,
         );
             
-        return axios.post('http://localhost:3002/awsUpload', formData)
+        return axios.post('/api/uploadimage', formData)
         .then(res => {
             console.log("Success uploading main image");
             that.setState({showLoader:false, mainImageURL:res.data});
@@ -269,7 +268,7 @@ class CreateCampaign extends React.Component {
                                 <Form.Dropdown placeholder="Select your country" name='cn' options={countries}
                                                value={this.state.cn} onChange={this.handleChange} />
                                 <Form.Dropdown required placeholder="Select coin" name='currencyAddress'
-                                               options={config.get("chainconfigs")[CHAIN]["currencyOptions"]}
+                                               options={config.get("chainconfigs")[config.get("CHAIN")]["currencyOptions"]}
                                                value={this.state.currencyAddress} onChange={this.handleChange} />
                                 <Form.Button name='ff1' onClick={this.handleClick}>Next</Form.Button>
                             </Form.Group>
@@ -362,12 +361,12 @@ class CreateCampaign extends React.Component {
 
     async componentDidMount() {
         if (typeof window.ethereum !== 'undefined') {
-            HEOPriceOracle = (await import("../remote/" + CHAIN + "/HEOPriceOracle")).default;
-            HEOGlobalParameters = (await import("../remote/" + CHAIN + "/HEOGlobalParameters")).default;
-            HEOCampaignFactory = (await import("../remote/" + CHAIN + "/HEOCampaignFactory")).default;
+            HEOPriceOracle = (await import("../remote/" + config.get("CHAIN") + "/HEOPriceOracle")).default;
+            HEOGlobalParameters = (await import("../remote/" + config.get("CHAIN") + "/HEOGlobalParameters")).default;
+            HEOCampaignFactory = (await import("../remote/" + config.get("CHAIN") + "/HEOCampaignFactory")).default;
             var ethereum = window.ethereum;
             ACCOUNTS = await ethereum.request({method: 'eth_requestAccounts'});
-            web3 = (await import("../remote/" + CHAIN + "/web3")).default;
+            web3 = (await import("../remote/" + config.get("CHAIN") + "/web3")).default;
             let X = await HEOGlobalParameters.methods.profitabilityCoefficient().call();
             this.setState({x: X});
         } else {

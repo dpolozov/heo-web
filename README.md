@@ -9,19 +9,15 @@ You will need to connect MetaMask to Binance Smart Chain testnet in order to use
 
 # Configuration parameters
 ## AWS configs
-This application currently does not have any server-side code, like ExpressJS.
-All the code in this repo so far is UI-only. In order to be able to upload files
-without a server-side API, the application uses AWS S3 (see `src/util/s3/README.md` for more info).
-In order to interact with AWS S3, the application requires 4 configuration parameters:
+In order to interact with AWS S3, the application requires 3 configuration parameters:
  * Access ID (AWS account identified)
  * Access Key (AWS account secret key)
  * Bucket Name (name of S3 bucjet)
- * Region (name of AWS region for accessing the S3 bucket)
 
 These parameters are passed to the application via environment variables:
-* REACT_APP_ACCESS_ID
-* REACT_APPREACT_APP_BUCKET_NAME_ACCESS_KEY
-* REACT_APP_REGION
+* SERVER_APP_ACCESS_ID
+* SERVER_APP_ACCESS_KEY  
+* SERVER_APP_BUCKET_NAME
     
 In addition to the above variables the application uses two more configuration parameters
 to specify the folders for storing images and metadata files:
@@ -38,25 +34,24 @@ is used to show a humanly-readable name of the selected blockchain in error mess
 
 # Running locally
 ## Environment variables
-To run the app locally, add `.env` file with the following parameters:
+To run the app locally, add `server/.env` file with the following parameters:
 ```
-REACT_APP_ACCESS_ID=
-REACT_APP_ACCESS_KEY=
-REACT_APP_BUCKET_NAME=
-REACT_APP_IMG_DIR_NAME=
-REACT_APP_META_DIR_NAME=
-REACT_APP_REGION=
-REACT_APP_CHAIN_ID=
-REACT_APP_CHAIN_NAME=
+SERVER_APP_ACCESS_ID
+SERVER_APP_ACCESS_KEY
+SERVER_APP_BUCKET_NAME
+SERVER_APP_IMG_DIR_NAME
+SERVER_APP_META_DIR_NAME
+REACT_APP_CHAIN_ID
+REACT_APP_CHAIN_NAME
 ```
 ## AWS configuration
-Set `REACT_APP_BUCKET_NAME` and `REACT_APP_REGION` to point to an IAM account and an S3 bucket that
-will hold file uploads from the app. Set `REACT_APP_IMG_DIR_NAME`, `REACT_APP_META_DIR_NAME`
+Set `SERVER_APP_BUCKET_NAME` to point to the S3 bucket that
+will hold file uploads from the app. Set `SERVER_APP_IMG_DIR_NAME`, `SERVER_APP_META_DIR_NAME`
 to two separate subfolders in that bucket (e.g. 'images' and 'meta'). Make sure that
 the bucket is publicly readable and by default all new objects uploaded to the bucket are publicly readable.
 
-Set `REACT_APP_ACCESS_ID`, `REACT_APP_ACCESS_KEY` to match an IAM account that has permissions to add and delete
-objects in the bucket specified by `REACT_APP_BUCKET_NAME`.  
+Set `SERVER_APP_ACCESS_ID`, `SERVER_APP_ACCESS_KEY` to match an IAM account that has permissions to add and delete
+objects in the bucket specified by `SERVER_APP_BUCKET_NAME`.  
  
 ## Blockchain configuration
 
@@ -68,15 +63,32 @@ See https://github.com/grishick/heo-eth for more information about smart contrac
 You can also run the application locally with a remote EVM node. See `chainconfigs/binancetestnet` for an example
 of configuration that points to smart contracts running on BSC Testnet. 
 
+## Build
+After you download the source code run 
+```
+npm run install-all
+```
+this will install UI dependencies into top level `node_modules` folder and server dependencies into `server/node_modules` folder.
+
+To build the React UI, run
+```
+npm run build
+```
+this will put all minified UI files into `build` folder.
+
+## Run
+To start the application run
+```
+npm start
+```
+
 # Running on Heroku
-To run on Heroku, create a Heroku dyno with create-react-app [Buildpack](https://elements.heroku.com/buildpacks/mars/create-react-app-buildpack).
-Then, to set the following environment variables in your dyno's environment:
-* REACT_APP_ACCESS_ID
-* REACT_APP_ACCESS_KEY
-* REACT_APP_BUCKET_NAME
-* REACT_APP_IMG_DIR_NAME
-* REACT_APP_META_DIR_NAME
-* REACT_APP_REGION
+Set the following environment variables in your dyno's environment:
+* SERVER_APP_ACCESS_ID
+* SERVER_APP_ACCESS_KEY
+* SERVER_APP_BUCKET_NAME
+* SERVER_APP_IMG_DIR_NAME
+* SERVER_APP_META_DIR_NAME
 * REACT_APP_CHAIN_ID
 * REACT_APP_CHAIN_NAME
 

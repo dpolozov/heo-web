@@ -17,8 +17,7 @@ import {
 import ReactPlayer from 'react-player';
 
 var HEOCampaign, ERC20Coin, web3;
-const CHAIN = process.env.REACT_APP_CHAIN_ID;
-const CHAIN_NAME = process.env.REACT_APP_CHAIN_NAME;
+
 class CampaignPage extends React.Component {
     constructor(props) {
         super(props);
@@ -131,7 +130,7 @@ class CampaignPage extends React.Component {
                 this.setState({
                     showModal:true,
                     modalMessage:"Failed to connect to blockchain network. If you are using a browser wallet like MetaMask, " +
-                        "please make sure that it is configured for " + CHAIN_NAME
+                        "please make sure that it is configured for " + config.get("CHAIN_NAME")
                 });
             }
         } else {
@@ -206,9 +205,9 @@ class CampaignPage extends React.Component {
     }
 
     async componentDidMount() {
-        HEOCampaign = (await import("../remote/"+ CHAIN + "/HEOCampaign")).default;
-        ERC20Coin = (await import("../remote/"+ CHAIN + "/ERC20Coin")).default;
-        web3 = (await import("../remote/"+ CHAIN + "/web3")).default;
+        HEOCampaign = (await import("../remote/"+ config.get("CHAIN") + "/HEOCampaign")).default;
+        ERC20Coin = (await import("../remote/"+ config.get("CHAIN") + "/ERC20Coin")).default;
+        web3 = (await import("../remote/"+ config.get("CHAIN") + "/web3")).default;
         let toks = this.props.location.pathname.split("/");
         let address = toks[toks.length -1];
         let campaignInstance = new web3.eth.Contract(HEOCampaign, address);
@@ -218,7 +217,7 @@ class CampaignPage extends React.Component {
         let maxAmount = parseInt(web3.utils.fromWei(await campaignInstance.methods.maxAmount().call()));
         let raisedAmount = parseInt(web3.utils.fromWei(await campaignInstance.methods.raisedAmount().call()));
         let coinAddress = (await campaignInstance.methods.currency().call()).toLowerCase();
-        let coinName = config.get("chainconfigs")[CHAIN]["currencies"][coinAddress];
+        let coinName = config.get("chainconfigs")[config.get("CHAIN")]["currencies"][coinAddress];
         let donationYield = await campaignInstance.methods.donationYield().call();
         let y = web3.utils.fromWei(donationYield.toString());
         let reward = `${y * 100}%`;
