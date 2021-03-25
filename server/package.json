@@ -1,0 +1,17 @@
+{
+  "name": "heo-server",
+  "version": "1.0.0",
+  "description": "node js server for heo-web application",
+  "main": "server.js",
+  "scripts": {
+    "test": "test"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "aws-sdk": "^2.864.0",
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "express-fileupload": "^1.2.1"
+  }
+}
