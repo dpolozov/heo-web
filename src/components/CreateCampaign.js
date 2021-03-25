@@ -189,7 +189,7 @@ class CreateCampaign extends React.Component {
     async uploadMetaS3(that, metaID) {
         console.log(`Generating metadata file ${metaID}`);
         that.setState({showLoader:true, loaderMessage:"Please wait. Uploading metadata."});
-        let data = JSON.stringify({title:that.state.title,
+        let data = new Blob([JSON.stringify({title:that.state.title,
             description:that.state.description,
             mainImageURL:that.state.mainImageURL,
             fn:that.state.fn,
@@ -197,22 +197,38 @@ class CreateCampaign extends React.Component {
             org:that.state.org,
             cn:that.state.cn,
             vl:that.state.vl
+        })], {
+            type: 'applicaton/json'
         });
-        const ReactS3Client = new S3(AWS_CONFIG_META);
-        return ReactS3Client.uploadDataFile(data, "application/json", `${metaID}.json`).then(response => {
-            console.log("S3 callback");
-            console.log(response);
-            if(response.status == 204) {
-                console.log("Success");
-                that.setState({showLoader:false, metaDataURL:response.location});
-            } else {
-                that.setState({showLoader:false, showError:true, errorMessage:`Failed to upload metadata.`});
-                throw new Error(`Failed to upload metadata.`);
-            }
+        const formData = new FormData();
+        formData.append(
+            "myFile",
+            data,
+            `${metaID}.json`
+        );
+        var options = {
+            header: { 'Content-Type': 'multipart/form-data' }
+        };
+
+        return axios.post('/api/uploadmeta', formData)
+        .then(res => {
+            console.log("Success uploading meta data");
+            that.setState({showLoader:false, metaDataURL:res.data});
         }).catch(err => {
-            console.error(err);
-            that.setState({showLoader:false, showError:true, errorMessage:`Failed to upload metadata.`});
-            throw new Error(`Failed to upload metadata.`);
+            if (err.response) { 
+                console.log('response error in uploading meta data- ' + err.response.status);
+                that.setState({showLoader:false, showError:true, 
+                    errorMessage:`Failed to upload compaign informaion.  We are having technical difficulties`});
+            } else if (err.request) { 
+                console.log('No response in uploading meta data' + err.message);
+                that.setState({showLoader:false, showError:true, 
+                    errorMessage:`Failed to upload compaign information. Please check your connection.`}); 
+            } else { 
+                console.log('error uploading image ' + err.message);
+                that.setState({showLoader:false, showError:true, 
+                    errorMessage:`Failed to upload compaign information.`});
+            }           
+            throw new Error(`Failed to upload compaign information.`); 
         });
     }
 
@@ -228,7 +244,7 @@ class CreateCampaign extends React.Component {
             newName,
         );
             
-        return axios.post('http://localhost:3002/awsUpload', formData)
+        return axios.post('/api/uploadimage', formData)
         .then(res => {
             console.log("Success uploading main image");
             that.setState({showLoader:false, mainImageURL:res.data});

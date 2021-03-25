@@ -2,14 +2,32 @@ const express = require('express');
 const path = require('path');
 const AWS = require('aws-sdk');
 const fileUpload = require('express-fileupload');
+const httpProxy = require('http-proxy');
 const app = express();
 
+const apiProxy = httpProxy.createProxyServer();
+
 // Serve the static files from the React app
-app.use(express.static(path.join(__dirname, '../build')));
+app.use(express.static(path.join(__dirname, '../build/public')));
+
+apiProxy.on('error', (err, req, res) => {
+    console.log(err);
+    res.status(500).send('Proxy error');
+});
 
 //TODO: An api endpoint that will handle image uploads
 app.post('/api/uploadimage', (req,res) => {
+    apiProxy.web(req, res, {
+        target: 'http://localhost:3002',
+    });
     console.log('Upload image to AWS here');
+});
+
+app.post('/api/uploadmeta', (req,res) => {
+    apiProxy.web(req, res, {
+        target: 'http://localhost:3003',
+    });
+    console.log('Upload image to meta data here');
 });
 
 //TODO: An api endpoint that will handle metadata uploads

@@ -1,5 +1,5 @@
 const path = require('path');
-require('dotenv').config({path : path.resolve(process.cwd(), '../.env')});
+require('dotenv').config({path : path.resolve(process.cwd(), '../../.env')});
 const express = require('express');
 const fs = require('fs');
 const AWS = require('aws-sdk');
@@ -18,7 +18,7 @@ const s3 = new AWS.S3({
 
 s3.config.update({region: process.env.REACT_APP_REGION})
 
-app.post('/awsUpload', (req, res) => {
+app.post('/api/uploadimage', (req, res) => {
     const params = {
         Bucket: process.env.REACT_APP_BUCKET_NAME,
         Key: process.env.REACT_APP_IMG_DIR_NAME + '/' + req.files.myFile.name,
@@ -40,4 +40,4 @@ app.post('/awsUpload', (req, res) => {
 
 app.listen(PORT, ()=> {
     console.log(`awsUpload on port ${PORT}`);
-} );
+});
