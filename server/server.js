@@ -17,6 +17,14 @@ app.post('/api/uploadmeta', (req,res) => {
     console.log('construct a JSON metadata file and upload it to AWS here');
 });
 
+app.get('/api/env', (req,res) => {
+    res.json(
+        {
+            REACT_APP_CHAIN_ID:'binancetestnet',
+            REACT_APP_CHAIN_NAME:'Binance test net'
+        });
+});
+
 // Handles any requests that don't match the ones above.
 // All other routing except paths defined above is done by React in the UI
 app.get('*', (req,res) =>{

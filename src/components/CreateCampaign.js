@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import logo from '../images/heo-logo.png';
 import countries from '../countries';
 import S3 from '../util/s3/react-aws-s3'
 import {
@@ -20,14 +19,6 @@ import config from "react-global-configuration";
 import uuid from 'react-uuid';
 import axios from 'axios';
 var HEOCampaignFactory, HEOGlobalParameters, HEOPriceOracle, ACCOUNTS, web3;
-const AWS_CONFIG_IMAGES = {
-        bucketName: process.env.REACT_APP_BUCKET_NAME,
-        region: process.env.REACT_APP_REGION || "us-east-1",
-        dirName:process.env.REACT_APP_IMG_DIR_NAME,
-        accessKeyId: process.env.REACT_APP_ACCESS_ID,
-        secretAccessKey: process.env.REACT_APP_ACCESS_KEY,
-        //s3Url: 'https://heowebmeta.s3.us-east-1.amazonaws.com'
-};
 const AWS_CONFIG_META = {
     bucketName: process.env.REACT_APP_BUCKET_NAME,
     region: process.env.REACT_APP_REGION || "us-east-1",
@@ -36,11 +27,10 @@ const AWS_CONFIG_META = {
     secretAccessKey: process.env.REACT_APP_ACCESS_KEY,
     //s3Url: 'https://heowebmeta.s3.us-east-1.amazonaws.com'
 };
-const CHAIN = process.env.REACT_APP_CHAIN_ID;
-const CHAIN_NAME = process.env.REACT_APP_CHAIN_NAME;
 class CreateCampaign extends React.Component {
     constructor(props) {
         super(props);
+
         this.state = {
             step:1,
             showLoader:false,
@@ -77,7 +67,7 @@ class CreateCampaign extends React.Component {
     handleChange = (e, { name, value }) => {
         this.setState({ [name]: value })
         if(name == "currencyAddress") {
-            let currencyName = config.get("chainconfigs")[CHAIN]["currencies"][value];
+            let currencyName = config.get("chainconfigs")[config.get("CHAIN")]["currencies"][value];
             this.setState({currencyName:currencyName});
             if(value) {
                 var that = this;
@@ -269,7 +259,7 @@ class CreateCampaign extends React.Component {
                                 <Form.Dropdown placeholder="Select your country" name='cn' options={countries}
                                                value={this.state.cn} onChange={this.handleChange} />
                                 <Form.Dropdown required placeholder="Select coin" name='currencyAddress'
-                                               options={config.get("chainconfigs")[CHAIN]["currencyOptions"]}
+                                               options={config.get("chainconfigs")[config.get("CHAIN")]["currencyOptions"]}
                                                value={this.state.currencyAddress} onChange={this.handleChange} />
                                 <Form.Button name='ff1' onClick={this.handleClick}>Next</Form.Button>
                             </Form.Group>
@@ -362,12 +352,12 @@ class CreateCampaign extends React.Component {
 
     async componentDidMount() {
         if (typeof window.ethereum !== 'undefined') {
-            HEOPriceOracle = (await import("../remote/" + CHAIN + "/HEOPriceOracle")).default;
-            HEOGlobalParameters = (await import("../remote/" + CHAIN + "/HEOGlobalParameters")).default;
-            HEOCampaignFactory = (await import("../remote/" + CHAIN + "/HEOCampaignFactory")).default;
+            HEOPriceOracle = (await import("../remote/" + config.get("CHAIN") + "/HEOPriceOracle")).default;
+            HEOGlobalParameters = (await import("../remote/" + config.get("CHAIN") + "/HEOGlobalParameters")).default;
+            HEOCampaignFactory = (await import("../remote/" + config.get("CHAIN") + "/HEOCampaignFactory")).default;
             var ethereum = window.ethereum;
             ACCOUNTS = await ethereum.request({method: 'eth_requestAccounts'});
-            web3 = (await import("../remote/" + CHAIN + "/web3")).default;
+            web3 = (await import("../remote/" + config.get("CHAIN") + "/web3")).default;
             let X = await HEOGlobalParameters.methods.profitabilityCoefficient().call();
             this.setState({x: X});
         } else {

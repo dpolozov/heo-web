@@ -2,8 +2,6 @@ import React, { Component, lazy } from 'react';
 import config from 'react-global-configuration';
 import {Button, Item, Label, Modal, Progress, Header} from 'semantic-ui-react'
 
-const CHAIN = process.env.REACT_APP_CHAIN_ID;
-const CHAIN_NAME = process.env.REACT_APP_CHAIN_NAME;
 var HEOCampaignRegistry, HEOCampaign, web3, CURRENCY_MAP;
 
 class CampaignList extends Component {
@@ -18,7 +16,7 @@ class CampaignList extends Component {
     }
 
     async componentDidMount() {
-        CURRENCY_MAP = config.get("chainconfigs")[CHAIN]["currencies"];
+        CURRENCY_MAP = config.get("chainconfigs")[config.get("CHAIN")]["currencies"];
         this.setState({
             campaigns: (await this.getCampaigns()),
         });
@@ -26,9 +24,9 @@ class CampaignList extends Component {
 
     async getCampaigns() {
         if (typeof window.ethereum !== 'undefined') {
-            HEOCampaignRegistry = (await import("../remote/" + CHAIN + "/HEOCampaignRegistry")).default;
-            HEOCampaign = (await import("../remote/" + CHAIN + "/HEOCampaign")).default;
-            web3 = (await import("../remote/" + CHAIN + "/web3")).default;
+            HEOCampaignRegistry = (await import("../remote/" + config.get("CHAIN") + "/HEOCampaignRegistry")).default;
+            HEOCampaign = (await import("../remote/" + config.get("CHAIN") + "/HEOCampaign")).default;
+            web3 = (await import("../remote/" + config.get("CHAIN") + "/web3")).default;
             try {
                 let HEOCampaigns = await HEOCampaignRegistry.methods.allCampaigns().call();
                 var campaigns = [];
@@ -67,7 +65,7 @@ class CampaignList extends Component {
                 this.setState({
                     showError: true,
                     errorMessage: "Failed to connect to blockchain network. If you are using a browser wallet like MetaMask, " +
-                        "please make sure that it is configured for " + CHAIN_NAME + ". " +
+                        "please make sure that it is configured for " + config.get("CHAIN_NAME") + ". " +
                         "You can read more about connecting to BSC Testnet here: " +
                         "https://academy.binance.com/en/articles/connecting-metamask-to-binance-smart-chain"
                 });
