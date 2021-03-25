@@ -1,9 +1,6 @@
 import React, { useState } from 'react';
 import config from "react-global-configuration";
 import {Button, Dimmer, Form, Header, Item, Loader, Modal, Segment} from "semantic-ui-react";
-const CHAIN = process.env.REACT_APP_CHAIN_ID;
-const CHAIN_NAME = process.env.REACT_APP_CHAIN_NAME;
-
 var HEOCampaignFactory, ERC20Coin, HEOGlobalParameters, HEOPriceOracle, HEOPublicSale, ACCOUNTS, web3, CURRENCY_MAP;
 class PublicSale extends React.Component {
     constructor(props) {
@@ -104,16 +101,16 @@ class PublicSale extends React.Component {
     }
 
     async componentDidMount() {
-        CURRENCY_MAP = config.get("chainconfigs")[CHAIN]["currencies"];
+        CURRENCY_MAP = config.get("chainconfigs")[config.get("CHAIN")]["currencies"];
         if (typeof window.ethereum !== 'undefined') {
-            HEOPublicSale = (await import("../remote/" + CHAIN + "/HEOPublicSale")).default;
-            HEOPriceOracle = (await import("../remote/" + CHAIN + "/HEOPriceOracle")).default;
-            ERC20Coin = (await import("../remote/"+ CHAIN + "/ERC20Coin")).default;
-            HEOGlobalParameters = (await import("../remote/" + CHAIN + "/HEOGlobalParameters")).default;
-            HEOCampaignFactory = (await import("../remote/" + CHAIN + "/HEOCampaignFactory")).default;
+            HEOPublicSale = (await import("../remote/" + config.get("CHAIN") + "/HEOPublicSale")).default;
+            HEOPriceOracle = (await import("../remote/" + config.get("CHAIN") + "/HEOPriceOracle")).default;
+            ERC20Coin = (await import("../remote/"+ config.get("CHAIN") + "/ERC20Coin")).default;
+            HEOGlobalParameters = (await import("../remote/" + config.get("CHAIN") + "/HEOGlobalParameters")).default;
+            HEOCampaignFactory = (await import("../remote/" + config.get("CHAIN") + "/HEOCampaignFactory")).default;
             var ethereum = window.ethereum;
             ACCOUNTS = await ethereum.request({method: 'eth_requestAccounts'});
-            web3 = (await import("../remote/" + CHAIN + "/web3")).default;
+            web3 = (await import("../remote/" + config.get("CHAIN") + "/web3")).default;
             let currencyAddress = (await HEOPublicSale.methods.currency().call()).toLowerCase();
             let heoPrice = web3.utils.fromWei(await HEOPriceOracle.methods.getPrice(currencyAddress).call());
             let currencyName = CURRENCY_MAP[currencyAddress];
