@@ -2,26 +2,61 @@ const express = require('express');
 const path = require('path');
 const AWS = require('aws-sdk');
 const fileUpload = require('express-fileupload');
+const cors = require('cors');
+
+require('dotenv').config({path : path.resolve(process.cwd(), '.env')});
+
 const app = express();
+app.use(fileUpload());
+app.use(cors());
 
 // Serve the static files from the React app
 app.use(express.static(path.join(__dirname, '../build')));
-
-//TODO: An api endpoint that will handle image uploads
-app.post('/api/uploadimage', (req,res) => {
-    console.log('Upload image to AWS here');
+const s3 = new AWS.S3({
+    accessKeyId: process.env.SERVER_APP_ACCESS_ID,
+    secretAccessKey: process.env.SERVER_APP_ACCESS_KEY
 });
 
-//TODO: An api endpoint that will handle metadata uploads
+app.post('/api/uploadimage', (req,res) => {
+    const params = {
+        Bucket: process.env.SERVER_APP_BUCKET_NAME,
+        Key: process.env.SERVER_APP_IMG_DIR_NAME + '/' + req.files.myFile.name,
+        Body: req.files.myFile.data
+    }
+
+    s3.upload(params, (error, data) => {
+        if(error) {
+            console.log(error);
+        } else {
+            console.log(data);
+            res.send(data.Location);
+        }
+    });
+});
+
 app.post('/api/uploadmeta', (req,res) => {
-    console.log('construct a JSON metadata file and upload it to AWS here');
+    const params = {
+        Bucket: process.env.SERVER_APP_BUCKET_NAME,
+        Key: process.env.SERVER_APP_META_DIR_NAME + '/' + req.files.myFile.name,
+        ContentType: 'application/json',
+        Body: req.files.myFile.data,
+    }
+
+    s3.upload(params, (error, data) => {
+        if(error) {
+            console.log(error);
+        } else {
+            console.log(data);
+            res.send(data.Location);
+        }
+    });
 });
 
 app.get('/api/env', (req,res) => {
     res.json(
         {
-            REACT_APP_CHAIN_ID:'binancetestnet',
-            REACT_APP_CHAIN_NAME:'Binance test net'
+            REACT_APP_CHAIN_ID: process.env.REACT_APP_CHAIN_ID,
+            REACT_APP_CHAIN_NAME: process.env.REACT_APP_CHAIN_NAME
         });
 });
 
