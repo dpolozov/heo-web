@@ -1,58 +1,109 @@
-const express = require('express');
-const path = require('path');
+const EXPRESS = require('express');
+const PATH = require('path');
 const AWS = require('aws-sdk');
-const fileUpload = require('express-fileupload');
-const cors = require('cors');
+const FILE_UPLOAD = require('express-fileupload');
+const CORS = require('cors');
+const AXIOS = require('axios');
+const { MongoClient } = require('mongodb');
+const PORT = process.env.PORT || 5000;
 
-require('dotenv').config({path : path.resolve(process.cwd(), '.env')});
+require('dotenv').config({path : PATH.resolve(process.cwd(), '.env')});
 
-const app = express();
-app.use(fileUpload());
-app.use(cors());
+const APP = EXPRESS();
+APP.use(FILE_UPLOAD());
+APP.use(CORS());
 
-// Serve the static files from the React app
-app.use(express.static(path.join(__dirname, '../build')));
-const s3 = new AWS.S3({
+const URL = `mongodb+srv://dpolozov:${process.env.MONGODB_PWD}@cluster0.jvp7o.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`;
+const DBNAME = 'HEO';
+const CLIENT = new MongoClient(URL);
+
+CLIENT.connect(err => {
+    if(err) {
+        console.log(err);
+    }
+    console.log('connected succesfully to server');    
+});
+
+// Serve the static files from the React APP
+APP.use(EXPRESS.static(PATH.join(__dirname, '../build')));
+const S3 = new AWS.S3({
     accessKeyId: process.env.SERVER_APP_ACCESS_ID,
     secretAccessKey: process.env.SERVER_APP_ACCESS_KEY
 });
 
-app.post('/api/uploadimage', (req,res) => {
-    const params = {
+APP.post('/api/uploadimage', (req,res) => {
+    const PARAMS = {
         Bucket: process.env.SERVER_APP_BUCKET_NAME,
         Key: process.env.SERVER_APP_IMG_DIR_NAME + '/' + req.files.myFile.name,
         Body: req.files.myFile.data
     }
 
-    s3.upload(params, (error, data) => {
+    S3.upload(PARAMS, (error, data) => {
         if(error) {
             console.log(error);
         } else {
-            console.log(data);
             res.send(data.Location);
         }
     });
 });
 
-app.post('/api/uploadmeta', (req,res) => {
-    const params = {
+APP.post('/api/campaigns/sendToDB', (req, res) => {
+    let campaigns = JSON.parse(req.files.myFile.data);
+    let i = 0;
+    campaigns.forEach(element => {
+        i++;
+        //console.log(i + JSON.stringify(element) + '\n');  
+        let date = Date.now();
+        const ITEM = {
+            _id : element.address,
+            beneficaryId : element.beneficaryId,
+            title : element.title,
+            mainImage : element.mainImage,
+            videoLink : element.videoLink,
+            campaignDesc : element.description,
+            coinName: element.coinName,
+            reward: element.reward,
+            maxAmount: element.maxAmount,
+            percentRaised: element.percentRaised,
+            creationDate : date,
+        }
+        const DB = CLIENT.db(DBNAME);
+        DB.collection('main')
+        .insertOne( ITEM, function (err, res){
+            if(err) console.log(err);
+            console.log("1 entry was insterted in db");
+        })
+        
+    });  
+
+});
+
+APP.post('/api/campaigns/load', (req, res) => {
+    const DB = CLIENT.db(DBNAME);
+    DB.collection("main").find({}).toArray(function(err, result) {
+        if (err) throw err;
+        res.send(result);
+      });
+})
+
+APP.post('/api/uploadmeta', (req,res) => {
+    const PARAMS = {
         Bucket: process.env.SERVER_APP_BUCKET_NAME,
         Key: process.env.SERVER_APP_META_DIR_NAME + '/' + req.files.myFile.name,
         ContentType: 'application/json',
         Body: req.files.myFile.data,
     }
 
-    s3.upload(params, (error, data) => {
+    S3.upload(PARAMS, (error, data) => {
         if(error) {
             console.log(error);
         } else {
-            console.log(data);
             res.send(data.Location);
         }
     });
 });
 
-app.get('/api/env', (req,res) => {
+APP.get('/api/env', (req,res) => {
     res.json(
         {
             REACT_APP_CHAIN_ID: process.env.REACT_APP_CHAIN_ID,
@@ -62,11 +113,10 @@ app.get('/api/env', (req,res) => {
 
 // Handles any requests that don't match the ones above.
 // All other routing except paths defined above is done by React in the UI
-app.get('*', (req,res) =>{
-    res.sendFile(path.join(__dirname, '..', 'build', 'index.html'));
+APP.get('*', (req,res) =>{
+    res.sendFile(PATH.join(__dirname, '..', 'build', 'index.html'));
 });
 
-const port = process.env.PORT || 5000;
-app.listen(port);
+APP.listen(PORT);
 
-console.log('App is listening on port ' + port);
+console.log('App is listening on port ' + PORT);
