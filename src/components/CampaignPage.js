@@ -1,52 +1,86 @@
-import React, {lazy, useState} from 'react';
+import React, {lazy, useState, Component} from 'react';
 import config from "react-global-configuration";
-import {
-    Input,
-    Image,
-    Label,
-    Progress,
-    Container,
-    Header,
-    Segment,
-    Grid,
-    Modal,
-    Loader,
-    Dimmer,
-    Button
-} from "semantic-ui-react";
+import axios from 'axios';
+import { Container, Row, Col, Card, ProgressBar, Button, Modal, Image, InputGroup, FormControl } from 'react-bootstrap';
+import { ChevronRight, Gift } from 'react-bootstrap-icons';
 import ReactPlayer from 'react-player';
+import '../css/campaignPage.css';
 
 var HEOCampaign, ERC20Coin, web3;
 
-class CampaignPage extends React.Component {
+class CampaignPage extends Component {
     constructor(props) {
         super(props);
         this.state = {
             donationAmount:"10",
-            address: "0x0",
-            title:"Title of the campaign",
-            description:"Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor.",
-            coinName:"BNB",
-            coinAddress:"",
-            maxAmount:0,
-            raisedAmount:0,
-            percentRaised: "60%",
-            mainImageURL: "",
-            vl:"",
-            reward: "200%",
+            campaign:{},
             modalMessage:"Please confirm the transaction in MetaMask",
-            showDimmer:false,
-            showModal:false
+            showModal:false,
+            donationStatus:"",
+            waitToClose:false,
+            donationStatusColor:"black",
+            modalButtonVariant:"",
+            raisedAmount:0,
+            
         };
     }
-    handleChange = (e, { name, value }) => this.setState({ [name]: value })
+
+    handleDonationAmount = (e) => {this.setState({donationAmount: e.target.value})};
+
+    async getCampaign(address){
+        var campaign = {};
+        var errorMessage = 'Failed to load campaign';
+        let data = {ID : address};
+        await axios.post('/api/campaign/load', data, {headers: {"Content-Type": "application/json"}})
+        .then(res => {
+            console.log(res.data);
+            campaign = res.data;
+        }).catch(err => {
+            if (err.response) { 
+                errorMessage = 'Failed to load campaigns. We are having technical difficulties'}
+            else if(err.request) {
+                errorMessage = 'Failed to load campaings. Please check your internet connection'
+            }
+            console.log(err);
+            this.setState({
+                showError: true,
+                errorMessage,
+            })
+        })
+        return campaign;
+    }
+
+    async updateRaisedAmountDB(address, newAmount){
+        let data = {ID : address, amount : newAmount};
+        let errorMessage = 'Failed to update raised amount';
+        await axios.post('/api/campaign/updateRaisedAmount', data,  {headers: {"Content-Type": "application/json"}})
+        .then(res => {
+            console.log(res);
+            if(res.data === 'db updated successfully'){
+                this.state.campaign.raisedAmount = newAmount;
+            }           
+        }).catch(err => {
+            if (err.response) { 
+                errorMessage = 'Failed to update raised amount. We are having technical difficulties'}
+            else if(err.request) {
+                errorMessage = 'Failed to update raised amount. Please check your internet connection'
+            }
+            console.log(err);
+            this.setState({
+                showError: true,
+                errorMessage,
+            })
+        })      
+    }
 
     updateRaisedAmount = async (accounts) => {
-        var campaignInstance = this.state.campaign;
+        var campaignInstance = this.state.campaignInstance;
         var that = this;
         campaignInstance.methods.raisedAmount().call({from:accounts[0]}, function(err, result) {
             if(!err) {
-                that.setState({raisedAmount:parseInt(web3.utils.fromWei(result))});
+                that.setState({raisedAmount:parseFloat(web3.utils.fromWei(result))});
+                console.log(that.state.raisedAmount)
+                that.updateRaisedAmountDB(that.state.address, that.state.raisedAmount);
             } else {
                 console.log("Failed to update raised amount.")
                 console.log(err);
@@ -55,9 +89,16 @@ class CampaignPage extends React.Component {
     }
 
     handleDonateClick = async event => {
-        var campaignInstance = this.state.campaign;
+        var campaignInstance = this.state.campaignInstance;
         if (typeof window.ethereum !== 'undefined') {
             var ethereum = window.ethereum;
+            this.setState({
+                donationStatus: "Processing",
+                waitToClose: true,
+                modalMessage: "Processing your Donation, please wait",
+                showModal: true,
+                donationStatusColor: "yellow",
+            });
             try {
                 var accounts = await ethereum.request({ method: 'eth_requestAccounts' });
                 var toDonate = web3.utils.toWei(this.state.donationAmount);
@@ -68,12 +109,20 @@ class CampaignPage extends React.Component {
                     'receipt', function(receipt) {
                             console.log("Received receipt from donation transaction");
                             that.updateRaisedAmount(accounts);
-                            that.setState({showDimmer:false});
-                            that.setState({showModal:true});
-                            that.setState({modalMessage:"Thank you for your donation!"});
+                            that.setState({
+                                donationStatus: "Complete!",
+                                waitToClose: false,
+                                modalMessage: "Thank you for your donation!",
+                                donationStatusColor: "green",
+                                modalButtonVariant: "success",
+                            });
                     }).on('error', function(error) {
-                            that.setState({showDimmer:false});
-                            that.setState({showModal:true});
+                            that.setState({
+                                donationStatus: "Failed",
+                                waitToClose: false,
+                                donationStatusColor: "red",
+                                modalButtonVariant: "danger",
+                            });
                             console.log("donateNative transaction failed");
                             console.log(error);
                             if(error.toString().indexOf("cannot donate to yourself") > -1) {
@@ -88,20 +137,28 @@ class CampaignPage extends React.Component {
                 } else {
                     //for ERC20 donations
                     var coinInstance = new web3.eth.Contract(ERC20Coin, this.state.coinAddress);
-                    coinInstance.methods.approve(this.state.address, toDonate).send({from:accounts[0]}).on(
+                    coinInstance.methods.approve(this.state.campaign._id, toDonate).send({from:accounts[0]}).on(
                         'receipt', function(receipt) {
                         console.log("Received receipt from approval transaction");
                         campaignInstance.methods.donateERC20(toDonate).send({from:accounts[0]}).on('receipt',
                             function(receipt) {
                                 console.log("Received receipt from donation transaction");
                                 that.updateRaisedAmount(accounts);
-                                that.setState({showDimmer:false});
-                                that.setState({showModal:true});
-                                that.setState({modalMessage:"Thank you for your donation!"});
+                                that.setState({
+                                    donationStatus: "Complete!",
+                                    waitToClose: false,
+                                    modalMessage: "Thank you for your donation!",
+                                    donationStatusColor: "green",
+                                    modalButtonVariant: "success",
+                                });
                             }
                         ).on('error', function(error) {
-                            that.setState({showDimmer:false});
-                            that.setState({showModal:true});
+                            that.setState({
+                                donationStatus: "Failed",
+                                waitToClose: false,
+                                donationStatusColor: "red",
+                                modalButtonVariant: "danger",
+                            });
                             console.log("donateERC20 transaction failed");
                             console.log(error);
                             if(error.toString().indexOf("cannot donate to yourself") > -1) {
@@ -114,21 +171,27 @@ class CampaignPage extends React.Component {
                         })
                         that.setState({modalMessage:"Please confirm transaction in MetaMask."});
                     }).on('error', function(error) {
-                        that.setState({showDimmer:false});
-                        that.setState({showModal:true});
+                        that.setState({
+                            donationStatus: "Failed!",
+                            waitToClose: false,
+                            modalMessage: "Transaction failed",
+                            donationStatusColor: "red",
+                            modalButtonVariant: "danger",
+                        });
                         console.log("Approval transaction failed");
                         console.log(error);
-                        that.setState({modalMessage:"Transaction failed"});
                     }).on('transactionHash', function(transactionHash){
                         that.setState({modalMessage:"Waiting for the network to confirm transaction."})
                     });
                 }
                 that.setState({modalMessage:"Please confirm transaction in MetaMask."})
-                that.setState({showDimmer:true});
             } catch (err) {
                 console.log(err);
                 this.setState({
-                    showModal:true,
+                    donationStatus: "Failed!",
+                    waitToClose: false,
+                    donationStatusColor: "red",
+                    modalButtonVariant: "danger",
                     modalMessage:"Failed to connect to blockchain network. If you are using a browser wallet like MetaMask, " +
                         "please make sure that it is configured for " + config.get("CHAIN_NAME")
                 });
@@ -136,94 +199,96 @@ class CampaignPage extends React.Component {
         } else {
             alert("Please install metamask");
         }
-
     }
+
     render() {
         return (
             <div>
-                <Dimmer.Dimmable as={Segment} dimmed={this.state.showDimmer}>
-                    <Grid columns={2}>
-                        <Grid.Row>
-                            <Grid.Column><Header as='h2'>{this.state.title}</Header></Grid.Column>
-                        </Grid.Row>
-                        <Grid.Row>
-                            <Grid.Column><Image src={this.state.mainImageURL}/></Grid.Column>      
-                            <Grid.Column>
-                                <Segment vertical>
-                                    <Progress color='olive' percent={this.state.percentRaised}>{this.state.raisedAmount} {this.state.coinName} raised out of {this.state.maxAmount} goal</Progress>
-                                </Segment>
-                                <Segment vertical>
-                                    <Label basic color='green'>
-                                    Accepting: {this.state.coinName}
-                                    </Label>
-                                    <Label basic color='red'>
-                                        Rewards: {this.state.reward}
-                                    </Label>
-                                    <Input
-                                        action={{
-                                            color: 'teal',
-                                            labelPosition: 'right',
-                                            icon: 'gift',
-                                            content: 'Donate ' + this.state.coinName,
-                                            onClick: this.handleDonateClick
-                                        }}
-                                        name='donationAmount'
-                                        actionPosition='right'
-                                        placeholder='Amount'
-                                        defaultValue='10'
-                                        size='mini'
-                                        onChange={this.handleChange}
-                                    />
-                                </Segment>
-                            </Grid.Column>
-                        </Grid.Row>
-                        <Grid.Row>
-                            <Grid.Column><Container text>{this.state.description}</Container></Grid.Column>
-                        </Grid.Row>
-                        <Grid.Row>
-                                {this.state.vl &&
-                                        <ReactPlayer 
-                                            url={this.state.vl}
-                                        />
-                                }
-                        </Grid.Row>
-                    </Grid>
-                </Dimmer.Dimmable>
-                <Dimmer active={this.state.showDimmer}>
-                    <Loader>{this.state.modalMessage}</Loader>
-                </Dimmer>
-                <Modal open={this.state.showModal}>
-                   <Modal.Content>{this.state.modalMessage}</Modal.Content>
-                   <Modal.Actions>
-                       <Button positive onClick={ () => {this.setState({showModal:false})}}>
-                           OK
-                       </Button>
-                   </Modal.Actions>
+                <Modal show={this.state.showModal} onHide={this.state.showModal}>
+                    <Modal.Header>
+                    <Modal.Title style={{backgroundColor: this.state.donationStatusColor}}>Donation {this.state.donationStatus}</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body>{this.state.modalMessage}</Modal.Body>
+                    <Modal.Footer>
+                    {!this.state.waitToClose &&
+                        <Button variant={this.state.modalButtonVariant} onClick={ () => {this.setState({showModal:false})}}>
+                            Close
+                        </Button>
+                    }
+                    </Modal.Footer>
                 </Modal>
+                
+                    <Container id='backToCampaignsDiv'>
+                        <p id='backToCampaigns'>Help Each Other <ChevronRight id='backToCampaignsChevron'/> Campaign Details</p>
+                    </Container>
+                  
+                <Container id='mainContainer'>
+                    <Row id='topRow'>
+                        <Col id='imgCol'>
+                            <Image src={this.state.campaign.mainImage} id='mainImage'/>
+                        </Col>
+                        <Col id='infoCol'>
+                            <Row id='titleRow'>
+                                <p id='title'>{this.state.campaign.title}</p>
+                            </Row>
+                            <Row id='progressRow'>
+                                <p id='progressBarLabel'><span id='progressBarLabelStart'>{`$${this.state.campaign.raisedAmount}`}</span>{` raised of ${this.state.campaign.maxAmount} goal`}</p>
+                                <ProgressBar id='progressBar' now={this.state.campaign.percentRaised}/>
+                            </Row>
+                            <Row id='acceptingRow'>
+                                <div id='acceptingDiv'>
+                                    <p>ACCEPTING: <span className='coinRewardInfo'>{this.state.campaign.coinName}</span></p>
+                                </div>
+                                <div id='rewardsDiv'>
+                                    <p>REWARDS: <span className='coinRewardInfo'>{this.state.campaign.reward}</span></p>
+                                </div>
+                            </Row>
+                            <Row id='donateRow'>
+                                <InputGroup className="mb-3">
+                                    <FormControl
+                                        id='donateAmount'
+                                        value={this.state.donationAmount}
+                                        onChange={this.handleDonationAmount}
+                                        type="number"
+                                    />
+                                    <InputGroup.Append>
+                                        <Button id='donateButton' onClick={this.handleDonateClick}>DONATE <Gift id='giftIcon'/></Button>
+                                    </InputGroup.Append>
+                                </InputGroup>
+                            </Row>
+                        </Col>
+                    </Row>
+                    <Row id='videoRow'>
+                        <Container>
+                            { this.state.campaign.videoLink && <ReactPlayer url={this.state.campaign.videoLink} id='videoPlayer' />}
+                        </Container>
+                    </Row>
+                    <Row id='descriptionRow'>
+                        <Container>
+                            <p id='description'>{this.state.campaign.campaignDesc}</p>
+                        </Container>
+                    </Row>
+                </Container>
+                
             </div>
         );
     }
 
     async componentDidMount() {
-        HEOCampaign = (await import("../remote/"+ config.get("CHAIN") + "/HEOCampaign")).default;
-        ERC20Coin = (await import("../remote/"+ config.get("CHAIN") + "/ERC20Coin")).default;
-        web3 = (await import("../remote/"+ config.get("CHAIN") + "/web3")).default;
+        window.scrollTo(0,0);
         let toks = this.props.location.pathname.split("/");
         let address = toks[toks.length -1];
+        this.setState({
+            campaign : (await this.getCampaign(address)),
+        });
+        web3 = (await import("../remote/"+ config.get("CHAIN") + "/web3")).default;
+        HEOCampaign = (await import("../remote/"+ config.get("CHAIN") + "/HEOCampaign")).default;
+        ERC20Coin = (await import("../remote/"+ config.get("CHAIN") + "/ERC20Coin")).default;
         let campaignInstance = new web3.eth.Contract(HEOCampaign, address);
-        let isActive = await campaignInstance.methods.isActive().call();
-        let metaDataUrl = await campaignInstance.methods.metaDataUrl().call();
-        let metaData = await (await fetch(metaDataUrl)).json();
-        let maxAmount = parseInt(web3.utils.fromWei(await campaignInstance.methods.maxAmount().call()));
-        let raisedAmount = parseInt(web3.utils.fromWei(await campaignInstance.methods.raisedAmount().call()));
         let coinAddress = (await campaignInstance.methods.currency().call()).toLowerCase();
-        let coinName = config.get("chainconfigs")[config.get("CHAIN")]["currencies"][coinAddress];
-        let donationYield = await campaignInstance.methods.donationYield().call();
-        let y = web3.utils.fromWei(donationYield.toString());
-        let reward = `${y * 100}%`;
-        this.setState({title:metaData.title, isActive:isActive, maxAmount:maxAmount, raisedAmount:raisedAmount,
-            coinAddress:coinAddress, coinName:coinName, donationYield:donationYield, reward:reward,
-            description:metaData.description, mainImageURL:metaData.mainImageURL, address:address, campaign:campaignInstance, vl:metaData.vl});
+        this.setState({
+            campaignInstance, coinAddress, address,
+        });
     }
 }
 
