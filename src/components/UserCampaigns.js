@@ -2,28 +2,40 @@ import React, { Component, lazy } from 'react';
 import config from 'react-global-configuration';
 import {Button, Item, Label, Modal, Progress, Header} from 'semantic-ui-react'
 import axios from 'axios';
+var ACCOUNTS, web3;
 
-class CampaignList extends Component {
+class UserCampaigns extends Component {
     constructor(props) {
         super(props);
 
         this.state = {
             campaigns: [],
             showError:false,
-            errorMessage:""
+            errorMessage:"",
+            isLoggedIn:false,
         };
     }
 
     async componentDidMount() {
-        this.setState({
-            campaigns : (await this.getCampaigns()),
-        });
+
+        if (typeof window.ethereum !== 'undefined') {
+            var ethereum = window.ethereum;
+            ACCOUNTS = await ethereum.request({method: 'eth_requestAccounts'});
+            web3 = (await import("../remote/" + config.get("CHAIN") + "/web3")).default;
+            this.setState({
+                campaigns : (await this.getCampaigns()),
+                isLoggedIn : true,
+            });
+        } else {
+            alert("Please install metamask");
+        }
     }
 
     async getCampaigns(){
         var campaigns = [];
         var errorMessage = 'Failed to load campaigns';
-        await axios.post('/api/campaigns/load')
+        let data = {accounts : ACCOUNTS}
+        await axios.post('/api/campaigns/loadUserCampaigns', data, {headers: {"Content-Type": "application/json"}})
         .then(res => {
             console.log(res.data);
             campaigns = res.data;
@@ -41,27 +53,10 @@ class CampaignList extends Component {
         })
 
         return campaigns;
-    }                
-
-    //initial upload to mongo db
-    async sendToDB(campaigns){
-        let data2 = new Blob([JSON.stringify(campaigns)], {type : 'application/jason'});
-        const formData2 = new FormData();
-        formData2.append(
-            "myFile",
-            data2,
-            )
-        axios.post('api/campaigns/sendToDB', formData2)
-        .then(res => {
-            console.log("Success sending campaings");
-        }).catch(err => {
-            console.log(err);
-        });
-    }
+    }                 
 
     renderCampaigns() {
         var items = [];
-        //this.sendToDB(this.state.campaigns);
         for(let i in this.state.campaigns) {
             let campaign = this.state.campaigns[i];
             items.push(
@@ -83,21 +78,6 @@ class CampaignList extends Component {
                 </Item>
 
             )
-            /*items.push(
-                <Item key={`${campaign.address}-actions`}>
-                    <Item.Content>
-
-                        <Label basic color='green' as='a' href={'/campaign/' + campaign.address}>
-                            Accepting: {campaign.coinName}
-                        </Label>
-                        <Label basic color='red' as='a' href={'/campaign/' + campaign.address}>
-                            Rewards: {campaign.reward}
-                        </Label>
-                        <Label basic color='blue' as='a' href={'/campaign/' + campaign.address}>See more details</Label>
-
-                    </Item.Content>
-                </Item>
-            )*/
             items.push(<Item key={`${campaign._id}-progress`} >
                 <Item.Content>
                     <Progress color='olive' content={'test'} percent={campaign.percentRaised}>{campaign.raisedAmount} {campaign.coinName} raised out of {campaign.maxAmount} goal</Progress>
@@ -114,6 +94,10 @@ class CampaignList extends Component {
                 <Item.Group relaxed>
                     {this.renderCampaigns()}
                 </Item.Group>
+                {this.state.isLoggedIn && this.state.campaigns.length == 0 
+                    && <h1>There are no campaigns to display</h1>}
+                {this.state.isLoggedIn == false 
+                    && <h1>Please log into MetaMask</h1>}
                 <Modal open={this.state.showError}>
                     <Header icon='warning sign' content='Failed to connect to network!' />
                     <Modal.Content>{this.state.errorMessage}</Modal.Content>
@@ -129,4 +113,4 @@ class CampaignList extends Component {
     }
 }
 
-export default CampaignList;
+export default UserCampaigns;
