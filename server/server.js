@@ -12,6 +12,7 @@ require('dotenv').config({path : PATH.resolve(process.cwd(), '.env')});
 const APP = EXPRESS();
 APP.use(FILE_UPLOAD());
 APP.use(CORS());
+APP.use(EXPRESS.json());
 
 const URL = `mongodb+srv://dpolozov:${process.env.MONGODB_PWD}@cluster0.jvp7o.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`;
 const DBNAME = 'HEO';
@@ -52,11 +53,10 @@ APP.post('/api/campaigns/sendToDB', (req, res) => {
     let i = 0;
     campaigns.forEach(element => {
         i++;
-        //console.log(i + JSON.stringify(element) + '\n');  
         let date = Date.now();
         const ITEM = {
-            _id : element.address,
-            beneficaryId : element.beneficaryId,
+            _id : element.address.toLowerCase(),
+            beneficiaryId : element.beneficiaryId.toLowerCase(),
             title : element.title,
             mainImage : element.mainImage,
             videoLink : element.videoLink,
@@ -65,10 +65,11 @@ APP.post('/api/campaigns/sendToDB', (req, res) => {
             reward: element.reward,
             maxAmount: element.maxAmount,
             percentRaised: element.percentRaised,
+            raisedAmount: element.raisedAmount,
             creationDate : date,
         }
         const DB = CLIENT.db(DBNAME);
-        DB.collection('main')
+        DB.collection('campaigns')
         .insertOne( ITEM, function (err, res){
             if(err) console.log(err);
             console.log("1 entry was insterted in db");
@@ -80,7 +81,15 @@ APP.post('/api/campaigns/sendToDB', (req, res) => {
 
 APP.post('/api/campaigns/load', (req, res) => {
     const DB = CLIENT.db(DBNAME);
-    DB.collection("main").find({}).toArray(function(err, result) {
+    DB.collection("campaigns").find().toArray(function(err, result) {
+        if (err) throw err;
+        res.send(result);
+      });
+})
+
+APP.post('/api/campaigns/loadUserCampaigns', (req, res) => {
+    const DB = CLIENT.db(DBNAME);
+    DB.collection("campaigns").find({"beneficiaryId" : {$in: req.body.accounts}}).toArray(function(err, result) {
         if (err) throw err;
         res.send(result);
       });
