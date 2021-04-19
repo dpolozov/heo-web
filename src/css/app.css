@@ -1,0 +1,101 @@
+
+#mainNavContainer{
+    border-bottom: 2px solid #EDEEF1;
+}
+
+#upperNav {
+    height:56px;
+    background-color:#f7f9fa;
+    padding:15px;
+}
+
+.upperNavText.nav-link {
+    color: #3F5663;
+    padding: 0 10px;
+}
+
+#upperNavSlogan{
+    margin-left:25px;
+    color: #3F5663;
+    font-family: Open Sans;
+    font-style: normal;
+    font-weight: normal;
+    font-size: 13px;
+    line-height: 16px;
+    /* identical to box height, or 123% */
+    letter-spacing: 0.05em;
+}
+
+#mainNav{
+    height: 75px;
+    margin-top: 56px;
+    background-color: #fff;
+    border-bottom: 1px solid #edeef1;
+}
+
+.mainNavText{
+    color: #0e161c !important;
+    font-size: 14px;
+    font-family: 'Open Sans', sans-serif;
+    border-bottom: 2px solid #fff;
+}
+
+.mainNavText.nav-link{
+    padding: 1.8rem 1rem !important;
+    font-family: 'Open Sans', sans-serif;
+    font-style: normal;
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 20px;
+/* identical to box height, or 143% */
+    color: #0E161C;
+    text-align: center;
+    letter-spacing: 0.05em;
+}
+
+@media (max-width: 1200px){
+    .mainNavText.nav-link{
+        padding: 1.1rem 1rem !important;
+    }
+}
+
+
+#mainNavSearch {
+    border-radius: 0;
+    border-bottom: 2px solid #3f5663;
+    flex-flow: nowrap;
+}
+
+#navSearchField{
+    border: none;
+    font-family: 'Open Sans', sans-serif;
+    font-style: normal;
+    font-weight: 600;
+    font-size: 13px;
+    line-height: 20px;
+    /* identical to box height, or 154% */
+    letter-spacing: 0.05em;
+    /* Frequently Used/Text/Secondary Text - Grey 700 */
+    color: #3F5663;
+}
+
+#searchIcon{
+    margin-left: 3px;
+}
+
+#loginBtn{
+    border-left: 1px solid  #9ba8ae;;
+}
+
+.navbar-collapse.collapsing{
+    background-color: white;
+}
+.navbar-collapse.collapse.show{
+    background-color: white;
+}
+
+.mainNavText:hover{
+    border-bottom: 2px solid #3f5663;
+}
+
+

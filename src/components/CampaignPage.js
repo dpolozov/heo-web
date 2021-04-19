@@ -15,6 +15,7 @@ import {
     Button
 } from "semantic-ui-react";
 import ReactPlayer from 'react-player';
+import '../css/campaignPage.css';
 
 var HEOCampaign, ERC20Coin, web3;
 
@@ -25,7 +26,7 @@ class CampaignPage extends React.Component {
             donationAmount:"10",
             address: "0x0",
             title:"Title of the campaign",
-            description:"Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor.",
+            campaignDesc:"Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor.",
             coinName:"BNB",
             coinAddress:"",
             maxAmount:0,

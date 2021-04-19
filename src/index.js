@@ -5,6 +5,7 @@ import { BrowserRouter as Router } from "react-router-dom";
 import config from 'react-global-configuration';
 import configuration from './config';
 import loadServerProps from './util/serverprops';
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 import './index.css';
 import 'semantic-ui-css/semantic.min.css'
