@@ -1,0 +1,183 @@
+#progressBarLabel{
+    margin-bottom: 0;
+    font-family: 'Open Sans', sans-serif;
+    color: #70808a;
+}
+
+#progressBarLabelStart{
+    font-family: 'Open Sans', sans-serif;
+    font-style: normal;
+    font-weight: bold;
+    font-size: 17px;
+    line-height: 28px;
+    /* identical to box height, or 165% */
+    letter-spacing: 0.005em;
+    /* Frequently Used/Text/Primary Text - Grey 900 */
+
+color: #0E161C;
+}
+
+.cardButtons{
+    font-family: 'Poppins', sans-serif;
+    height: 70px;
+    border: 1.5px solid #0E161C;
+    border-radius: 4px;
+    text-align: center;
+    font-style: normal;
+    font-weight: bold;
+    font-size: 17px;
+    line-height: 28px;
+    /* identical to box height, or 165% */
+
+    letter-spacing: 0.005em;
+    color: #0E161C;
+}
+
+#rewardsBtn{
+    padding: 21px;
+}
+
+#acceptingBtn{
+    padding: 10px;
+}
+
+#coinName{
+    margin-top: -15px;
+    font-family: Open Sans;
+    font-style: normal;
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 18px;
+    /* identical to box height, or 129% */
+
+    letter-spacing: 0.005em;
+    text-transform: uppercase;
+
+    /* Frequently Used/Text/Primary Text - Grey 900 */
+
+    color: #0E161C;
+}
+
+#donateBtnList{
+    padding: 21px;
+    background: #EF4E36;
+    border: 1.5px solid #EF4E36;
+    box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.25);
+    border-radius: 4px;
+    font-family: 'Poppins', sans-serif;
+    border-radius: 7px;
+    font-size: 17px;
+}
+
+.card-title.h5 {
+    font-family: 'Poppins', sans-serif;
+    font-style: normal;
+    font-weight: 600;
+    font-size: 24px;
+    line-height: 32px;
+    /* identical to box height, or 133% */
+    letter-spacing: 0.005em;
+    /* Frequently Used/Text/Primary Text - Grey 900 */
+    color: #0E161C;
+}
+.card-body{
+    padding-top: 0 !important;
+}
+
+.card{
+    padding: 25px;
+    width: 100%;
+}
+
+.card-title{
+    font-family: 'Poppins', sans-serif;
+    font-weight: bolder;
+}
+
+.card-text{
+    min-height: 40px;
+    font-family: Open Sans;
+    font-style: normal;
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 143.32%;
+    /* or 20px */
+    letter-spacing: 0.005em;
+
+    color: #3F5663;
+}
+
+
+#readMore{
+    font-style: italic;
+    text-decoration: underline;
+    color: #98abb6;
+    font-size: 13px;
+}
+
+#cardLink {
+    color: #0e161c;
+    width: 100%;
+}
+
+.card-img{
+    max-height: 225px;
+}
+
+#picColumn{
+    padding: 0;
+}
+
+.progress-bar {
+    background-color: #588157 !important;
+}
+
+.progress {
+    background-color: #f7f9fa !important;
+    height: .75rem !important;
+    border-radius: .5rem !important;
+    border-top: 1px solid #edeef1;
+    border-top-style: inset;
+}
+
+@media (max-width: 775px){
+    #picColumn{
+        min-width: 100%;
+    }
+    .card-img{
+        object-fit: contain;
+    }
+}
+
+@media (max-width: 990px){
+    #rewardsBtn{
+        padding: 10px;
+    }
+}
+
+@media (max-width: 500px) {
+    #donateBtnList{
+        margin-top: 10px;
+    }
+    #rewardsBtn{
+        padding-top: 20px;
+    }
+}
+
+@media (max-width: 435px) {
+    #rewardsBtn{
+        padding-top: 10px;
+    }
+}
+
+@media (max-width: 357px) {
+    #rewardsBtn{
+        margin-top: 10px;
+    }
+}
+
+@media (max-width: 357px) {
+    #rewardsBtn{
+        padding-top: 20px;
+    }
+}
