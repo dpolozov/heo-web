@@ -4,6 +4,7 @@ import axios from 'axios';
 import '../css/campaignList.css';
 import { Container, Row, Col, Card, ProgressBar, Button, Modal } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
+import { DescriptionPreview } from '../util/Utilities';
 
 class CampaignList extends Component {
     constructor(props) {
@@ -45,26 +46,6 @@ class CampaignList extends Component {
         return campaigns;
     }
     
-    descriptionPreview(description){
-        var i = 200;
-        if(description !== undefined ){
-            let preview = description.trim();
-            var firstSpace = preview.indexOf(" ");
-            if(firstSpace >= 200){
-                return preview.substring(0,200);
-            } else {
-                while(preview.charAt(i) != ' '  && i > 0){
-                    i--;
-                }
-                if(preview.charAt(i-1).match(/[.,?!]/)){
-                    return preview.substring(0, i-1);
-                } else {
-                    return preview.substring(0, i);
-                }
-            }
-        }
-    }
-
     //initial upload to mongo db
     async sendToDB(campaigns){
         let data2 = new Blob([JSON.stringify(campaigns)], {type : 'application/jason'});
@@ -82,7 +63,6 @@ class CampaignList extends Component {
     }
 
     render() {
-        this.descriptionPreview();
         return (
             <div> 
                 <Modal show={this.state.showError} >
@@ -110,7 +90,7 @@ class CampaignList extends Component {
                                             <Row>                                  
                                                 <Card.Body>
                                                     <Card.Title>{item.title}</Card.Title> 
-                                                    <Card.Text>{`${this.descriptionPreview(item.campaignDesc)}...`}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span id='readMore'>Read More</span></Card.Text>
+                                                    <Card.Text>{`${DescriptionPreview(item.campaignDesc)}...`}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span id='readMore'>Read More</span></Card.Text>
                                                     <p id='progressBarLabel'><span id='progressBarLabelStart'>{`$${item.raisedAmount}`}</span>{` raised of ${item.maxAmount} goal`}</p>
                                                     <ProgressBar now={item.percentRaised} /> 
                                                 </Card.Body>
