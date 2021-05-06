@@ -94,7 +94,7 @@ class UserCampaigns extends Component {
                                             <Row >
                                                 <Col><div id='acceptingBtn' className='cardButtons'><p>ACCEPTING</p><p id='coinName'>{item.coinName}</p></div></Col>
                                                 <Col><div id='rewardsBtn' className='cardButtons'><p>REWARDS {item.reward}</p></div></Col>
-                                                <Col><Button variant="danger" id='donateBtnList' block>DONATE</Button></Col>
+                                                <Col><Button id='editBtn' block>EDIT</Button></Col>
                                                 <Col sm='1'></Col>
                                             </Row> 
                                         </Col>
