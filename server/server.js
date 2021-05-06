@@ -87,6 +87,22 @@ APP.post('/api/campaigns/load', (req, res) => {
       });
 })
 
+APP.post('/api/campaign/load', async (req, res) => {
+    const DB = CLIENT.db(DBNAME);
+    let result = await DB.collection("campaigns").findOne({"_id" : req.body.ID});
+    res.send(result);
+})
+
+APP.post('/api/campaign/updateRaisedAmount', (req, res) =>{
+    const DB = CLIENT.db(DBNAME);
+    DB.collection("campaigns").findOneAndUpdate({ "_id" : req.body.ID}, { "$set" : {"raisedAmount" : req.body.amount}})
+    .then( res.send('db updated successfully'))
+    .catch( err => {
+        console.log(err);
+        res.send('db update failed');
+    })
+})
+
 APP.post('/api/campaigns/loadUserCampaigns', (req, res) => {
     const DB = CLIENT.db(DBNAME);
     DB.collection("campaigns").find({"beneficiaryId" : {$in: req.body.accounts}}).toArray(function(err, result) {

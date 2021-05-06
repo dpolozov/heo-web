@@ -27,7 +27,7 @@ class CampaignList extends Component {
         var errorMessage = 'Failed to load campaigns';
         await axios.post('/api/campaigns/load')
         .then(res => {
-            console.log(res.data);
+            //console.log(res.data);
             campaigns = res.data;
         }).catch(err => {
             if (err.response) { 
