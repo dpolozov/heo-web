@@ -1,7 +1,10 @@
 import React, { Component, lazy } from 'react';
 import config from 'react-global-configuration';
-import {Button, Item, Label, Modal, Progress, Header} from 'semantic-ui-react'
+import '../css/campaignList.css';
+import { Container, Row, Col, Card, ProgressBar, Button, Modal } from 'react-bootstrap';
 import axios from 'axios';
+import { Link } from 'react-router-dom';
+import { DescriptionPreview } from '../util/Utilities';
 var ACCOUNTS, web3;
 
 class UserCampaigns extends Component {
@@ -53,60 +56,55 @@ class UserCampaigns extends Component {
         })
 
         return campaigns;
-    }                 
-
-    renderCampaigns() {
-        var items = [];
-        for(let i in this.state.campaigns) {
-            let campaign = this.state.campaigns[i];
-            items.push(
-                <Item key={`${campaign._id}-main`}>
-                    <Item.Image src={ campaign.mainImage } as='a' href={'/campaign/' + campaign._id} />
-                    <Item.Content>
-                        <Item.Header as='a'>{campaign.title}</Item.Header>
-                        <Item.Description>{campaign.description}</Item.Description>
-                        <Item.Meta>
-                            <Label basic color='green' as='a' href={'/campaign/' + campaign._id}>
-                                Accepting: {campaign.coinName}
-                            </Label>
-                            <Label basic color='red' as='a' href={'/campaign/' + campaign._id}>
-                                Rewards: {campaign.reward}
-                            </Label>
-                            <Label basic color='blue' as='a' href={'/campaign/' + campaign._id}>See more details</Label>
-                        </Item.Meta>
-                    </Item.Content>
-                </Item>
-
-            )
-            items.push(<Item key={`${campaign._id}-progress`} >
-                <Item.Content>
-                    <Progress color='olive' content={'test'} percent={campaign.percentRaised}>{campaign.raisedAmount} {campaign.coinName} raised out of {campaign.maxAmount} goal</Progress>
-                </Item.Content>
-            </Item>)
-
-        };
-        return items;
     }
 
     render() {
         return (
-            <div>
-                <Item.Group relaxed>
-                    {this.renderCampaigns()}
-                </Item.Group>
-                {this.state.isLoggedIn && this.state.campaigns.length == 0 
-                    && <h1>There are no campaigns to display</h1>}
-                {this.state.isLoggedIn == false 
-                    && <h1>Please log into MetaMask</h1>}
-                <Modal open={this.state.showError}>
-                    <Header icon='warning sign' content='Failed to connect to network!' />
-                    <Modal.Content>{this.state.errorMessage}</Modal.Content>
-                    <Modal.Actions>
-                        <Button positive onClick={ () => {this.setState({showError:false})}}>
-                            OK
-                        </Button>
-                    </Modal.Actions>
-                </Modal>
+            <div> 
+                <Modal show={this.state.showError} >
+                    <Modal.Header closeButton>
+                    <Modal.Title>Failed to connect to network.</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body>{this.state.errorMessage}</Modal.Body>
+                    <Modal.Footer>
+                    <Button variant="secondary" onClick={ () => {this.setState({showError:false})}}>
+                        Close
+                    </Button>
+                    </Modal.Footer>
+                </Modal>           
+                <div id="campaingListMainDiv">
+                    <Container>
+                        {this.state.campaigns.map((item, i) =>
+                            <Row style={{marginBottom: '20px'}} key={i}>
+                                <Link to={'/campaign/' + item._id} id='cardLink'>
+                                <Card>
+                                    <Row>
+                                        <Col sm='3' id='picColumn'>
+                                            <Card.Img src={item.mainImage} fluid='true' />
+                                        </Col>
+                                        <Col >
+                                            <Row>                                  
+                                                <Card.Body>
+                                                    <Card.Title>{item.title}</Card.Title> 
+                                                    <Card.Text>{`${DescriptionPreview(item.campaignDesc)}...`}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span id='readMore'>Read More</span></Card.Text>
+                                                    <p id='progressBarLabel'><span id='progressBarLabelStart'>{`$${item.raisedAmount}`}</span>{` raised of ${item.maxAmount} goal`}</p>
+                                                    <ProgressBar now={item.percentRaised} /> 
+                                                </Card.Body>
+                                            </Row>
+                                            <Row >
+                                                <Col><div id='acceptingBtn' className='cardButtons'><p>ACCEPTING</p><p id='coinName'>{item.coinName}</p></div></Col>
+                                                <Col><div id='rewardsBtn' className='cardButtons'><p>REWARDS {item.reward}</p></div></Col>
+                                                <Col><Button variant="danger" id='donateBtnList' block>DONATE</Button></Col>
+                                                <Col sm='1'></Col>
+                                            </Row> 
+                                        </Col>
+                                    </Row>
+                                </Card>
+                                </Link>
+                            </Row>                           
+                        )} 
+                    </Container>
+                </div>
             </div>
 
         );
