@@ -1,4 +1,4 @@
-import React from 'react';
+import {React, Component, Suspense} from 'react';
 import CampaignPage from './CampaignPage';
 import CreateCampaign from './CreateCampaign';
 import UserCampaigns from './UserCampaigns';
@@ -13,65 +13,106 @@ import {
     Route,
     Link
 } from "react-router-dom";
-import { Nav, Navbar, Form, FormControl, Container, Image } from 'react-bootstrap';
+import { Nav, Navbar, Form, FormControl, Container } from 'react-bootstrap';
 import {Search} from 'react-bootstrap-icons';
-class App extends React.Component {
+import { Trans } from 'react-i18next';
+import { GetLanguage, Login } from '../util/Utilities';
+import i18n from '../util/i18n';
+
+class App extends Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            language: 'en',
+            isLoggedIn: false,           
+        };
+    }
+
+    async componentDidMount(){
+        console.log('inside component did mount');
+        let lang = GetLanguage();
+        this.setState({language : lang});
+        // console.log(lang);
+    }
+
+    async setLanguage(lang){        
+        await i18n.changeLanguage(lang);
+        this.setState({language: lang});
+    }
+
+    async setLoggedIn(){
+        console.log('setLoggedIn is called');
+        if( await Login()){
+            this.setState({isLoggedIn : true});
+        } else {
+            this.setState({isLoggedIn : false});
+        }
+    }
+
     render() {
         return (
-            <main>
-                <div>
-                    <Navbar id="upperNav" fixed="top">
+            <Suspense fallback="...is loading">
+                <main>
+                    <div>
+                        <Navbar id="upperNav" fixed="top">
+                            <Container>
+                                <Navbar.Brand href="#home" id='upperNavSlogan'><Trans i18nKey='slogan'/></Navbar.Brand>
+                                <Navbar.Toggle />
+                                <Navbar.Collapse className="justify-content-end">
+                                <select value={this.state.language} id="languages" onChange={(e)=>this.setLanguage(e.target.value)}>
+                                    <option value='en'>{i18n.t('english')}</option>
+                                    <option value='ru'>{i18n.t('russian')}</option>
+                                </select>
+                                    <Nav.Link className='upperNavText' id='helpBtn'><Trans i18nKey='help'/></Nav.Link>
+                                    <Nav.Link className='upperNavText' id='loginBtn' onClick={ () => this.setLoggedIn()}>
+                                        {!this.state.isLoggedIn && <Trans i18nKey='login'/>}
+                                        {this.state.isLoggedIn && <Trans i18nKey='logout'/>}
+                                    </Nav.Link>
+                                </Navbar.Collapse>
+                            </Container>
+                        </Navbar>
+                    </div>
+                    <div id="mainNavContainer">
+                    <Navbar expand="lg" id="mainNav" fixed="top">
                         <Container>
-                            <Navbar.Brand href="#home" id='upperNavSlogan'>EARN REWARDS ON YOUR DONATIONS</Navbar.Brand>
-                            <Navbar.Toggle />
-                            <Navbar.Collapse className="justify-content-end">
-                                <Nav.Link className='upperNavText'>Help</Nav.Link>
-                                <Nav.Link className='upperNavText' id='loginBtn'>Login</Nav.Link>
-                            </Navbar.Collapse>
+                        <Navbar.Brand href="/">
+                                    <img
+                                        src={logo}
+                                        width="50"
+                                        height="50"
+                                        className="d-inline-block align-top"
+                                        alt="HEO logo"
+                                    />
+                        </Navbar.Brand>
+                        <Navbar.Toggle aria-controls="basic-navbar-nav" />
+                        <Navbar.Collapse id="basic-navbar-nav">
+                            <Nav className="mr-auto" bg="light">
+                                <Link className='mainNavText' to="/"><Trans i18nKey='browse'/></Link>
+                                <Link className='mainNavText' to="/new"><Trans i18nKey='startFundraiser'/></Link>
+                                <Link className='mainNavText' to="/myCampaigns"><Trans i18nKey='myFundraisers'/></Link>
+                                <Link className='mainNavText' to="/rewards"><Trans i18nKey='rewards'/></Link>
+                                <Nav.Link className='mainNavText' as='a' target='_blank' href='https://heo.finance'><Trans i18nKey='about'/></Nav.Link>                            </Nav>
+                            <Form inline id='mainNavSearch'>
+                                    <Search id='searchIcon'/>
+                                    <FormControl type="text" placeholder={i18n.t('find')} id="navSearchField" />
+                            </Form>
+                        </Navbar.Collapse>
                         </Container>
-                    </Navbar>
-                </div>
-                <div id="mainNavContainer">
-                <Navbar expand="lg" id="mainNav" fixed="top">
-                    <Container>
-                    <Navbar.Brand href="/">
-                                <img
-                                    src={logo}
-                                    width="50"
-                                    height="50"
-                                    className="d-inline-block align-top"
-                                    alt="HEO logo"
-                                />
-                    </Navbar.Brand>
-                    <Navbar.Toggle aria-controls="basic-navbar-nav" />
-                    <Navbar.Collapse id="basic-navbar-nav">
-                        <Nav className="mr-auto" bg="light">
-                            <Nav.Link className='mainNavText' as='a' href="/">Browse Fundraisers</Nav.Link>
-                            <Nav.Link className='mainNavText' as='a' href="/new">Start A Fundraiser</Nav.Link>
-                            <Nav.Link className='mainNavText' as='a' href="/myCampaigns">My Fundraisers</Nav.Link>
-                            <Nav.Link className='mainNavText' as='a' href="/rewards">My Rewards</Nav.Link>
-                            <Nav.Link className='mainNavText' as='a' target='_blank' href='https://heo.finance'>About HEO</Nav.Link>
-                        </Nav>
-                        <Form inline id='mainNavSearch'>
-                                <Search id='searchIcon'/>
-                                <FormControl type="text" placeholder="Find A Campaign" id="navSearchField" />
-                        </Form>
-                    </Navbar.Collapse>
+                    </Navbar>                              
+                    </div>
+                    <Container  style={{ marginTop: '7em' }}>
+                        <Switch>
+                            <Route path="/campaign" component={CampaignPage} />
+                            <Route path="/myCampaigns" component={UserCampaigns} />
+                            <Route path="/new" component={CreateCampaign} />
+                            <Route path="/buyheo" component={PublicSale} />
+                            <Route path="/rewards" component={MyDonations} />
+                            <Route path="/" component={Home} />
+                            <Route component={Error} />
+                        </Switch>
                     </Container>
-                </Navbar>                              
-                </div>
-                <Container  style={{ marginTop: '7em' }}>
-                    <Switch>
-                        <Route path="/campaign" component={CampaignPage} />
-                        <Route path="/myCampaigns" component={UserCampaigns} />
-                        <Route path="/new" component={CreateCampaign} />
-                        <Route path="/buyheo" component={PublicSale} />
-                        <Route path="/rewards" component={MyDonations} />
-                        <Route path="/" component={Home} />
-                        <Route component={Error} />
-                    </Switch>
-                </Container>
-            </main>
+                </main>
+            </Suspense>
         );
     }
 }

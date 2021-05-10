@@ -7,6 +7,22 @@
     height:56px;
     background-color:#f7f9fa;
     padding:15px;
+    
+}
+
+#languages {
+    background-color:#f7f9fa;
+    border: none;
+    margin-right: 10px;
+    color: #3F5663;
+    font-family: Open Sans;
+    font-style: normal;
+    font-weight: normal;
+    font-size: 13px;
+    line-height: 16px;
+    /* identical to box height, or 123% */
+    letter-spacing: 0.05em;
+    outline: none;
 }
 
 .upperNavText.nav-link {
@@ -31,16 +47,10 @@
     margin-top: 56px;
     background-color: #fff;
     border-bottom: 1px solid #edeef1;
+    white-space: nowrap;
 }
 
 .mainNavText{
-    color: #0e161c !important;
-    font-size: 14px;
-    font-family: 'Open Sans', sans-serif;
-    border-bottom: 2px solid #fff;
-}
-
-.mainNavText.nav-link{
     padding: 1.8rem 1rem !important;
     font-family: 'Open Sans', sans-serif;
     font-style: normal;
@@ -51,14 +61,25 @@
     color: #0E161C;
     text-align: center;
     letter-spacing: 0.05em;
+    border-bottom: 2px solid #fff;
 }
 
-@media (max-width: 1200px){
-    .mainNavText.nav-link{
-        padding: 1.1rem 1rem !important;
-    }
+.mainNavText:hover {
+    color: #0E161C;
 }
 
+.mainNavText.nav-link{
+    padding: 1.8rem 1rem !important;
+    font-family: 'Open Sans', sans-serif;
+    font-style: normal;
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 20px;
+/* identical to box height, or 143% */
+    color: #0E161C !important;
+    text-align: center;
+    letter-spacing: 0.05em;
+}
 
 #mainNavSearch {
     border-radius: 0;
@@ -87,6 +108,10 @@
     border-left: 1px solid  #9ba8ae;;
 }
 
+#helpBtn{
+    border-left: 1px solid  #9ba8ae;;
+}
+
 .navbar-collapse.collapsing{
     background-color: white;
 }
@@ -98,10 +123,9 @@
     border-bottom: 2px solid #3f5663;
 }
 
-@media (max-width: 435px){
+@media (max-width: 770px){
     #upperNavSlogan{
         display: none;
     }
 }
-
 

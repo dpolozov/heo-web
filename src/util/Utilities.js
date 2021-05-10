@@ -1,3 +1,6 @@
+import config from 'react-global-configuration';
+var ACCOUNTS, web3;
+
 class Utilities {
 
 }
@@ -23,7 +26,23 @@ function DescriptionPreview(description){
     }
 }
 
+function GetLanguage(){
+    let language = navigator.language || navigator.userLanguage;
+    return language;
+}
+
+async function Login(){
+    if (typeof window.ethereum !== 'undefined') {
+        var ethereum = window.ethereum;
+        ACCOUNTS = await ethereum.request({method: 'eth_requestAccounts'});
+        web3 = (await import("../remote/" + config.get("CHAIN") + "/web3")).default;
+        return true;
+    } else {
+        alert("Please install metamask");
+        return false;
+    }
+}
 
 
-export {DescriptionPreview};
+export {DescriptionPreview, GetLanguage, Login};
 export default Utilities;

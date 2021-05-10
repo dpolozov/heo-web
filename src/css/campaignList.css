@@ -17,6 +17,10 @@
 color: #0E161C;
 }
 
+.buttonCol{
+    padding-bottom: 15px;
+}
+
 .cardButtons{
     font-family: 'Poppins', sans-serif;
     height: 70px;
@@ -35,6 +39,7 @@ color: #0E161C;
 
 #rewardsBtn{
     padding: 21px;
+    white-space: nowrap;
 }
 
 #acceptingBtn{
@@ -58,7 +63,7 @@ color: #0E161C;
     color: #0E161C;
 }
 
-#donateBtnList{
+#donateBtn{
     padding: 21px;
     background: #EF4E36;
     border: 1.5px solid #EF4E36;
@@ -151,6 +156,12 @@ color: #0E161C;
     border-top-style: inset;
 }
 
+@media (max-width: 530px) {
+    #buttonsRow{
+        flex-direction: column;
+    }
+}
+
 @media (max-width: 775px){
     #picColumn{
         min-width: 100%;
@@ -160,28 +171,13 @@ color: #0E161C;
     }
 }
 
-@media (max-width: 990px){
-    #rewardsBtn{
-        padding: 10px;
-    }
-}
-
 @media (max-width: 500px) {
-    #donateBtnList{
-        margin-top: 10px;
-    }
     #editBtn{
         min-width: 120px;
         margin-top: 10px;
     }
     #rewardsBtn{
         padding-top: 20px;
-    }
-}
-
-@media (max-width: 435px) {
-    #rewardsBtn{
-        padding-top: 10px;
     }
 }
 

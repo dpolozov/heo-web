@@ -31,6 +31,10 @@ body {
     color: #3F5663;
 }
 
+#imgCol{
+    margin-right: 30px;
+}
+
 #mainContainer{
     border: 1px solid #EDEEF1;
     box-sizing: border-box;
@@ -48,10 +52,6 @@ body {
     width: 100%
 }
 
-#infoCol{
-    padding-left: 40px;
-}
-
 #title{
     padding: inherit;
     font-family: 'Poppins', sans-serif;
@@ -66,7 +66,6 @@ body {
 }
 #progressRow{
     padding-top: 20px;
-    padding-right: 40px;
 }
 #progressBar{
     width: 100%;
@@ -94,14 +93,19 @@ body {
     font-weight: 100;
 }
 
+.mb-3.input-group{
+    display: inline-grid;
+    grid-template-columns: 1fr 1fr;
+}
+
 #donateRow{
     margin-top: 20px;
-    width: 280px;
 }
 
 #donateAmount{
+    display: inline-block;
     height: 44px;
-    width: 140px;
+    width: 100%;
     border: 1.5px solid #E5E5E5;
     box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.25);
     border-radius: 4px;
@@ -109,8 +113,9 @@ body {
 }
 
 #donateButton{
+    display: inline-block;
     height: 45px;
-    width: 140px;
+    width: 100%;
     background: #E63C36;
     border: 1.5px solid #E63C36;
     box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.25);
@@ -124,6 +129,7 @@ body {
     letter-spacing: 0.005em;
     text-transform: uppercase;
     color: #FFFFFF;
+    white-space: nowrap;
 }
 
 #giftIcon{
@@ -152,7 +158,6 @@ body {
 @media (max-width: 992px){
     #videoPlayer{
         width: inherit !important;
-        margin: auto auto 20px -5px;
     }
 }
 

@@ -5,22 +5,28 @@ import '../css/campaignList.css';
 import { Container, Row, Col, Card, ProgressBar, Button, Modal } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import { DescriptionPreview } from '../util/Utilities';
+import { Trans } from 'react-i18next';
+import i18n from '../util/i18n';
 
 class CampaignList extends Component {
     constructor(props) {
         super(props);
-
         this.state = {
             campaigns: [],
             showError:false,
-            errorMessage:""
+            errorMessage:"",
+            lang:'',
+            
         };
+
+        console.log(this)
     }
 
     async componentDidMount() {
         this.setState({
             campaigns : (await this.getCampaigns()),
         });
+        
     }
 
     async getCampaigns(){
@@ -91,15 +97,14 @@ class CampaignList extends Component {
                                                 <Card.Body>
                                                     <Card.Title>{item.title}</Card.Title> 
                                                     <Card.Text>{`${DescriptionPreview(item.campaignDesc)}...`}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span id='readMore'>Read More</span></Card.Text>
-                                                    <p id='progressBarLabel'><span id='progressBarLabelStart'>{`$${item.raisedAmount}`}</span>{` raised of ${item.maxAmount} goal`}</p>
+                                                    <p id='progressBarLabel'><span id='progressBarLabelStart'>{`$${item.raisedAmount}`}</span>{i18n.t('raised')}{item.maxAmount} {i18n.t('goal')}</p>
                                                     <ProgressBar now={item.percentRaised} /> 
                                                 </Card.Body>
                                             </Row>
                                             <Row >
-                                                <Col><div id='acceptingBtn' className='cardButtons'><p>ACCEPTING</p><p id='coinName'>{item.coinName}</p></div></Col>
-                                                <Col><div id='rewardsBtn' className='cardButtons'><p>REWARDS {item.reward}</p></div></Col>
-                                                <Col><Button variant="danger" id='donateBtnList' block>DONATE</Button></Col>
-                                                <Col sm='1'></Col>
+                                                <Col className='buttonCol'><div id='acceptingBtn' className='cardButtons'><p><Trans i18nKey='accepting'/></p><p id='coinName'>{item.coinName}</p></div></Col>
+                                                <Col className='buttonCol'><div id='rewardsBtn' className='cardButtons'><p><Trans i18nKey='reward'/> {item.reward}</p></div></Col>
+                                                <Col className='buttonCol'><Button variant="danger" id='donateBtn' block><Trans i18nKey='donate'/></Button></Col>
                                             </Row> 
                                         </Col>
                                     </Row>
