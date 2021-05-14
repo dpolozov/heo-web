@@ -5,6 +5,8 @@ import { Container, Row, Col, Card, ProgressBar, Button, Modal, Image, InputGrou
 import { ChevronRight, Gift } from 'react-bootstrap-icons';
 import ReactPlayer from 'react-player';
 import '../css/campaignPage.css';
+import { Trans } from 'react-i18next';
+import i18n from '../util/i18n';
 
 var HEOCampaign, ERC20Coin, web3;
 
@@ -232,15 +234,15 @@ class CampaignPage extends Component {
                                 <p id='title'>{this.state.campaign.title}</p>
                             </Row>
                             <Row id='progressRow'>
-                                <p id='progressBarLabel'><span id='progressBarLabelStart'>{`$${this.state.campaign.raisedAmount}`}</span>{` raised of ${this.state.campaign.maxAmount} goal`}</p>
+                                <p id='progressBarLabel'><span id='progressBarLabelStart'>{`$${this.state.campaign.raisedAmount}`}</span>{i18n.t('raised')}{this.state.campaign.maxAmount} {i18n.t('goal')}</p>
                                 <ProgressBar id='progressBar' now={this.state.campaign.percentRaised}/>
                             </Row>
                             <Row id='acceptingRow'>
                                 <div id='acceptingDiv'>
-                                    <p>ACCEPTING: <span className='coinRewardInfo'>{this.state.campaign.coinName}</span></p>
+                                    <p><Trans i18nKey='accepting'/>: <span className='coinRewardInfo'>{this.state.campaign.coinName}</span></p>
                                 </div>
                                 <div id='rewardsDiv'>
-                                    <p>REWARDS: <span className='coinRewardInfo'>{this.state.campaign.reward}</span></p>
+                                    <p><Trans i18nKey='reward'/>: <span className='coinRewardInfo'>{this.state.campaign.reward}</span></p>
                                 </div>
                             </Row>
                             <Row id='donateRow'>
@@ -252,7 +254,7 @@ class CampaignPage extends Component {
                                         type="number"
                                     />
                                     <InputGroup.Append>
-                                        <Button id='donateButton' onClick={this.handleDonateClick}>DONATE <Gift id='giftIcon'/></Button>
+                                        <Button id='donateButton' onClick={this.handleDonateClick}><Trans i18nKey='donate'/> <Gift id='giftIcon'/></Button>
                                     </InputGroup.Append>
                                 </InputGroup>
                             </Row>

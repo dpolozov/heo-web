@@ -6,6 +6,7 @@ import config from 'react-global-configuration';
 import configuration from './config';
 import loadServerProps from './util/serverprops';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import './util/i18n';
 
 import './index.css';
 import 'semantic-ui-css/semantic.min.css'
