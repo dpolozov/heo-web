@@ -1,6 +1,6 @@
 import {React, Component, Suspense} from 'react';
 import CampaignPage from './CampaignPage';
-import CreateCampaign from './CreateCampaign';
+import CreateCampaign2 from './CreateCampaign2';
 import UserCampaigns from './UserCampaigns';
 import PublicSale from './PublicSale';
 import MyDonations from "./MyDonations";
@@ -104,7 +104,7 @@ class App extends Component {
                         <Switch>
                             <Route path="/campaign" component={CampaignPage} />
                             <Route path="/myCampaigns" component={UserCampaigns} />
-                            <Route path="/new" component={CreateCampaign} />
+                            <Route path="/new" component={CreateCampaign2} />
                             <Route path="/buyheo" component={PublicSale} />
                             <Route path="/rewards" component={MyDonations} />
                             <Route path="/" component={Home} />

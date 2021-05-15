@@ -2,7 +2,7 @@ body {
     margin-top: 85px !important;
 }
 
-#backToCampaignsDiv{
+.backToCampaignsDiv{
     margin-top: -50px;
     margin-left: -20px;
     padding-top: 20px;
@@ -16,7 +16,7 @@ body {
     margin-right: 10px;
 }
 
-#backToCampaigns{
+.backToCampaigns{
     width: fit-content;
     font-family: 'Open Sans', sans-serif;
     font-style: normal;

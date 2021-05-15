@@ -220,8 +220,8 @@ class CampaignPage extends Component {
                     </Modal.Footer>
                 </Modal>
                 
-                    <Container id='backToCampaignsDiv'>
-                        <p id='backToCampaigns'>Help Each Other <ChevronRight id='backToCampaignsChevron'/> Campaign Details</p>
+                    <Container className='backToCampaignsDiv'>
+                        <p className='backToCampaigns'>Help Each Other <ChevronRight id='backToCampaignsChevron'/> Campaign Details</p>
                     </Container>
                   
                 <Container id='mainContainer'>

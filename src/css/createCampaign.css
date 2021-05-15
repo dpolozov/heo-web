@@ -1,0 +1,102 @@
+#createCampaignChevron{
+    align-self: center;
+    color: #3F5663;
+    margin-right: 10px;
+}
+
+.titles{
+    font-family: 'Poppins', sans-serif;
+    font-style: normal;
+    font-weight: bold;
+    font-size: 42px;
+    line-height: 119.2%;
+    /* identical to box height, or 50px */
+    letter-spacing: 0.005em;
+    /* Frequently Used/Text/Primary Text - Grey 900 */
+    color: #0E161C;
+    margin: 25px 0px;
+
+}
+
+.subTitles{
+    font-family: 'Poppins', sans-serif;
+    font-style: normal;
+    font-weight: bold;
+    font-size: 24px;
+    line-height: 32px;
+    /* identical to box height, or 133% */
+    letter-spacing: 0.005em;
+    /* Frequently Used/Text/Primary Text - Grey 900 */
+    color: #0E161C;
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+    margin: 40px 0px;
+}
+
+.form-label{
+    font-family:'Poppins', sans-serif;
+    font-style: normal;
+    font-weight: bold;
+    font-size: 16px;
+    line-height: 24px;
+    /* identical to box height */
+    letter-spacing: 0.005em;
+    /* Frequently Used/Text/Primary Text - Grey 900 */
+    color: #0E161C;
+}
+
+.createFormPlaceHolder{
+    font-family: 'Open Sans', sans-serif;
+    font-style: normal;
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 143.32%;
+    /* identical to box height, or 20px */
+
+    letter-spacing: 0.005em;
+
+    color: #3F5663;
+}
+
+#createCampaignBtn{
+    margin-top: 1rem;
+    background-color: #E63C36;
+    border-color: #E63C36;
+    border-radius: 4px !important;
+    padding: 20px 40px;
+    font-family: 'Poppins', sans-serif;
+    font-style: normal;
+    font-weight: bold;
+    font-size: 17px;
+    line-height: 28px;
+    letter-spacing: 0.005em;
+    text-transform: uppercase;
+    color: #FFFFFF;
+}
+
+.optional{
+    font-family: 'Open Sans', sans-serif;
+    font-style: italic;
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 143.32%;
+    /* identical to box height, or 20px */
+    letter-spacing: 0.005em;
+    color: #3F5663;
+}
+
+.redAsterisk{
+    color: #E63C36;
+}
+
+#campaignImgInput{
+    font-family: 'Open Sans', sans-serif;
+    font-style: normal;
+    font-weight: bold;
+    font-size: 14px;
+    line-height: 143.32%;
+    /* identical to box height, or 20px */
+    letter-spacing: 0.005em;
+    color: #0E161C;
+}
