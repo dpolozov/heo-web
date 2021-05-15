@@ -6,8 +6,13 @@ import ReactPlayer from 'react-player';
 import config from "react-global-configuration";
 import uuid from 'react-uuid';
 import axios from 'axios';
+<<<<<<< HEAD
 import { ChevronLeft, CheckCircle, ExclamationTriangle, HourglassSplit, XCircle } from 'react-bootstrap-icons';
 var HEOCampaignFactory, ACCOUNTS, web3;
+=======
+import { ChevronLeft } from 'react-bootstrap-icons';
+var HEOCampaignFactory, HEOGlobalParameters, HEOPriceOracle, ACCOUNTS, web3;
+>>>>>>> css
 
 class CreateCampaign2 extends React.Component {
     constructor(props) {
@@ -26,12 +31,26 @@ class CreateCampaign2 extends React.Component {
             fn:"",
             ln:"",
             org:"",
+<<<<<<< HEAD
             cn:"",
             vl:"",
             donorsEarnPerDollar:1,
             title:"",
             maxAmount:10000,
             title:"",
+=======
+            maxAmount:"10000",
+            donorsEarnPerDollar:1,
+            title:"",
+            cn:"",
+            vl:"",
+            heoPrice:"",
+            maxAmount:10000,
+            donorsEarnPerDollar:1,
+            z:1,
+            x:20,
+            title:"Title of the campaign",
+>>>>>>> css
             description:"Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor.",
             raisedAmount:0,
             tokensToBurn:0,
@@ -39,6 +58,7 @@ class CreateCampaign2 extends React.Component {
             mainImageURL: "",
             metaDataURL:"",
             mainImageFile:"",
+            reward:0,
             currencyAddress:"",
             currencyName:"",
             coinOptions: [],
@@ -52,7 +72,43 @@ class CreateCampaign2 extends React.Component {
     handleChange = (e) => {
         const name = e.target.name
         const value = e.target.value;
-        this.setState({ [name] : value })
+        this.setState({ [name]: value })
+        if(name == "currencyAddress") {
+            let currencyName = config.get("chainconfigs")[config.get("CHAIN")]["currencies"][value];
+            this.setState({currencyName:currencyName});
+            if(value) {
+                var that = this;
+                HEOPriceOracle.methods.getPrice(value).call((err, result) => {
+                    if(!err) {
+                        let heoPrice = web3.utils.fromWei(result);
+                        that.setState({heoPrice:heoPrice});
+                    } else {
+                        console.log(`Failed to fetch price of ${currencyName}`);
+                        console.log(err);
+                    }
+
+                })
+            }
+        }
+        if(name=="reward") {
+            if(value == 0) {
+                this.setState({z:0});
+                this.setState({tokensToBurn:0});
+            } else {
+                let Z = this.state.x/value;
+                this.setState({z:Z});
+                let toBurn = this.state.maxAmount/(Z * this.state.heoPrice);
+                this.setState({tokensToBurn:toBurn});
+            }
+        }
+        if(name == "maxAmount") {
+            if(this.state.reward == 0) {
+                this.setState({tokensToBurn:0});
+            } else if(this.state.heoPrice > 0) {
+                let toBurn = value/(this.state.z * this.state.heoPrice);
+                this.setState({tokensToBurn:toBurn});
+            }
+        }
     }
 
     fileSelected = e => {
@@ -78,7 +134,8 @@ class CreateCampaign2 extends React.Component {
         console.log("Creating campaign");
         var that = this;
         HEOCampaignFactory.methods.createCampaign(web3.utils.toWei(`${this.state.maxAmount}`),
-            this.state.currencyAddress, this.state.metaDataURL, ACCOUNTS[0]).send({from:ACCOUNTS[0]}).on(
+            web3.utils.toWei(`${this.state.tokensToBurn}`),
+            this.state.currencyAddress, this.state.metaDataURL).send({from:ACCOUNTS[0]}).on(
             'receipt', function(receipt) {
                 console.log("Received receipt from createCampaign transaction");
                 that.setState({showModal:true,
@@ -319,13 +376,13 @@ class CreateCampaign2 extends React.Component {
             var ethereum = window.ethereum;
             ACCOUNTS = await ethereum.request({method: 'eth_requestAccounts'});
             web3 = (await import("../remote/" + config.get("CHAIN") + "/web3")).default;
+            let X = await HEOGlobalParameters.methods.profitabilityCoefficient().call();
+            this.setState({x: X});
         } else {
             alert("Please install metamask");
         }
-        
         let options = (config.get("chainconfigs")[config.get("CHAIN")]["currencyOptions"]);
         this.setState({coinOptions : options, currencyAddress:options[0].value, currencyName:options[0].text});
-        
     }
 }
 
