@@ -51,7 +51,7 @@ class CreateCampaign extends React.Component {
             mainImageFile:"",
             reward:0,
             currencyAddress:"",
-            currencyName:""
+            currencyName:"",
         };
     }
     handleTextArea = (e) => {
@@ -371,7 +371,7 @@ class CreateCampaign extends React.Component {
             this.setState({x: X});
         } else {
             alert("Please install metamask");
-        }
+        }       
     }
 }
 

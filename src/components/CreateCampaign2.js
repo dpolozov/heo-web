@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
 import countries from '../countries';
 import '../css/createCampaign.css';
-
 import {Container, Form, Col, Button} from 'react-bootstrap';
-
 import config from "react-global-configuration";
 import uuid from 'react-uuid';
 import axios from 'axios';
@@ -42,6 +40,7 @@ class CreateCampaign2 extends React.Component {
             reward:0,
             currencyAddress:"",
             currencyName:"",
+            coinOptions: [],
         };
     }
     handleTextArea = (e) => {
@@ -258,7 +257,7 @@ class CreateCampaign2 extends React.Component {
                                 <Form.Control type="text" className="createFormPlaceHolder" placeholder="Last name" />
                             </Form.Group>
                         </Form.Row>                       
-                        <Form.Group controlId="createForm.ln">
+                        <Form.Group controlId="createForm.og">
                             <Form.Label>Organizaion <span className="optional">(optional)</span></Form.Label>
                             <Form.Control type="text" className="createFormPlaceHolder" placeholder="Organization name"/>
                         </Form.Group>
@@ -266,21 +265,17 @@ class CreateCampaign2 extends React.Component {
                             <Form.Group as={Col} controlId="createForm.country">
                                 <Form.Label>Select your country</Form.Label>
                                 <Form.Control as="select">
-                                <option>1</option>
-                                <option>2</option>
-                                <option>3</option>
-                                <option>4</option>
-                                <option>5</option>
+                                {countries.map( (data)=> 
+                                    <option value={data.value}>{data.text}</option>
+                                )}
                                 </Form.Control>
                             </Form.Group>
                             <Form.Group as={Col} controlId="createForm.coinName">
                                 <Form.Label>Select coin</Form.Label>
                                 <Form.Control as="select">
-                                <option>1</option>
-                                <option>2</option>
-                                <option>3</option>
-                                <option>4</option>
-                                <option>5</option>
+                                {this.state.coinOptions.map( (data)=>
+                                    <option value={data.value}>{data.text}</option>
+                                )}
                                 </Form.Control>
                             </Form.Group>
                         </Form.Row>
@@ -324,7 +319,7 @@ class CreateCampaign2 extends React.Component {
     }
 
     async componentDidMount() {
-        /*
+        
         if (typeof window.ethereum !== 'undefined') {
             HEOPriceOracle = (await import("../remote/" + config.get("CHAIN") + "/HEOPriceOracle")).default;
             HEOGlobalParameters = (await import("../remote/" + config.get("CHAIN") + "/HEOGlobalParameters")).default;
@@ -337,7 +332,11 @@ class CreateCampaign2 extends React.Component {
         } else {
             alert("Please install metamask");
         }
-        */
+        
+
+        let options = (config.get("chainconfigs")[config.get("CHAIN")]["currencyOptions"]);
+        this.setState({coinOptions : options});
+        console.log(this.state.coinOptions);
     }
 }
 
