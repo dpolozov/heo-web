@@ -100,3 +100,12 @@
     letter-spacing: 0.005em;
     color: #0E161C;
 }
+
+#createCampaignImg{
+    width: 10rem;
+}
+
+#createCampaignVideoPlayer{
+    width: 20rem !important;
+    height: auto !important;
+}

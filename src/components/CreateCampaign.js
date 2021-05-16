@@ -52,6 +52,7 @@ class CreateCampaign extends React.Component {
             reward:0,
             currencyAddress:"",
             currencyName:"",
+            coinOptions:[]
         };
     }
     handleTextArea = (e) => {
@@ -256,7 +257,7 @@ class CreateCampaign extends React.Component {
                     <Form>
                     { (this.state.step == 1) && (
                         <div>
-                            <Form.Group widths='equal' name='fn'>
+                            <Form.Group widths='equal'>
                                 <Form.Input required fluid label='First name' placeholder='First name' name='fn'
                                             value={this.state.fn} onChange={this.handleChange} />
                                 <Form.Input required fluid label='Last name' placeholder='Last name' name='ln'
@@ -371,7 +372,7 @@ class CreateCampaign extends React.Component {
             this.setState({x: X});
         } else {
             alert("Please install metamask");
-        }       
+        } 
     }
 }
 

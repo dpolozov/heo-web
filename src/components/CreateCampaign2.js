@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import countries from '../countries';
 import '../css/createCampaign.css';
 import {Container, Form, Col, Button, Image} from 'react-bootstrap';
+import ReactPlayer from 'react-player';
 import config from "react-global-configuration";
 import uuid from 'react-uuid';
 import axios from 'axios';
@@ -94,49 +95,18 @@ class CreateCampaign2 extends React.Component {
         this.setState({mainImageFile:e.target.files[0], mainImageURL: URL.createObjectURL(e.target.files[0])});
     }
 
-    handleClick = (event, target) => {
-        console.log(`Button clicked ${target.name}`);
-        switch(target.name) {
-            case "ff1":
-                if(!this.state.currencyAddress) {
-                    this.setState({showLoader:false, showError:true,
-                        errorMessage:`Please select a coin that your fundraiser will accept.`});
-                    return;
-                }
-                if(!this.state.fn || !this.state.ln) {
-                    this.setState({showLoader:false, showError:true,
-                        errorMessage:`Please enter your first and last name.`});
-                    return;
-                }
-                this.setState({step:2});
-                break;
-            case "ff2":
-                this.setState({step:3});
-                break;
-            case "bb2":
-                this.setState({step:1});
-                break;
-            case "bb3":
-                this.setState({step:2});
-                break;
-            case "ff3":
-                //Creating the campaign
-                var that = this;
-                let imgID = uuid();
-                this.uploadImageS3(that, imgID).then(() => {
-                    that.uploadMetaS3(that, imgID).then(() => {
-                        that.createCampaign(that);
-                    }).catch((error) => {
-                        console.log(error);
-                    });
-                }).catch((error) => {
-                    console.log(error);
-                });
-
-                break;
-            default:
-                break;
-        }
+    handleClick = (event) => {
+        var that = this;
+        let imgID = uuid();
+        this.uploadImageS3(that, imgID).then(() => {
+                that.uploadMetaS3(that, imgID).then(() => {
+                    that.createCampaign(that);
+            }).catch((error) => {
+                console.log(error);
+            });
+        }).catch((error) => {
+            console.log(error);
+        });
     }
 
     async createCampaign(that) {
@@ -307,12 +277,13 @@ class CreateCampaign2 extends React.Component {
                                 onChange={this.fileSelected}
                             />
                         </Form.Group>
-                        <Image src={this.state.mainImageURL}/>
+                        <Image id='createCampaignImg' src={this.state.mainImageURL}/>
                         <Form.Group>
                             <Form.Label>Promotional Video <span className='optional'>(optional)</span></Form.Label>
                             <Form.Control type="text" className="createFormPlaceHolder" placeholder="Link to YouTube Video"
                                 name='vl' value={this.state.vl} onChange={this.handleChange}/>
                         </Form.Group>
+                        { this.state.vl != "" && <ReactPlayer url={this.state.vl} id='createCampaignVideoPlayer' />}
                         <Form.Group>
                             <Form.Label>Title<span className='redAsterisk'>*</span></Form.Label>
                             <Form.Control type="text" className="createFormPlaceHolder" placeholder="Title of the campaign"
