@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import countries from '../countries';
 import '../css/createCampaign.css';
-import {Container, Form, Col, Button} from 'react-bootstrap';
+import {Container, Form, Col, Button, Image} from 'react-bootstrap';
 import config from "react-global-configuration";
 import uuid from 'react-uuid';
 import axios from 'axios';
@@ -22,14 +22,15 @@ class CreateCampaign2 extends React.Component {
             errorMessage:"",
             fn:"",
             ln:"",
+            org:"",
             cn:"",
             vl:"",
             heoPrice:"",
-            maxAmount:10000,
+            maxAmount:"10000",
             donorsEarnPerDollar:1,
             z:1,
             x:20,
-            title:"Title of the campaign",
+            title:"",
             description:"Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor.",
             raisedAmount:0,
             tokensToBurn:0,
@@ -43,11 +44,14 @@ class CreateCampaign2 extends React.Component {
             coinOptions: [],
         };
     }
+    
     handleTextArea = (e) => {
         this.setState({description:e.target.value});
     }
-    handleChange = (e, { name, value }) => {
-        this.setState({ [name]: value })
+    handleChange = (e) => {
+        const name = e.target.name
+        const value = e.target.value;
+        this.setState({ [name] : value })
         if(name == "currencyAddress") {
             let currencyName = config.get("chainconfigs")[config.get("CHAIN")]["currencies"][value];
             this.setState({currencyName:currencyName});
@@ -248,68 +252,78 @@ class CreateCampaign2 extends React.Component {
                     <Form>
                         <div className='titles'> About You </div>
                         <Form.Row>
-                            <Form.Group as={Col} controlId="createForm.fn" className='name'>                           
+                            <Form.Group as={Col} className='name'>                           
                                 <Form.Label>First name<span className='redAsterisk'>*</span></Form.Label>
-                                <Form.Control type="text" className="createFormPlaceHolder" placeholder="First name" />
+                                <Form.Control type="text" className="createFormPlaceHolder" placeholder="First name" 
+                                    name='fn' value={this.state.fn} onChange={this.handleChange} 
+                                />
                             </Form.Group>
-                            <Form.Group as={Col} controlId="createForm.ln" className='name'>                           
+                            <Form.Group as={Col} className='name'>                           
                                 <Form.Label>Last name<span className='redAsterisk'>*</span></Form.Label>
-                                <Form.Control type="text" className="createFormPlaceHolder" placeholder="Last name" />
+                                <Form.Control type="text" className="createFormPlaceHolder" placeholder="Last name" name='ln'
+                                            value={this.state.ln} onChange={this.handleChange} />
                             </Form.Group>
                         </Form.Row>                       
-                        <Form.Group controlId="createForm.og">
+                        <Form.Group >
                             <Form.Label>Organizaion <span className="optional">(optional)</span></Form.Label>
-                            <Form.Control type="text" className="createFormPlaceHolder" placeholder="Organization name"/>
+                            <Form.Control type="text" className="createFormPlaceHolder" placeholder="Organization name" 
+                                name='org' value={this.state.org} onChange={this.handleChange} />
                         </Form.Group>
                         <Form.Row>
-                            <Form.Group as={Col} controlId="createForm.country">
+                            <Form.Group as={Col}>
                                 <Form.Label>Select your country</Form.Label>
-                                <Form.Control as="select">
+                                <Form.Control as="select" name='cn' value={this.state.cn} onChange={this.handleChange} >
                                 {countries.map( (data)=> 
                                     <option value={data.value}>{data.text}</option>
                                 )}
                                 </Form.Control>
                             </Form.Group>
-                            <Form.Group as={Col} controlId="createForm.coinName">
+                            <Form.Group as={Col}>
                                 <Form.Label>Select coin</Form.Label>
-                                <Form.Control as="select">
-                                {this.state.coinOptions.map( (data)=>
-                                    <option value={data.value}>{data.text}</option>
-                                )}
+                                <Form.Control as="select" name='currencyAddress' 
+                                    value={this.state.currencyAddress} onChange={this.handleChange}>
+                                    {this.state.coinOptions.map( (data)=>
+                                        <option value={data.value}>{data.text}</option>
+                                    )}
                                 </Form.Control>
                             </Form.Group>
                         </Form.Row>
                         <hr/>
                         <div className='titles'> How much do you need? </div>
                         <div className='subTitles'> Current Price of HEO token 1BSUD </div>
-                        <Form.Group controlId="creatForm.maxAmount">
+                        <Form.Group>
                             <Form.Label>How much BSUD do you need to raise?<span className='redAsterisk'>*</span></Form.Label>
-                            <Form.Control type="number" className="createFormPlaceHolder" placeholder="10,000"/>
+                            <Form.Control type="number" className="createFormPlaceHolder" placeholder="10,000" 
+                                value={this.state.maxAmount} placeholder={this.state.maxAmount}
+                                name='maxAmount' onChange={this.handleChange}/>
                         </Form.Group>  
                         <hr/>
                         <div className='titles'> Campaign Details </div>
                         <Form.Group>
                             <Form.Label>Select cover image</Form.Label>
                             <Form.File
-                                className="position-relative"
-                                required
-                                name="file"
-                                id="campaignImgInput"
+                                name='imageFile' className="position-relative" required
+                                id="campaignImgInput" accept='.jpg,.png,.jpeg,.gif' 
+                                onChange={this.fileSelected}
                             />
                         </Form.Group>
-                        <Form.Group controlId="creatForm.vl">
+                        <Image src={this.state.mainImageURL}/>
+                        <Form.Group>
                             <Form.Label>Promotional Video <span className='optional'>(optional)</span></Form.Label>
-                            <Form.Control type="text" className="createFormPlaceHolder" placeholder="Link to YouTube Video"/>
+                            <Form.Control type="text" className="createFormPlaceHolder" placeholder="Link to YouTube Video"
+                                name='vl' value={this.state.vl} onChange={this.handleChange}/>
                         </Form.Group>
-                        <Form.Group controlId="creatForm.title">
+                        <Form.Group>
                             <Form.Label>Title<span className='redAsterisk'>*</span></Form.Label>
-                            <Form.Control type="text" className="createFormPlaceHolder" placeholder="Title of the campaign"/>
+                            <Form.Control type="text" className="createFormPlaceHolder" placeholder="Title of the campaign"
+                                name='title' value={this.state.title} onChange={this.handleChange}/>
                         </Form.Group>
-                        <Form.Group controlId="creatForm.description">
+                        <Form.Group>
                             <Form.Label>Campaign description</Form.Label>
-                            <Form.Control as="textarea" rows={5} className="createFormPlaceHolder" placeholder="Campaign description"/>
+                            <Form.Control as="textarea" rows={5} className="createFormPlaceHolder" placeholder="Campaign description"
+                                name='description' value={this.state.description} onChange={this.handleTextArea} />
                         </Form.Group>
-                        <Button id='createCampaignBtn' type="submit">
+                        <Button id='createCampaignBtn' name='ff3' onClick={this.handleClick}>
                             CREATE CAMPAIGN
                         </Button>
                     </Form>
@@ -336,7 +350,6 @@ class CreateCampaign2 extends React.Component {
 
         let options = (config.get("chainconfigs")[config.get("CHAIN")]["currencyOptions"]);
         this.setState({coinOptions : options});
-        console.log(this.state.coinOptions);
     }
 }
 

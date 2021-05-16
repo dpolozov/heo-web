@@ -30,6 +30,7 @@ class App extends Component {
     }
 
     async componentDidMount(){
+        console.log('inside component did mount');
         let lang = GetLanguage();
         this.setState({language : lang});
         // console.log(lang);
@@ -103,8 +104,8 @@ class App extends Component {
                     <Container  style={{ marginTop: '7em' }}>
                         <Switch>
                             <Route path="/campaign" component={CampaignPage} />
-                            <Route path="/myCampaigns" component={CreateCampaign2} />
-                            <Route path="/new" component={CreateCampaign} />
+                            <Route path="/myCampaigns" component={UserCampaigns} />
+                            <Route path="/new" component={CreateCampaign2} />
                             <Route path="/buyheo" component={PublicSale} />
                             <Route path="/rewards" component={MyDonations} />
                             <Route path="/" component={Home} />
