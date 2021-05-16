@@ -7,7 +7,7 @@ import config from "react-global-configuration";
 import uuid from 'react-uuid';
 import axios from 'axios';
 import { ChevronLeft } from 'react-bootstrap-icons';
-var HEOCampaignFactory, HEOGlobalParameters, HEOPriceOracle, ACCOUNTS, web3;
+var HEOCampaignFactory, ACCOUNTS, web3;
 
 class CreateCampaign2 extends React.Component {
     constructor(props) {
@@ -26,11 +26,8 @@ class CreateCampaign2 extends React.Component {
             org:"",
             cn:"",
             vl:"",
-            heoPrice:"",
             maxAmount:"10000",
             donorsEarnPerDollar:1,
-            z:1,
-            x:20,
             title:"",
             description:"Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor.",
             raisedAmount:0,
@@ -39,7 +36,6 @@ class CreateCampaign2 extends React.Component {
             mainImageURL: "",
             metaDataURL:"",
             mainImageFile:"",
-            reward:0,
             currencyAddress:"",
             currencyName:"",
             coinOptions: [],
@@ -53,42 +49,6 @@ class CreateCampaign2 extends React.Component {
         const name = e.target.name
         const value = e.target.value;
         this.setState({ [name] : value })
-        if(name == "currencyAddress") {
-            let currencyName = config.get("chainconfigs")[config.get("CHAIN")]["currencies"][value];
-            this.setState({currencyName:currencyName});
-            if(value) {
-                var that = this;
-                HEOPriceOracle.methods.getPrice(value).call((err, result) => {
-                    if(!err) {
-                        let heoPrice = web3.utils.fromWei(result);
-                        that.setState({heoPrice:heoPrice});
-                    } else {
-                        console.log(`Failed to fetch price of ${currencyName}`);
-                        console.log(err);
-                    }
-
-                })
-            }
-        }
-        if(name=="reward") {
-            if(value == 0) {
-                this.setState({z:0});
-                this.setState({tokensToBurn:0});
-            } else {
-                let Z = this.state.x/value;
-                this.setState({z:Z});
-                let toBurn = this.state.maxAmount/(Z * this.state.heoPrice);
-                this.setState({tokensToBurn:toBurn});
-            }
-        }
-        if(name == "maxAmount") {
-            if(this.state.reward == 0) {
-                this.setState({tokensToBurn:0});
-            } else if(this.state.heoPrice > 0) {
-                let toBurn = value/(this.state.z * this.state.heoPrice);
-                this.setState({tokensToBurn:toBurn});
-            }
-        }
     }
 
     fileSelected = e => {
@@ -113,8 +73,7 @@ class CreateCampaign2 extends React.Component {
         console.log("Creating campaign");
         var that = this;
         HEOCampaignFactory.methods.createCampaign(web3.utils.toWei(`${this.state.maxAmount}`),
-            web3.utils.toWei(`${this.state.tokensToBurn}`),
-            this.state.currencyAddress, this.state.metaDataURL).send({from:ACCOUNTS[0]}).on(
+            this.state.currencyAddress, this.state.metaDataURL, ACCOUNTS[0]).send({from:ACCOUNTS[0]}).on(
             'receipt', function(receipt) {
                 console.log("Received receipt from createCampaign transaction");
                 that.setState({showLoader:false, showError:false, showModal:true,
@@ -263,7 +222,7 @@ class CreateCampaign2 extends React.Component {
                         <div className='subTitles'> Current Price of HEO token 1BSUD </div>
                         <Form.Group>
                             <Form.Label>How much BSUD do you need to raise?<span className='redAsterisk'>*</span></Form.Label>
-                            <Form.Control type="number" className="createFormPlaceHolder" placeholder="10,000" 
+                            <Form.Control type="number" className="createFormPlaceHolder"
                                 value={this.state.maxAmount} placeholder={this.state.maxAmount}
                                 name='maxAmount' onChange={this.handleChange}/>
                         </Form.Group>  
@@ -306,21 +265,17 @@ class CreateCampaign2 extends React.Component {
     async componentDidMount() {
         
         if (typeof window.ethereum !== 'undefined') {
-            HEOPriceOracle = (await import("../remote/" + config.get("CHAIN") + "/HEOPriceOracle")).default;
-            HEOGlobalParameters = (await import("../remote/" + config.get("CHAIN") + "/HEOGlobalParameters")).default;
             HEOCampaignFactory = (await import("../remote/" + config.get("CHAIN") + "/HEOCampaignFactory")).default;
             var ethereum = window.ethereum;
             ACCOUNTS = await ethereum.request({method: 'eth_requestAccounts'});
             web3 = (await import("../remote/" + config.get("CHAIN") + "/web3")).default;
-            let X = await HEOGlobalParameters.methods.profitabilityCoefficient().call();
-            this.setState({x: X});
         } else {
             alert("Please install metamask");
         }
         
 
         let options = (config.get("chainconfigs")[config.get("CHAIN")]["currencyOptions"]);
-        this.setState({coinOptions : options});
+        this.setState({coinOptions : options, currencyAddress:options[0].value, currencyName:options[0].text});
     }
 }
 

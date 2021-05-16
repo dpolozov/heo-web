@@ -103,7 +103,6 @@ class CampaignList extends Component {
                                             </Row>
                                             <Row >
                                                 <Col className='buttonCol'><div id='acceptingBtn' className='cardButtons'><p><Trans i18nKey='accepting'/></p><p id='coinName'>{item.coinName}</p></div></Col>
-                                                <Col className='buttonCol'><div id='rewardsBtn' className='cardButtons'><p><Trans i18nKey='reward'/> {item.reward}</p></div></Col>
                                                 <Col className='buttonCol'><Button variant="danger" id='donateBtn' block><Trans i18nKey='donate'/></Button></Col>
                                             </Row> 
                                         </Col>
