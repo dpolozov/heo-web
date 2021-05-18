@@ -14,8 +14,8 @@ APP.use(FILE_UPLOAD());
 APP.use(CORS());
 APP.use(EXPRESS.json());
 
-const URL = `mongodb+srv://dpolozov:${process.env.MONGODB_PWD}@cluster0.jvp7o.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`;
-const DBNAME = 'HEO';
+const URL = `mongodb+srv://${process.env.MONGO_LOGIN}:${process.env.MONGODB_PWD}${process.env.MONGO_URL}`;
+const DBNAME = process.env.MONGO_DB_NAME;
 const CLIENT = new MongoClient(URL);
 
 CLIENT.connect(err => {
@@ -57,14 +57,13 @@ APP.post('/api/campaigns/sendToDB', (req, res) => {
         const ITEM = {
             _id : element.address.toLowerCase(),
             beneficiaryId : element.beneficiaryId.toLowerCase(),
+            ownerId : element.ownerId.toLowerCase(),
             title : element.title,
             mainImage : element.mainImage,
             videoLink : element.videoLink,
             campaignDesc : element.description,
             coinName: element.coinName,
-            reward: element.reward,
             maxAmount: element.maxAmount,
-            percentRaised: element.percentRaised,
             raisedAmount: element.raisedAmount,
             creationDate : date,
         }
@@ -93,7 +92,7 @@ APP.post('/api/campaign/load', async (req, res) => {
     res.send(result);
 })
 
-APP.post('/api/campaign/updateRaisedAmount', (req, res) =>{
+/*APP.post('/api/campaign/updateRaisedAmount', (req, res) =>{
     const DB = CLIENT.db(DBNAME);
     DB.collection("campaigns").findOneAndUpdate({ "_id" : req.body.ID}, { "$set" : {"raisedAmount" : req.body.amount}})
     .then( res.send('db updated successfully'))
@@ -101,7 +100,7 @@ APP.post('/api/campaign/updateRaisedAmount', (req, res) =>{
         console.log(err);
         res.send('db update failed');
     })
-})
+})*/
 
 APP.post('/api/campaigns/loadUserCampaigns', (req, res) => {
     const DB = CLIENT.db(DBNAME);

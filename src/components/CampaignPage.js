@@ -52,37 +52,15 @@ class CampaignPage extends Component {
         return campaign;
     }
 
-    async updateRaisedAmountDB(address, newAmount){
-        let data = {ID : address, amount : newAmount};
-        let errorMessage = 'Failed to update raised amount';
-        await axios.post('/api/campaign/updateRaisedAmount', data,  {headers: {"Content-Type": "application/json"}})
-        .then(res => {
-            console.log(res);
-            if(res.data === 'db updated successfully'){
-                this.state.campaign.raisedAmount = newAmount;
-            }           
-        }).catch(err => {
-            if (err.response) { 
-                errorMessage = 'Failed to update raised amount. We are having technical difficulties'}
-            else if(err.request) {
-                errorMessage = 'Failed to update raised amount. Please check your internet connection'
-            }
-            console.log(err);
-            this.setState({
-                showError: true,
-                errorMessage,
-            })
-        })      
-    }
-
     updateRaisedAmount = async (accounts) => {
         var campaignInstance = this.state.campaignInstance;
+        var campaign = this.state.campaign;
         var that = this;
         campaignInstance.methods.raisedAmount().call({from:accounts[0]}, function(err, result) {
             if(!err) {
-                that.setState({raisedAmount:parseFloat(web3.utils.fromWei(result))});
+                campaign.raisedAmount = parseFloat(web3.utils.fromWei(result));
+                that.setState({campaign:campaign});
                 console.log(that.state.raisedAmount)
-                that.updateRaisedAmountDB(that.state.address, that.state.raisedAmount);
             } else {
                 console.log("Failed to update raised amount.")
                 console.log(err);
@@ -220,8 +198,8 @@ class CampaignPage extends Component {
                     </Modal.Footer>
                 </Modal>
                 
-                    <Container id='backToCampaignsDiv'>
-                        <p id='backToCampaigns'>Help Each Other <ChevronRight id='backToCampaignsChevron'/> Campaign Details</p>
+                    <Container className='backToCampaignsDiv'>
+                        <p className='backToCampaigns'>Help Each Other <ChevronRight id='backToCampaignsChevron'/> Campaign Details</p>
                     </Container>
                   
                 <Container id='mainContainer'>
@@ -240,9 +218,6 @@ class CampaignPage extends Component {
                             <Row id='acceptingRow'>
                                 <div id='acceptingDiv'>
                                     <p><Trans i18nKey='accepting'/>: <span className='coinRewardInfo'>{this.state.campaign.coinName}</span></p>
-                                </div>
-                                <div id='rewardsDiv'>
-                                    <p><Trans i18nKey='reward'/>: <span className='coinRewardInfo'>{this.state.campaign.reward}</span></p>
                                 </div>
                             </Row>
                             <Row id='donateRow'>
