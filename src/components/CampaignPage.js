@@ -260,7 +260,7 @@ class CampaignPage extends Component {
         });
         web3 = (await import("../remote/"+ config.get("CHAIN") + "/web3")).default;
         HEOCampaign = (await import("../remote/"+ config.get("CHAIN") + "/HEOCampaign")).default;
-        ERC20Coin = (await import("../remote/"+ config.get("CHAIN") + "/ERC20Coin")).default;
+        ERC20Coin = (await import("../remote/"+ config.get("CHAIN") + "/ERC20")).default;
         let campaignInstance = new web3.eth.Contract(HEOCampaign, address);
         let coinAddress = (await campaignInstance.methods.currency().call()).toLowerCase();
         this.setState({
