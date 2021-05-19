@@ -109,3 +109,39 @@
     width: 20rem !important;
     height: auto !important;
 }
+
+.modal-content{
+    width: 80% !important;
+    text-align: center;
+}
+
+.errorIcon {
+    font-size: 3rem;
+    margin-bottom: 1.5rem;
+}
+
+.errorMessage {
+    font-family: 'Poppins', sans-serif;
+    font-style: normal;
+    font-weight: 600;
+    font-size: 24px;
+    line-height: 32px;
+    letter-spacing: 0.005em;
+    color: #0E161C;
+    margin-bottom: 1.5rem;
+}
+
+.modalMessage {
+    font-family: Open Sans;
+    font-style: normal;
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 143.32%;
+    letter-spacing: 0.005em;
+    color: #0E161C;
+    margin-bottom: 1.5rem;
+}
+
+.modal-body{
+    padding: 5rem !important;
+}
