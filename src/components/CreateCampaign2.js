@@ -6,14 +6,9 @@ import ReactPlayer from 'react-player';
 import config from "react-global-configuration";
 import uuid from 'react-uuid';
 import axios from 'axios';
-<<<<<<< HEAD
 import { ChevronLeft, CheckCircle, ExclamationTriangle, HourglassSplit, XCircle } from 'react-bootstrap-icons';
-var HEOCampaignFactory, ACCOUNTS, web3;
-=======
-import { ChevronLeft } from 'react-bootstrap-icons';
-var HEOCampaignFactory, HEOGlobalParameters, HEOPriceOracle, ACCOUNTS, web3;
->>>>>>> css
 
+var HEOCampaignFactory, ACCOUNTS, web3;
 class CreateCampaign2 extends React.Component {
     constructor(props) {
         super(props);
@@ -31,34 +26,21 @@ class CreateCampaign2 extends React.Component {
             fn:"",
             ln:"",
             org:"",
-<<<<<<< HEAD
             cn:"",
             vl:"",
             donorsEarnPerDollar:1,
-            title:"",
-            maxAmount:10000,
-            title:"",
-=======
             maxAmount:"10000",
             donorsEarnPerDollar:1,
-            title:"",
             cn:"",
             vl:"",
             heoPrice:"",
-            maxAmount:10000,
-            donorsEarnPerDollar:1,
-            z:1,
-            x:20,
-            title:"Title of the campaign",
->>>>>>> css
-            description:"Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor.",
+            title:"",
+            description:"",
             raisedAmount:0,
-            tokensToBurn:0,
             percentRaised: "0%",
             mainImageURL: "",
             metaDataURL:"",
             mainImageFile:"",
-            reward:0,
             currencyAddress:"",
             currencyName:"",
             coinOptions: [],
@@ -90,25 +72,6 @@ class CreateCampaign2 extends React.Component {
                 })
             }
         }
-        if(name=="reward") {
-            if(value == 0) {
-                this.setState({z:0});
-                this.setState({tokensToBurn:0});
-            } else {
-                let Z = this.state.x/value;
-                this.setState({z:Z});
-                let toBurn = this.state.maxAmount/(Z * this.state.heoPrice);
-                this.setState({tokensToBurn:toBurn});
-            }
-        }
-        if(name == "maxAmount") {
-            if(this.state.reward == 0) {
-                this.setState({tokensToBurn:0});
-            } else if(this.state.heoPrice > 0) {
-                let toBurn = value/(this.state.z * this.state.heoPrice);
-                this.setState({tokensToBurn:toBurn});
-            }
-        }
     }
 
     fileSelected = e => {
@@ -134,8 +97,7 @@ class CreateCampaign2 extends React.Component {
         console.log("Creating campaign");
         var that = this;
         HEOCampaignFactory.methods.createCampaign(web3.utils.toWei(`${this.state.maxAmount}`),
-            web3.utils.toWei(`${this.state.tokensToBurn}`),
-            this.state.currencyAddress, this.state.metaDataURL).send({from:ACCOUNTS[0]}).on(
+            this.state.currencyAddress, this.state.metaDataURL, ACCOUNTS[0]).send({from:ACCOUNTS[0]}).on(
             'receipt', function(receipt) {
                 console.log("Received receipt from createCampaign transaction");
                 that.setState({showModal:true,
@@ -263,11 +225,11 @@ class CreateCampaign2 extends React.Component {
     render() {
         return (
             <div>
-                <Modal show={this.state.showModal} onHide={this.state.showModal} className='myModal' centered>
+                <Modal show={this.state.showError} onHide={this.state.showError} className='myModal' centered>
                     <Modal.Body><p className='errorIcon'>
                         {this.state.errorIcon == 'CheckCircle' && <CheckCircle style={{color:'#588157'}} />}
                         {this.state.errorIcon == 'ExclamationTriangle' && <ExclamationTriangle/>}
-                        {this.state.errorIcon == 'HourglassSplit' && <HourglassSplit style={{color: 'gold'}}/>}
+                        {this.state.errorIcon == 'HourglassSplit' && <HourglassSplit/>}
                         {this.state.errorIcon == 'XCircle' && <XCircle style={{color: '#E63C36'}}/>}
                         </p>
                         <p className='errorMessage'>{this.state.errorMessage}</p>
@@ -275,7 +237,7 @@ class CreateCampaign2 extends React.Component {
                         {!this.state.waitToClose &&
                         <Button className='myModalButton' 
                             style={{backgroundColor : this.state.modalButtonVariant, borderColor : this.state.modalButtonVariant}} 
-                            onClick={ () => {this.setState({showModal:false})}}>
+                            onClick={ () => {this.setState({showError:false})}}>
                             {this.state.modalButtonMessage}
                         </Button>
                         }
@@ -376,8 +338,6 @@ class CreateCampaign2 extends React.Component {
             var ethereum = window.ethereum;
             ACCOUNTS = await ethereum.request({method: 'eth_requestAccounts'});
             web3 = (await import("../remote/" + config.get("CHAIN") + "/web3")).default;
-            let X = await HEOGlobalParameters.methods.profitabilityCoefficient().call();
-            this.setState({x: X});
         } else {
             alert("Please install metamask");
         }
