@@ -28,14 +28,10 @@ class CreateCampaign2 extends React.Component {
             org:"",
             cn:"",
             vl:"",
-            donorsEarnPerDollar:1,
-            maxAmount:"10000",
-            donorsEarnPerDollar:1,
-            cn:"",
-            vl:"",
-            heoPrice:"",
             title:"",
-            description:"",
+            maxAmount:10000,
+            title:"",
+            description:"Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor.",
             raisedAmount:0,
             percentRaised: "0%",
             mainImageURL: "",
@@ -54,24 +50,7 @@ class CreateCampaign2 extends React.Component {
     handleChange = (e) => {
         const name = e.target.name
         const value = e.target.value;
-        this.setState({ [name]: value })
-        if(name == "currencyAddress") {
-            let currencyName = config.get("chainconfigs")[config.get("CHAIN")]["currencies"][value];
-            this.setState({currencyName:currencyName});
-            if(value) {
-                var that = this;
-                HEOPriceOracle.methods.getPrice(value).call((err, result) => {
-                    if(!err) {
-                        let heoPrice = web3.utils.fromWei(result);
-                        that.setState({heoPrice:heoPrice});
-                    } else {
-                        console.log(`Failed to fetch price of ${currencyName}`);
-                        console.log(err);
-                    }
-
-                })
-            }
-        }
+        this.setState({ [name] : value })
     }
 
     fileSelected = e => {
