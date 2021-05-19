@@ -225,11 +225,11 @@ class CreateCampaign2 extends React.Component {
     render() {
         return (
             <div>
-                <Modal show={this.state.showError} onHide={this.state.showError} className='myModal' centered>
+                <Modal show={this.state.showModal} onHide={this.state.showModal} className='myModal' centered>
                     <Modal.Body><p className='errorIcon'>
                         {this.state.errorIcon == 'CheckCircle' && <CheckCircle style={{color:'#588157'}} />}
                         {this.state.errorIcon == 'ExclamationTriangle' && <ExclamationTriangle/>}
-                        {this.state.errorIcon == 'HourglassSplit' && <HourglassSplit/>}
+                        {this.state.errorIcon == 'HourglassSplit' && <HourglassSplit style={{color: 'gold'}}/>}
                         {this.state.errorIcon == 'XCircle' && <XCircle style={{color: '#E63C36'}}/>}
                         </p>
                         <p className='errorMessage'>{this.state.errorMessage}</p>
@@ -237,7 +237,7 @@ class CreateCampaign2 extends React.Component {
                         {!this.state.waitToClose &&
                         <Button className='myModalButton' 
                             style={{backgroundColor : this.state.modalButtonVariant, borderColor : this.state.modalButtonVariant}} 
-                            onClick={ () => {this.setState({showError:false})}}>
+                            onClick={ () => {this.setState({showModal:false})}}>
                             {this.state.modalButtonMessage}
                         </Button>
                         }
