@@ -7,7 +7,7 @@ import config from "react-global-configuration";
 import uuid from 'react-uuid';
 import axios from 'axios';
 import { ChevronLeft, CheckCircle, ExclamationTriangle, HourglassSplit, XCircle } from 'react-bootstrap-icons';
-var HEOCampaignFactory, HEOGlobalParameters, HEOPriceOracle, ACCOUNTS, web3;
+var HEOCampaignFactory, ACCOUNTS, web3;
 
 class CreateCampaign2 extends React.Component {
     constructor(props) {
@@ -39,7 +39,6 @@ class CreateCampaign2 extends React.Component {
             mainImageURL: "",
             metaDataURL:"",
             mainImageFile:"",
-            reward:0,
             currencyAddress:"",
             currencyName:"",
             coinOptions: [],
@@ -324,7 +323,6 @@ class CreateCampaign2 extends React.Component {
             alert("Please install metamask");
         }
         
-    
         let options = (config.get("chainconfigs")[config.get("CHAIN")]["currencyOptions"]);
         this.setState({coinOptions : options, currencyAddress:options[0].value, currencyName:options[0].text});
         
