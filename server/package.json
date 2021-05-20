@@ -1,6 +1,9 @@
 {
   "name": "heo-server",
   "version": "1.0.0",
+  "engines": {
+    "node": "14.16.1"
+  },
   "description": "node js server for heo-web application",
   "main": "server.js",
   "scripts": {
