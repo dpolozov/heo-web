@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import countries from '../countries';
 import '../css/createCampaign.css';
 import {Container, Form, Col, Button, Image, Modal} from 'react-bootstrap';
@@ -9,6 +9,7 @@ import axios from 'axios';
 import { ChevronLeft, CheckCircle, ExclamationTriangle, HourglassSplit, XCircle } from 'react-bootstrap-icons';
 
 var HEOCampaignFactory, ACCOUNTS, web3;
+
 class CreateCampaign2 extends React.Component {
     constructor(props) {
         super(props);
@@ -42,16 +43,18 @@ class CreateCampaign2 extends React.Component {
             coinOptions: [],
             waitToClose: false
         };
+
     }
     
     handleTextArea = (e) => {
         this.setState({description:e.target.value});
     }
-    handleChange = (e) => {
-        const name = e.target.name
-        const value = e.target.value;
-        this.setState({ [name] : value })
-    }
+    handleChange = e => {
+        this.setState({ [e.target.name]: e.target.value });
+        if(e.target.name == "currencyAddress") {
+            this.setState({["currencyName"]: this.state.currencies[e.target.value]});
+        }
+    };
 
     fileSelected = e => {
         this.setState({mainImageFile:e.target.files[0], mainImageURL: URL.createObjectURL(e.target.files[0])});
@@ -267,16 +270,14 @@ class CreateCampaign2 extends React.Component {
                             </Form.Group>
                         </Form.Row>
                         <hr/>
-                        <div className='titles'> How much do you need? </div>
-                        <div className='subTitles'> Current Price of HEO token 1BSUD </div>
-                        <Form.Group>
-                            <Form.Label>How much BSUD do you need to raise?<span className='redAsterisk'>*</span></Form.Label>
-                            <Form.Control required type="number" className="createFormPlaceHolder"
-                                value={this.state.maxAmount} placeholder={this.state.maxAmount}
-                                name='maxAmount' onChange={this.handleChange}/>
-                        </Form.Group>  
-                        <hr/>
                         <div className='titles'> Campaign Details </div>
+                        <Form.Group>
+                            <Form.Label>How much {this.state.currencyName} do you need to raise?<span className='redAsterisk'>*</span></Form.Label>
+                            <Form.Control required type="number" className="createFormPlaceHolder"
+                                          value={this.state.maxAmount} placeholder={this.state.maxAmount}
+                                          name='maxAmount' onChange={this.handleChange}/>
+                        </Form.Group>
+                        <hr/>
                         <Form.Group>
                             <Form.Label>Select cover image</Form.Label>
                             <Form.File
@@ -321,7 +322,12 @@ class CreateCampaign2 extends React.Component {
             alert("Please install metamask");
         }
         let options = (config.get("chainconfigs")[config.get("CHAIN")]["currencyOptions"]);
-        this.setState({coinOptions : options, currencyAddress:options[0].value, currencyName:options[0].text});
+        let currencyOptions= (config.get("chainconfigs")[config.get("CHAIN")]["currencies"]);
+        this.setState({currencies: currencyOptions,
+            coinOptions: options,
+            currencyAddress: options[0].value,
+            currencyName:options[0].text}
+        );
     }
 }
 
