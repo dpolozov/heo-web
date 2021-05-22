@@ -59,7 +59,7 @@ async function doWork() {
             //get currency symbol
             var coinName;
             if(token == "0x0000000000000000000000000000000000000000") {
-
+                coinName = process.env.NATIVE_TOKEN_SYMBOL;
             } else {
                 console.log(`getting the name of coin at ${token}`);
                 let coinInstance = new web3.eth.Contract(
