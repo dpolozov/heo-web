@@ -91,18 +91,21 @@ async function doWork() {
     console.log("Updated new campaigns");
     console.log("Updating donations");
     let campaigns = await DB.collection("campaigns").find().toArray();
+    console.log(`Found ${campaigns.length} campaigns`);
     for(let i = 0; i < campaigns.length; i++) {
         let campaign = campaigns[i];
         var campaignInstance = new web3.eth.Contract(
             CAMPAIGN_ABI,
             campaign._id,
         );
+        console.log(`Checking campaign ${campaign._id}`);
         let amountRaised = await campaignInstance.methods.raisedAmount().call();
         if(web3.utils.fromWei(amountRaised) != campaign.raisedAmount) {
             console.log("Updating raised amount");
             await DB.collection("campaigns").findOneAndUpdate({ "_id" : campaign._id}, { "$set" : {"raisedAmount" : web3.utils.fromWei(amountRaised)}})
         }
     }
+    await CLIENT.close();
     console.log("Updated donations");
     console.log(`Worker is done`);
     setTimeout(doWork, 3000);
