@@ -172,22 +172,29 @@ body {
     #donateRow{
         width: 95%;
     }
-    #donateAmount{
-        width: 70px;
-    } 
-    #donateButton{
-        width: auto;
-    }
 }
 
 @media (max-width: 470px){   
     #donateAmount{
-        width: 70px;
+        min-width: 70px;
     } 
+    #videoRowContainer{
+        padding-left: 0;
+    }
 }
 
-@media (max-width: 391px){   
-    #donateButton{
-        margin-top: 10px;      
+@media (max-width: 391px){ 
+    #donateRow{
+        width:100%;
     } 
+    .mb-3.input-group{
+        display:inline-block;
+    }
+    #donateButton {
+        margin-top: 1rem;
+        border-radius: 4px;
+    }
+    #donateAmount{
+        text-align: center;
+    }
 }

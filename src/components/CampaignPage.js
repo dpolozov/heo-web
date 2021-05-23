@@ -2,7 +2,7 @@ import React, {lazy, useState, Component} from 'react';
 import config from "react-global-configuration";
 import axios from 'axios';
 import { Container, Row, Col, Card, ProgressBar, Button, Modal, Image, InputGroup, FormControl } from 'react-bootstrap';
-import { ChevronRight, Gift } from 'react-bootstrap-icons';
+import { ChevronRight, Gift, CheckCircle, ExclamationTriangle, HourglassSplit, XCircle } from 'react-bootstrap-icons';
 import ReactPlayer from 'react-player';
 import '../css/campaignPage.css';
 import { Trans } from 'react-i18next';
@@ -16,13 +16,14 @@ class CampaignPage extends Component {
         this.state = {
             donationAmount:"10",
             campaign:{},
-            modalMessage:"Please confirm the transaction in MetaMask",
-            showModal:false,
-            donationStatus:"",
             waitToClose:false,
-            donationStatusColor:"black",
-            modalButtonVariant:"",
             raisedAmount:0,
+            showModal: false,
+            modalMessage:"",
+            errorMessage:"",
+            errorIcon:"",
+            modalButtonMessage: "",
+            modalButtonVariant: "",
             
         };
     }
@@ -73,14 +74,21 @@ class CampaignPage extends Component {
         if (typeof window.ethereum !== 'undefined') {
             var ethereum = window.ethereum;
             this.setState({
-                donationStatus: "Processing",
-                waitToClose: true,
+                showModal: true, errorMessage: 'Processing...',
                 modalMessage: "Processing your Donation, please wait",
-                showModal: true,
-                donationStatusColor: "yellow",
+                errorIcon: 'HourglassSplit', modalButtonVariant: "gold", waitToClose: true
             });
             try {
                 var accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+                if(accounts[0] == this.state.campaign.beneficiaryId){
+                    this.setState({
+                        showModal: true, errorMessage: 'Transaction not available',
+                        modalMessage: 'Donating to yourself is not allowed',
+                        errorIcon: 'ExclamationTriangle', modalButtonMessage: 'CLOSE',
+                        modalButtonVariant: '#E63C36', waitToClose: false
+                    });
+                    return;
+                }
                 var toDonate = web3.utils.toWei(this.state.donationAmount);
                 var that = this;
                 //for native donations
@@ -90,18 +98,16 @@ class CampaignPage extends Component {
                             console.log("Received receipt from donation transaction");
                             that.updateRaisedAmount(accounts);
                             that.setState({
-                                donationStatus: "Complete!",
-                                waitToClose: false,
-                                modalMessage: "Thank you for your donation!",
-                                donationStatusColor: "green",
-                                modalButtonVariant: "success",
+                                showModal: true, errorMessage: 'Complete!',
+                                modalMessage: 'Thank you for your donation!',
+                                errorIcon: 'CheckCircle', modalButtonMessage: 'Close',
+                                modalButtonVariant: '#588157', waitToClose: false
                             });
                     }).on('error', function(error) {
                             that.setState({
-                                donationStatus: "Failed",
-                                waitToClose: false,
-                                donationStatusColor: "red",
-                                modalButtonVariant: "danger",
+                                showModal: true, errorMessage: 'Failed',
+                                errorIcon: 'XCircle', modalButtonMessage: 'CLOSE',
+                                modalButtonVariant: '#E63C36', waitToClose: false
                             });
                             console.log("donateNative transaction failed");
                             console.log(error);
@@ -125,19 +131,17 @@ class CampaignPage extends Component {
                                 console.log("Received receipt from donation transaction");
                                 that.updateRaisedAmount(accounts);
                                 that.setState({
-                                    donationStatus: "Complete!",
-                                    waitToClose: false,
-                                    modalMessage: "Thank you for your donation!",
-                                    donationStatusColor: "green",
-                                    modalButtonVariant: "success",
+                                    showModal: true, errorMessage: 'Complete!',
+                                    modalMessage: 'Thank you for your donation!',
+                                    errorIcon: 'CheckCircle', modalButtonMessage: 'Close',
+                                    modalButtonVariant: '#588157', waitToClose: false
                                 });
                             }
                         ).on('error', function(error) {
                             that.setState({
-                                donationStatus: "Failed",
-                                waitToClose: false,
-                                donationStatusColor: "red",
-                                modalButtonVariant: "danger",
+                                showModal: true, errorMessage: 'Failed',
+                                errorIcon: 'XCircle', modalButtonMessage: 'CLOSE',
+                                modalButtonVariant: '#E63C36', waitToClose: false
                             });
                             console.log("donateERC20 transaction failed");
                             console.log(error);
@@ -152,11 +156,9 @@ class CampaignPage extends Component {
                         that.setState({modalMessage:"Please confirm transaction in MetaMask."});
                     }).on('error', function(error) {
                         that.setState({
-                            donationStatus: "Failed!",
-                            waitToClose: false,
-                            modalMessage: "Transaction failed",
-                            donationStatusColor: "red",
-                            modalButtonVariant: "danger",
+                            showModal: true, errorMessage: 'Failed',
+                            errorIcon: 'XCircle', modalButtonMessage: 'CLOSE',
+                            modalButtonVariant: '#E63C36', waitToClose: false
                         });
                         console.log("Approval transaction failed");
                         console.log(error);
@@ -168,10 +170,9 @@ class CampaignPage extends Component {
             } catch (err) {
                 console.log(err);
                 this.setState({
-                    donationStatus: "Failed!",
-                    waitToClose: false,
-                    donationStatusColor: "red",
-                    modalButtonVariant: "danger",
+                    showModal: true, errorMessage: 'Failed',
+                    errorIcon: 'XCircle', modalButtonMessage: 'CLOSE',
+                    modalButtonVariant: '#E63C36', waitToClose: false,
                     modalMessage:"Failed to connect to blockchain network. If you are using a browser wallet like MetaMask, " +
                         "please make sure that it is configured for " + config.get("CHAIN_NAME")
                 });
@@ -184,24 +185,27 @@ class CampaignPage extends Component {
     render() {
         return (
             <div>
-                <Modal show={this.state.showModal} onHide={this.state.showModal}>
-                    <Modal.Header>
-                    <Modal.Title style={{backgroundColor: this.state.donationStatusColor}}>Donation {this.state.donationStatus}</Modal.Title>
-                    </Modal.Header>
-                    <Modal.Body>{this.state.modalMessage}</Modal.Body>
-                    <Modal.Footer>
-                    {!this.state.waitToClose &&
-                        <Button variant={this.state.modalButtonVariant} onClick={ () => {this.setState({showModal:false})}}>
-                            Close
+                <Modal show={this.state.showModal} onHide={this.state.showModal} className='myModal' centered>
+                    <Modal.Body><p className='errorIcon'>
+                        {this.state.errorIcon == 'CheckCircle' && <CheckCircle style={{color:'#588157'}} />}
+                        {this.state.errorIcon == 'ExclamationTriangle' && <ExclamationTriangle style={{color: '#E63C36'}}/>}
+                        {this.state.errorIcon == 'HourglassSplit' && <HourglassSplit style={{color: 'gold'}}/>}
+                        {this.state.errorIcon == 'XCircle' && <XCircle style={{color: '#E63C36'}}/>}
+                        </p>
+                        <p className='errorMessage'>{this.state.errorMessage}</p>
+                        <p className='modalMessage'>{this.state.modalMessage}</p>
+                        {!this.state.waitToClose &&
+                        <Button className='myModalButton' 
+                            style={{backgroundColor : this.state.modalButtonVariant, borderColor : this.state.modalButtonVariant}} 
+                            onClick={ () => {this.setState({showModal:false})}}>
+                            {this.state.modalButtonMessage}
                         </Button>
-                    }
-                    </Modal.Footer>
+                        }
+                    </Modal.Body>                
                 </Modal>
-                
                     <Container className='backToCampaignsDiv'>
                         <p className='backToCampaigns'>Help Each Other <ChevronRight id='backToCampaignsChevron'/> Campaign Details</p>
-                    </Container>
-                  
+                    </Container>                
                 <Container id='mainContainer'>
                     <Row id='topRow'>
                         <Col id='imgCol'>
@@ -236,7 +240,7 @@ class CampaignPage extends Component {
                         </Col>
                     </Row>
                     <Row id='videoRow'>
-                        <Container>
+                        <Container id='videoRowContainer'>
                             { this.state.campaign.videoLink && <ReactPlayer url={this.state.campaign.videoLink} id='videoPlayer' />}
                         </Container>
                     </Row>
