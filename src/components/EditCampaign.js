@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import countries from '../countries';
 import '../css/createCampaign.css';
 import {Container, Form, Col, Button, Image, Modal} from 'react-bootstrap';
@@ -6,17 +6,12 @@ import ReactPlayer from 'react-player';
 import config from "react-global-configuration";
 import uuid from 'react-uuid';
 import axios from 'axios';
-import { Trans } from 'react-i18next';
-import i18n from '../util/i18n';
-
 import { ChevronLeft, CheckCircle, ExclamationTriangle, HourglassSplit, XCircle } from 'react-bootstrap-icons';
-
 var HEOCampaignFactory, ACCOUNTS, web3;
 
-class CreateCampaign2 extends React.Component {
+class EditCampaign extends React.Component {
     constructor(props) {
         super(props);
-
         this.state = {
             showLoader:false,
             loaderMessage:"Please wait",
@@ -33,31 +28,22 @@ class CreateCampaign2 extends React.Component {
             cn:"",
             vl:"",
             title:"",
-            maxAmount:10000,
-            title:"",
-            description:"Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor.",
-            raisedAmount:0,
-            percentRaised: "0%",
+            description:"",
             mainImageURL: "",
             metaDataURL:"",
             mainImageFile:"",
-            currencyAddress:"",
-            currencyName:"",
-            coinOptions: [],
             waitToClose: false
         };
-
     }
     
     handleTextArea = (e) => {
         this.setState({description:e.target.value});
     }
-    handleChange = e => {
-        this.setState({ [e.target.name]: e.target.value });
-        if(e.target.name == "currencyAddress") {
-            this.setState({["currencyName"]: this.state.currencies[e.target.value]});
-        }
-    };
+    handleChange = (e) => {
+        const name = e.target.name
+        const value = e.target.value;
+        this.setState({ [name] : value })
+    }
 
     fileSelected = e => {
         this.setState({mainImageFile:e.target.files[0], mainImageURL: URL.createObjectURL(e.target.files[0])});
@@ -68,8 +54,8 @@ class CreateCampaign2 extends React.Component {
         var that = this;
         let imgID = uuid();
         this.uploadImageS3(that, imgID).then(() => {
-                that.uploadMetaS3(that, imgID).then(() => {
-                    that.createCampaign(that);
+            that.uploadMetaS3(that, imgID).then(() => {
+                that.updateCampaign(that);
             }).catch((error) => {
                 console.log(error);
             });
@@ -78,38 +64,41 @@ class CreateCampaign2 extends React.Component {
         });
     }
 
-    async createCampaign(that) {
+    async updateCampaign(that) {
         console.log("Creating campaign");
         var that = this;
+
+        /*
         HEOCampaignFactory.methods.createCampaign(web3.utils.toWei(`${this.state.maxAmount}`),
             this.state.currencyAddress, this.state.metaDataURL, ACCOUNTS[0]).send({from:ACCOUNTS[0]}).on(
             'receipt', function(receipt) {
                 console.log("Received receipt from createCampaign transaction");
                 that.setState({showModal:true,
-                    modalMessage: i18n.t('campaignCreateSuccess'),
-                    errorMessage: i18n.t('success'), errorIcon: 'CheckCircle', modalButtonMessage: i18n.t('returnHome'),
+                    modalMessage:"Congratulations! Your fundraiser is live on the blockchain.",
+                    errorMessage:'Success!', errorIcon:'CheckCircle', modalButtonMessage: "RETURN TO HOME",
                     modalButtonVariant: "#588157", waitToClose: false });
             }).on('error', function(error) {
-                that.setState({showModal: true,
-                    errorMessage: i18n.t('blockChainTransactionFailed'),
-                    modalMessage: i18n.t('checkMetamask'),
-                    errorIcon:'XCircle', modalButtonMessage: i18n.t('returnHome'),
+                that.setState({showModal:true,
+                    errorMessage:'Blockchain transaction has failed.',
+                    modalMessage:'Please check MetaMask for more details.',
+                    errorIcon:'XCircle', modalButtonMessage: "RETURN TO HOME",
                     modalButtonVariant: "#E63C36", waitToClose: false});
                 console.log("createCampaign transaction failed");
                 console.log(error);
             }).on('transactionHash', function(transactionHash){
-                that.setState({showModal:true, errorMessage: i18n.t('processingWait'),
-                    modalMessage: i18n.t('waitingForNetowork'), errorIcon:'HourglassSplit',
+                that.setState({showModal:true, errorMessage:'Processing...',
+                    modalMessage:'Waiting for the network to confirm transaction.', errorIcon:'HourglassSplit',
                     modalButtonVariant: "gold", waitToClose: true});
             });
-        that.setState({showLoader:true, loaderMessage: i18n.t('confirmMetamask')})
+        that.setState({showLoader:true, loaderMessage:"Please confirm transaction in MetaMask."})
+        */
     }
 
     //vl - video link(youtube)
     async uploadMetaS3(that, metaID) {
         console.log(`Generating metadata file ${metaID}`);
-        that.setState({showModal:true, errorMessage: i18n.t('processingWait'),
-            modalMessage: i18n.t('uploadingMetaWait'), errorIcon:'HourglassSplit',
+        that.setState({showModal:true, errorMessage:'Processing...',
+            modalMessage:'Please wait. Uploading metadata.', errorIcon:'HourglassSplit',
             modalButtonVariant: "gold", waitToClose: true});
         let data = new Blob([JSON.stringify({title:that.state.title,
             description:that.state.description,
@@ -141,22 +130,22 @@ class CreateCampaign2 extends React.Component {
             if (err.response) { 
                 console.log('response error in uploading meta data- ' + err.response.status);
                 that.setState({showModal:true,
-                    errorMessage: i18n.t('metaUploadFailed'),
-                    modalMessage: i18n.t('technicalDifficulties'),
-                    errorIcon:'XCircle', modalButtonMessage: i18n.t('returnHome'),
+                    errorMessage:'Failed to upload compaign informaion.',
+                    modalMessage:'We are having technical difficulties',
+                    errorIcon:'XCircle', modalButtonMessage: "RETURN TO HOME",
                     modalButtonVariant: "#E63C36", waitToClose: false});
             } else if (err.request) { 
                 console.log('No response in uploading meta data' + err.message);
                 that.setState({showModal:true,
-                    errorMessage: i18n.t('metaUploadFailed'),
-                    modalMessage: i18n.t('checkYourConnection'),
-                    errorIcon:'XCircle', modalButtonMessage: i18n.t('returnHome'),
+                    errorMessage:'Failed to upload compaign informaion.',
+                    modalMessage:'Please check your connection.',
+                    errorIcon:'XCircle', modalButtonMessage: "RETURN TO HOME",
                     modalButtonVariant: "#E63C36", waitToClose: false}); 
             } else { 
                 console.log('error uploading campaign information ' + err.message);
                 that.setState({showModal:true,
-                    errorMessage: i18n.t('metaUploadFailed'),
-                    errorIcon:'XCircle', modalButtonMessage: i18n.t('returnHome'),
+                    errorMessage:'Failed to upload compaign informaion.',
+                    errorIcon:'XCircle', modalButtonMessage: "RETURN TO HOME",
                     modalButtonVariant: "#E63C36", waitToClose: false});
             }           
             throw new Error(`Failed to upload compaign information.`); 
@@ -165,8 +154,8 @@ class CreateCampaign2 extends React.Component {
 
     async uploadImageS3 (that, imgID) {
         console.log(`Uploading ${this.state.mainImageFile.name} of type ${this.state.mainImageFile.type} to S3`);
-        that.setState({showModal:true, errorMessage: i18n.t('processingWait'),
-        modalMessage: i18n.t('uploadingImageWait'), errorIcon:'HourglassSplit',
+        that.setState({showModal:true, errorMessage:'Processing...',
+        modalMessage:'Please wait. Uploading image file.', errorIcon:'HourglassSplit',
         modalButtonVariant: "gold", waitToClose: true});
         let fileType = this.state.mainImageFile.type.split("/")[1];
         let newName = `${imgID}.${fileType}`;
@@ -185,22 +174,22 @@ class CreateCampaign2 extends React.Component {
             if (err.response) { 
                 console.log('response error in uploading main image- ' + err.response.status);
                 that.setState({showModal:true,
-                    errorMessage: i18n.t('imageUploadFailed'),
-                    modalMessage: i18n.t('technicalDifficulties'),
-                    errorIcon:'XCircle', modalButtonMessage: i18n.t('returnHome'),
+                    errorMessage:'Failed to upload image file.',
+                    modalMessage:'We are having technical difficulties',
+                    errorIcon:'XCircle', modalButtonMessage: "RETURN TO HOME",
                     modalButtonVariant: "#E63C36", waitToClose: false});
             } else if (err.request) { 
                 console.log('No response in uploading main image' + err.message);
                 that.setState({showModal:true,
-                    errorMessage: i18n.t('imageUploadFailed'),
-                    modalMessage: i18n.t('checkYourConnection'),
-                    errorIcon:'XCircle', modalButtonMessage: i18n.t('returnHome'),
+                    errorMessage:'Failed to upload image file.',
+                    modalMessage:'Please check your connection.',
+                    errorIcon:'XCircle', modalButtonMessage: "RETURN TO HOME",
                     modalButtonVariant: "#E63C36", waitToClose: false}); 
             } else { 
                 console.log('error uploading image ' + err.message);
                 that.setState({showModal:true,
-                    errorMessage: i18n.t('imageUploadFailed'),
-                    errorIcon:'XCircle', modalButtonMessage: i18n.t('returnHome'),
+                    errorMessage:'Failed to upload image file.',
+                    errorIcon:'XCircle', modalButtonMessage: "RETURN TO HOME",
                     modalButtonVariant: "#E63C36", waitToClose: false});
             }           
             throw new Error(`Failed to upload image file.`); 
@@ -229,32 +218,32 @@ class CreateCampaign2 extends React.Component {
                     </Modal.Body>                
                 </Modal>
                 <Container className='backToCampaignsDiv'>
-                        <p className='backToCampaigns'><ChevronLeft id='createCampaignChevron'/> <Trans i18nKey='backToCampaigns'/></p>
+                        <p className='backToCampaigns'><ChevronLeft id='createCampaignChevron'/> Back To Campaigns</p>
                 </Container>
                 <Container id='mainContainer'>
                     <Form onSubmit={this.handleClick}>
-                        <div className='titles'> <Trans i18nKey='aboutYou'/> </div>
+                        <div className='titles'> About You </div>
                         <Form.Row>
                             <Form.Group as={Col} className='name'>                           
-                                <Form.Label><Trans i18nKey='fn'/><span className='redAsterisk'>*</span></Form.Label>
-                                <Form.Control required type="text" className="createFormPlaceHolder" placeholder={i18n.t('fn')}
+                                <Form.Label>First name<span className='redAsterisk'>*</span></Form.Label>
+                                <Form.Control required type="text" className="createFormPlaceHolder" placeholder="First name" 
                                     name='fn' value={this.state.fn} onChange={this.handleChange} 
                                 />
                             </Form.Group>
                             <Form.Group as={Col} className='name'>                           
-                                <Form.Label><Trans i18nKey='ln'/><span className='redAsterisk'>*</span></Form.Label>
-                                <Form.Control required type="text" className="createFormPlaceHolder" placeholder={i18n.t('ln')}name='ln'
+                                <Form.Label>Last name<span className='redAsterisk'>*</span></Form.Label>
+                                <Form.Control required type="text" className="createFormPlaceHolder" placeholder="Last name" name='ln'
                                             value={this.state.ln} onChange={this.handleChange} />
                             </Form.Group>
                         </Form.Row>                       
                         <Form.Group >
-                            <Form.Label><Trans i18nKey='organization'/> <span className="optional">(optional)</span></Form.Label>
-                            <Form.Control type="text" className="createFormPlaceHolder" placeholder={i18n.t('on')}
+                            <Form.Label>Organizaion <span className="optional">(optional)</span></Form.Label>
+                            <Form.Control type="text" className="createFormPlaceHolder" placeholder="Organization name" 
                                 name='org' value={this.state.org} onChange={this.handleChange} />
                         </Form.Group>
                         <Form.Row>
                             <Form.Group as={Col}>
-                                <Form.Label><Trans i18nKey='selectConuntry'/></Form.Label>
+                                <Form.Label>Select your country</Form.Label>
                                 <Form.Control as="select" name='cn' value={this.state.cn} onChange={this.handleChange} >
                                 {countries.map( (data)=> 
                                     <option value={data.value}>{data.text}</option>
@@ -262,7 +251,7 @@ class CreateCampaign2 extends React.Component {
                                 </Form.Control>
                             </Form.Group>
                             <Form.Group as={Col}>
-                                <Form.Label><Trans i18nKey='selectCoin'/></Form.Label>
+                                <Form.Label>Select coin</Form.Label>
                                 <Form.Control as="select" name='currencyAddress' 
                                     value={this.state.currencyAddress} onChange={this.handleChange}>
                                     {this.state.coinOptions.map( (data)=>
@@ -272,16 +261,18 @@ class CreateCampaign2 extends React.Component {
                             </Form.Group>
                         </Form.Row>
                         <hr/>
-                        <div className='titles'> <Trans i18nKey='campaignDetails'/></div>
+                        <div className='titles'> How much do you need? </div>
+                        <div className='subTitles'> Current Price of HEO token 1BSUD </div>
                         <Form.Group>
-                            <Form.Label>{i18n.t('howMuchYouNeed', { currencyName: this.state.currencyName })}<span className='redAsterisk'>*</span></Form.Label>
+                            <Form.Label>How much BSUD do you need to raise?<span className='redAsterisk'>*</span></Form.Label>
                             <Form.Control required type="number" className="createFormPlaceHolder"
-                                          value={this.state.maxAmount} placeholder={this.state.maxAmount}
-                                          name='maxAmount' onChange={this.handleChange}/>
-                        </Form.Group>
+                                value={this.state.maxAmount} placeholder={this.state.maxAmount}
+                                name='maxAmount' onChange={this.handleChange}/>
+                        </Form.Group>  
                         <hr/>
+                        <div className='titles'> Campaign Details </div>
                         <Form.Group>
-                            <Form.Label><Trans i18nKey='selectCoverImage'/></Form.Label>
+                            <Form.Label>Select cover image</Form.Label>
                             <Form.File
                                 name='imageFile' className="position-relative" required
                                 id="campaignImgInput" accept='.jpg,.png,.jpeg,.gif' 
@@ -290,23 +281,23 @@ class CreateCampaign2 extends React.Component {
                         </Form.Group>
                         <Image id='createCampaignImg' src={this.state.mainImageURL}/>
                         <Form.Group>
-                            <Form.Label><Trans i18nKey='promoVideo'/> <span className='optional'>(optional)</span></Form.Label>
-                            <Form.Control type="text" className="createFormPlaceHolder" placeholder={i18n.t('linkToYouTube')}
+                            <Form.Label>Promotional Video <span className='optional'>(optional)</span></Form.Label>
+                            <Form.Control type="text" className="createFormPlaceHolder" placeholder="Link to YouTube Video"
                                 name='vl' value={this.state.vl} onChange={this.handleChange}/>
                         </Form.Group>
                         { this.state.vl != "" && <ReactPlayer url={this.state.vl} id='createCampaignVideoPlayer' />}
                         <Form.Group>
-                            <Form.Label><Trans i18nKey='title'/><span className='redAsterisk'>*</span></Form.Label>
-                            <Form.Control required type="text" className="createFormPlaceHolder" placeholder={i18n.t('campaignTitle')}
+                            <Form.Label>Title<span className='redAsterisk'>*</span></Form.Label>
+                            <Form.Control required type="text" className="createFormPlaceHolder" placeholder="Title of the campaign"
                                 name='title' value={this.state.title} onChange={this.handleChange}/>
                         </Form.Group>
                         <Form.Group>
-                            <Form.Label><Trans i18nKey='campaignDescription'/></Form.Label>
-                            <Form.Control as="textarea" rows={5} className="createFormPlaceHolder" placeholder={i18n.t('descriptionOfCampaign')}
+                            <Form.Label>Campaign description</Form.Label>
+                            <Form.Control as="textarea" rows={5} className="createFormPlaceHolder" placeholder="Campaign description"
                                 name='description' value={this.state.description} onChange={this.handleTextArea} />
                         </Form.Group>
                         <Button type="submit" id='createCampaignBtn' name='ff3'>
-                            {i18n.t('createCampaignBtn')}
+                            CREATE CAMPAIGN
                         </Button>
                     </Form>
                 </Container>
@@ -323,15 +314,12 @@ class CreateCampaign2 extends React.Component {
         } else {
             alert("Please install metamask");
         }
+        
         let options = (config.get("chainconfigs")[config.get("CHAIN")]["currencyOptions"]);
-        let currencyOptions= (config.get("chainconfigs")[config.get("CHAIN")]["currencies"]);
-        this.setState({currencies: currencyOptions,
-            coinOptions: options,
-            currencyAddress: options[0].value,
-            currencyName:options[0].text}
-        );
+        this.setState({coinOptions : options, currencyAddress:options[0].value, currencyName:options[0].text});
+        
     }
 }
 
 
-export default CreateCampaign2;
+export default EditCampaign;
