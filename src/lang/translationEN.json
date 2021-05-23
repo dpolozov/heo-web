@@ -32,6 +32,7 @@
     "uploadingImageWait": "Please wait. Uploading image file.",
     "imageUploadFailed": "Failed to upload image file.",
     "backToCampaigns": "Back To Campaigns",
+    "backToMyCampaigns": "Back To My Campaigns",
     "fn": "First name",
     "ln": "Last name",
     "on": "Organization name",
@@ -47,5 +48,11 @@
     "campaignTitle": "Title of the campaign",
     "descriptionOfCampaign": "Description of the campaign",
     "campaignDescription": "Campaign description",
-    "createCampaignBtn": "CREATE CAMPAIGN"
+    "createCampaignBtn": "CREATE CAMPAIGN",
+    "noUserCampaigns1": "You did not create any campaigns yet. If you would like to create a campaign, please fill out this ",
+    "noUserCampaigns2": " to be granted permission to fundraise on HEO Platform.",
+    "saveCampaignBtn" : "SAVE CAMPAIGN",
+    "complete" : "Complete!",
+    "updateSuccessfull" : "Updated Campaign information successfully",
+    "closeBtn" : "CLOSE"
 }

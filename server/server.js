@@ -5,6 +5,7 @@ const FILE_UPLOAD = require('express-fileupload');
 const CORS = require('cors');
 const AXIOS = require('axios');
 const { MongoClient } = require('mongodb');
+const { default: axios } = require('axios');
 const PORT = process.env.PORT || 5000;
 
 require('dotenv').config({path : PATH.resolve(process.cwd(), '.env')});
@@ -42,10 +43,23 @@ APP.post('/api/uploadimage', (req,res) => {
     S3.upload(PARAMS, (error, data) => {
         if(error) {
             console.log(error);
+            res.sendStatus(500);
         } else {
             res.send(data.Location);
         }
     });
+});
+
+APP.post('/api/updateCampaignDB', (req, res) => {   
+    const DB = CLIENT.db(DBNAME);
+    DB.collection('campaigns')
+    .updateOne({'_id': req.body.mydata.address}, {$set: req.body.mydata.dataToUpdate}, (err, result) => {
+        if(err){
+            res.sendStatus(500);
+            console.log(err);
+        }
+        res.send('success');
+    });     
 });
 
 APP.post('/api/campaigns/sendToDB', (req, res) => {
@@ -121,10 +135,16 @@ APP.post('/api/uploadmeta', (req,res) => {
     S3.upload(PARAMS, (error, data) => {
         if(error) {
             console.log(error);
+            res.sendStatus(500);
         } else {
             res.send(data.Location);
         }
     });
+});
+
+APP.post('/api/getMetaData', async (req,res) => {
+    let metaData = await axios.get(req.body.metaUrl).catch(e => {console.log(e)});
+    res.send(JSON.stringify(metaData.data));
 });
 
 APP.get('/api/env', (req,res) => {
@@ -134,6 +154,7 @@ APP.get('/api/env', (req,res) => {
             REACT_APP_CHAIN_NAME: process.env.REACT_APP_CHAIN_NAME
         });
 });
+
 
 // Handles any requests that don't match the ones above.
 // All other routing except paths defined above is done by React in the UI
