@@ -32,6 +32,7 @@
     "uploadingImageWait": "Пожалуйста подождите. Загружаем обложку.",
     "imageUploadFailed": "Не удалось загрузить обложку.",
     "backToCampaigns": "Назад к кампаниям",
+    "backToMyCampaigns": "Назад к моим кампаниям",
     "fn": "Ваше имя",
     "ln": "Ваша фамилия",
     "on": "Название вашей организации",
@@ -47,5 +48,11 @@
     "campaignTitle": "Название вашей кампании",
     "descriptionOfCampaign": "Описание кампании",
     "campaignDescription": "Описание кампании",
-    "createCampaignBtn": "СОЗДАТЬ КАМПАНИЮ"
+    "createCampaignBtn": "СОЗДАТЬ КАМПАНИЮ",
+    "noUserCampaigns1": "You did not create any campaigns yet. If you would like to create a campaign, please fill out this ",
+    "noUserCampaigns2": " to be granted permission to fundraise on HEO Platform.",
+    "saveCampaignBtn" : "SAVE CAMPAIGN",
+    "complete" : "Complete!",
+    "updateSuccessfull" : "Updated Campaign information successfully",
+    "closeBtn" : "CLOSE"
 }

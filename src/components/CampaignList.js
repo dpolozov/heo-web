@@ -15,18 +15,15 @@ class CampaignList extends Component {
             campaigns: [],
             showError:false,
             errorMessage:"",
-            lang:'',
-            
+            lang:'',          
         };
-
-        console.log(this)
     }
 
     async componentDidMount() {
         this.setState({
             campaigns : (await this.getCampaigns()),
         });
-        
+        console.log(this.state.campaigns);
     }
 
     async getCampaigns(){

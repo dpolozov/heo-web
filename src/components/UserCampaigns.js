@@ -22,8 +22,6 @@ class UserCampaigns extends Component {
     }
 
     async componentDidMount() {
-        console.log('inside compont')
-
         if (typeof window.ethereum !== 'undefined') {
             var ethereum = window.ethereum;
             ACCOUNTS = await ethereum.request({method: 'eth_requestAccounts'});
@@ -43,7 +41,6 @@ class UserCampaigns extends Component {
         let data = {accounts : ACCOUNTS}
         await axios.post('/api/campaigns/loadUserCampaigns', data, {headers: {"Content-Type": "application/json"}})
         .then(res => {
-            console.log(res.data);
             campaigns = res.data;
         }).catch(err => {
             if (err.response) { 
@@ -64,6 +61,15 @@ class UserCampaigns extends Component {
     render() {
         return (
             <div> 
+                <Container>
+                    {this.state.campaigns.length == 0 && 
+                        <h1>
+                            <Trans i18nKey='noUserCampaigns1'/>
+                            <a id='formLink' href='https://docs.google.com/forms/d/e/1FAIpQLSdTo_igaNjF-1E51JmsjJgILv68RN2v5pisTcqTLvZvuUvLDQ/viewform'>form</a>
+                            <Trans i18nKey='noUserCampaigns2'/>
+                        </h1>                       
+                    }
+                </Container>
                 <Modal show={this.state.showError} >
                     <Modal.Header closeButton>
                     <Modal.Title>Failed to connect to network.</Modal.Title>
@@ -95,9 +101,8 @@ class UserCampaigns extends Component {
                                                 </Card.Body>
                                             </Row>
                                             <Row id='buttonsRow'>
-                                                <Col className='buttonCol'><div id='acceptingBtn' className='cardButtons'><p><Trans i18nKey='accepting'/></p><p id='coinName'>{item.coinName}</p></div></Col>
-                                                <Col className='buttonCol'><div id='rewardsBtn' className='cardButtons'><p><Trans i18nKey='reward'/> {item.reward}</p></div></Col>
-                                                <Col className='buttonCol'><Button id='editBtn' block>EDIT</Button></Col>
+                                                <Col className='buttonCol'><div id='rewardsBtn' className='cardButtons'><p><Trans i18nKey='reward'/> {item.reward}</p></div></Col>                                                  
+                                                <Col className='buttonCol'><Link to={'/editCampaign/' + item._id} id='cardLink'><Button id='editBtn' block>EDIT</Button></Link></Col>
                                             </Row> 
                                         </Col>
                                     </Row>
