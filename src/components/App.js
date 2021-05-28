@@ -91,7 +91,6 @@ class App extends Component {
                                 <Link className='mainNavText' to="/"><Trans i18nKey='browse'/></Link>
                                 <Link className='mainNavText' to="/new"><Trans i18nKey='startFundraiser'/></Link>
                                 <Link className='mainNavText' to="/myCampaigns"><Trans i18nKey='myFundraisers'/></Link>
-                                <Link className='mainNavText' to="/rewards"><Trans i18nKey='rewards'/></Link>
                                 <Nav.Link className='mainNavText' as='a' target='_blank' href='https://heo.finance'><Trans i18nKey='about'/></Nav.Link>                            </Nav>
                             <Form inline id='mainNavSearch'>
                                     <Search id='searchIcon'/>
