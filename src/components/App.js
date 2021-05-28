@@ -74,8 +74,7 @@ class App extends Component {
                         </Navbar>
                     </div>
                     <div id="mainNavContainer">
-                    <Navbar expand="lg" id="mainNav" fixed="top">
-                        <Container>
+                    <Navbar collapseOnSelect expand="lg" id="mainNav" fixed="top">
                         <Navbar.Brand href="/">
                                     <img
                                         src={logo}
@@ -88,16 +87,12 @@ class App extends Component {
                         <Navbar.Toggle aria-controls="basic-navbar-nav" />
                         <Navbar.Collapse id="basic-navbar-nav">
                             <Nav className="mr-auto" bg="light">
-                                <Link className='mainNavText' to="/"><Trans i18nKey='browse'/></Link>
-                                <Link className='mainNavText' to="/new"><Trans i18nKey='startFundraiser'/></Link>
-                                <Link className='mainNavText' to="/myCampaigns"><Trans i18nKey='myFundraisers'/></Link>
-                                <Nav.Link className='mainNavText' as='a' target='_blank' href='https://heo.finance'><Trans i18nKey='about'/></Nav.Link>                            </Nav>
-                            <Form inline id='mainNavSearch'>
-                                    <Search id='searchIcon'/>
-                                    <FormControl type="text" placeholder={i18n.t('find')} id="navSearchField" />
-                            </Form>
+                                <Nav.Link className='mainNavText' href="/"><Trans i18nKey='browse'/></Nav.Link>
+                                <Nav.Link className='mainNavText' href="/new"><Trans i18nKey='startFundraiser'/></Nav.Link>
+                                <Nav.Link className='mainNavText' href="/myCampaigns"><Trans i18nKey='myFundraisers'/></Nav.Link>
+                                <Nav.Link className='mainNavText' as='a' target='_blank' href='https://heo.finance'><Trans i18nKey='about'/></Nav.Link>
+                            </Nav>
                         </Navbar.Collapse>
-                        </Container>
                     </Navbar>                              
                     </div>
                     <Container  style={{ marginTop: '7em' }}>
