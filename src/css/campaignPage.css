@@ -2,6 +2,10 @@ body {
     margin-top: 85px !important;
 }
 
+.backToCampaignsLink {
+    color: #3F5663;
+}
+
 .backToCampaignsDiv{
     margin-top: -50px;
     margin-left: -20px;

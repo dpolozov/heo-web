@@ -2,11 +2,12 @@ import React, {lazy, useState, Component} from 'react';
 import config from "react-global-configuration";
 import axios from 'axios';
 import { Container, Row, Col, Card, ProgressBar, Button, Modal, Image, InputGroup, FormControl } from 'react-bootstrap';
-import { ChevronRight, Gift, CheckCircle, ExclamationTriangle, HourglassSplit, XCircle } from 'react-bootstrap-icons';
+import { ChevronLeft, Gift, CheckCircle, ExclamationTriangle, HourglassSplit, XCircle } from 'react-bootstrap-icons';
 import ReactPlayer from 'react-player';
-import '../css/campaignPage.css';
+import { Link } from "react-router-dom";
 import { Trans } from 'react-i18next';
 import i18n from '../util/i18n';
+import '../css/campaignPage.css';
 
 var HEOCampaign, ERC20Coin, web3;
 
@@ -203,9 +204,9 @@ class CampaignPage extends Component {
                         }
                     </Modal.Body>                
                 </Modal>
-                    <Container className='backToCampaignsDiv'>
-                        <p className='backToCampaigns'>Help Each Other <ChevronRight id='backToCampaignsChevron'/><Trans i18nKey='campaignDetails'/></p>
-                    </Container>                
+                <Container className='backToCampaignsDiv'>
+                    <p className='backToCampaigns'><Link class={"backToCampaignsLink"} to="/"><ChevronLeft id='backToCampaignsChevron'/><Trans i18nKey='backToCampaigns'/></Link></p>
+                </Container>
                 <Container id='mainContainer'>
                     <Row id='topRow'>
                         <Col id='imgCol'>

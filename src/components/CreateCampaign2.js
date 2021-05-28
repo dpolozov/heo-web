@@ -4,6 +4,7 @@ import '../css/createCampaign.css';
 import {Container, Form, Col, Button, Image, Modal} from 'react-bootstrap';
 import ReactPlayer from 'react-player';
 import config from "react-global-configuration";
+import { Link } from "react-router-dom";
 import uuid from 'react-uuid';
 import axios from 'axios';
 import { Trans } from 'react-i18next';
@@ -229,7 +230,7 @@ class CreateCampaign2 extends React.Component {
                     </Modal.Body>                
                 </Modal>
                 <Container className='backToCampaignsDiv'>
-                        <p className='backToCampaigns'><ChevronLeft id='createCampaignChevron'/> <Trans i18nKey='backToCampaigns'/></p>
+                    <p className='backToCampaigns'><Link class={"backToCampaignsLink"} to="/"><ChevronLeft id='backToCampaignsChevron'/> <Trans i18nKey='backToCampaigns'/></Link></p>
                 </Container>
                 <Container id='mainContainer'>
                     <Form onSubmit={this.handleClick}>
