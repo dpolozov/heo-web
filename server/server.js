@@ -6,6 +6,10 @@ const CORS = require('cors');
 const AXIOS = require('axios');
 const { MongoClient } = require('mongodb');
 const { default: axios } = require('axios');
+const jwt = require('express-jwt');
+const jsonwebtoken = require('jsonwebtoken');
+const cookieParser = require('cookie-parser')
+const ethereumutil = require("ethereumjs-util");
 const PORT = process.env.PORT || 5000;
 
 require('dotenv').config({path : PATH.resolve(process.cwd(), '.env')});
@@ -33,21 +37,27 @@ const S3 = new AWS.S3({
     secretAccessKey: process.env.SERVER_APP_ACCESS_KEY
 });
 
+APP.use(cookieParser());
+APP.use(jwt({ secret: process.env.JWT_SECRET, credentialsRequired:false, getToken: req => req.cookies.authToken, algorithms: ['HS256'] }));
 APP.post('/api/uploadimage', (req,res) => {
-    const PARAMS = {
-        Bucket: process.env.SERVER_APP_BUCKET_NAME,
-        Key: process.env.SERVER_APP_IMG_DIR_NAME + '/' + req.files.myFile.name,
-        Body: req.files.myFile.data
-    }
-
-    S3.upload(PARAMS, (error, data) => {
-        if(error) {
-            console.log(error);
-            res.sendStatus(500);
-        } else {
-            res.send(data.Location);
+    if(req.user && req.user.address) {
+        const PARAMS = {
+            Bucket: process.env.SERVER_APP_BUCKET_NAME,
+            Key: process.env.SERVER_APP_IMG_DIR_NAME + '/' + req.files.myFile.name,
+            Body: req.files.myFile.data
         }
-    });
+
+        S3.upload(PARAMS, (error, data) => {
+            if (error) {
+                console.log(error);
+                res.sendStatus(500);
+            } else {
+                res.send(data.Location);
+            }
+        });
+    } else {
+        res.sendStatus(401);
+    }
 });
 
 APP.post('/api/updateCampaignDB', (req, res) => {   
@@ -116,30 +126,43 @@ APP.post('/api/campaign/load', async (req, res) => {
     })
 })*/
 
-APP.post('/api/campaigns/loadUserCampaigns', (req, res) => {
-    const DB = CLIENT.db(DBNAME);
-    DB.collection("campaigns").find({"beneficiaryId" : {$in: req.body.accounts}}).toArray(function(err, result) {
-        if (err) throw err;
-        res.send(result);
-      });
+APP.post('/api/campaigns/loadUserCampaigns',
+    (req, res) => {
+    if(req.user && req.user.address) {
+        const DB = CLIENT.db(DBNAME);
+        DB.collection("campaigns").find({"beneficiaryId" : {$eq: req.user.address}}).toArray(function(err, result) {
+            if (err) {
+                console.log(err);
+                res.sendStatus(500);
+            } else {
+                res.send(result);
+            }
+        });
+    } else {
+        res.sendStatus(401);
+    }
 })
 
 APP.post('/api/uploadmeta', (req,res) => {
-    const PARAMS = {
-        Bucket: process.env.SERVER_APP_BUCKET_NAME,
-        Key: process.env.SERVER_APP_META_DIR_NAME + '/' + req.files.myFile.name,
-        ContentType: 'application/json',
-        Body: req.files.myFile.data,
-    }
-
-    S3.upload(PARAMS, (error, data) => {
-        if(error) {
-            console.log(error);
-            res.sendStatus(500);
-        } else {
-            res.send(data.Location);
+    if(req.user && req.user.address) {
+        const PARAMS = {
+            Bucket: process.env.SERVER_APP_BUCKET_NAME,
+            Key: process.env.SERVER_APP_META_DIR_NAME + '/' + req.files.myFile.name,
+            ContentType: 'application/json',
+            Body: req.files.myFile.data,
         }
-    });
+
+        S3.upload(PARAMS, (error, data) => {
+            if (error) {
+                console.log(error);
+                res.sendStatus(500);
+            } else {
+                res.send(data.Location);
+            }
+        });
+    } else {
+        res.sendStatus(401);
+    }
 });
 
 APP.post('/api/getMetaData', async (req,res) => {
@@ -153,6 +176,47 @@ APP.get('/api/env', (req,res) => {
             REACT_APP_CHAIN_ID: process.env.REACT_APP_CHAIN_ID,
             REACT_APP_CHAIN_NAME: process.env.REACT_APP_CHAIN_NAME
         });
+});
+
+APP.get('/api/auth/msg', (req, res) => {
+    let ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1';
+    res.json({dataToSign:`My IP address is ${ip} and today is ${(new Date()).toDateString()}`});
+});
+
+APP.post('/api/auth/jwt', async(req, res) => {
+    //extract Address from signature
+    try {
+        let ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1';
+        let dataToSign = `My IP address is ${ip} and today is ${(new Date()).toDateString()}`;
+        const {v, r, s} = ethereumutil.fromRpcSig(req.body.signature);
+        let signedData = ethereumutil.keccak("\x19Ethereum Signed Message:\n" + dataToSign.length + dataToSign);
+        const pubKey = ethereumutil.ecrecover(signedData, v, r, s);
+        const addrBuf = ethereumutil.pubToAddress(pubKey);
+        const addr = ethereumutil.bufferToHex(addrBuf);
+        if(addr != req.body.addr) {
+            console.log(`Error: decoded address ${addr} is different from user address ${req.body.addr}`);
+            res.sendStatus(401);
+        } else {
+            let token = jsonwebtoken.sign({ address:addr }, process.env.JWT_SECRET, { expiresIn: '7d' });
+            console.log(`JWT token ${token}`);
+            res.cookie('authToken', token, { httpOnly: true }).send({sucess:true});
+        }
+    } catch (err) {
+        console.log(err);
+        res.sendStatus(401);
+    }
+});
+
+APP.get('/api/auth/status', (req, res) => {
+    if(req.user && req.user.address) {
+        res.send({addr:req.user.address});
+    } else {
+        res.sendStatus(401);
+    }
+});
+
+APP.post('/api/auth/logout', (req, res) => {
+    res.clearCookie('authToken').send({});
 });
 
 
