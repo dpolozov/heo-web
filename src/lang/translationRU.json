@@ -49,10 +49,10 @@
     "descriptionOfCampaign": "Описание кампании",
     "campaignDescription": "Описание кампании",
     "createCampaignBtn": "СОЗДАТЬ КАМПАНИЮ",
-    "noUserCampaigns1": "You did not create any campaigns yet. If you would like to create a campaign, please fill out this ",
-    "noUserCampaigns2": " to be granted permission to fundraise on HEO Platform.",
+    "noUserCampaigns": "Вы ещё не запустили кампании. Нажмите <1>сюда</1> чтобы создать первую кампанию.",
     "saveCampaignBtn" : "SAVE CAMPAIGN",
     "complete" : "Complete!",
     "updateSuccessfull" : "Updated Campaign information successfully",
-    "closeBtn" : "CLOSE"
+    "closeBtn" : "CLOSE",
+    "nonWLMessage": "Вам не разрешено заводить кампании. Пожалуйста заполните эту <1>форму</1> чтобы быть получить разрешение на сбор пожертвований через HEO Platform"
 }

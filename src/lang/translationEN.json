@@ -49,10 +49,19 @@
     "descriptionOfCampaign": "Description of the campaign",
     "campaignDescription": "Campaign description",
     "createCampaignBtn": "CREATE CAMPAIGN",
-    "noUserCampaigns1": "You did not create any campaigns yet. If you would like to create a campaign, please fill out this ",
-    "noUserCampaigns2": " to be granted permission to fundraise on HEO Platform.",
+    "noUserCampaigns": "You did not create any campaigns yet. Click <1>here</1> to create your first campaign.",
     "saveCampaignBtn" : "SAVE CAMPAIGN",
     "complete" : "Complete!",
     "updateSuccessfull" : "Updated Campaign information successfully",
-    "closeBtn" : "CLOSE"
+    "closeBtn" : "CLOSE",
+    "web3WalletRequired": "Web3 Wallet is Required",
+    "pleaseInstallMetamask": "Please install MetaMask or visit this page via MetaMask mobile app",
+    "authFailedTitle": "Login failed",
+    "authFailedMessage": "Authentication failed. Please check MetaMask for details",
+    "pleaseLogInTitle": "Authentication Required",
+    "pleaseLogInMessage": "Please log in to see your campaigns",
+    "pleaseLogInToCreateMessage": "Please log in to create a campaign",
+    "failedToLoadCampaigns": "Failed to load campaigns",
+    "nonWLTitle": "Account not whitelisted",
+    "nonWLMessage": "Your account has not been cleared to create campaigns. Please fill out this <1>form</1> to ne granted permission to fundraise on HEO Platform"
 }

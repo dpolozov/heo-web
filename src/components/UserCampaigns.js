@@ -2,12 +2,13 @@ import React, { Component, lazy } from 'react';
 import config from 'react-global-configuration';
 import '../css/campaignList.css';
 import { Container, Row, Col, Card, ProgressBar, Button, Modal } from 'react-bootstrap';
+import { ChevronLeft, CheckCircle, ExclamationTriangle, HourglassSplit, XCircle } from 'react-bootstrap-icons';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
-import { DescriptionPreview, Login } from '../util/Utilities';
+import { DescriptionPreview } from '../util/Utilities';
 import { Trans } from 'react-i18next';
 import i18n from '../util/i18n';
-var ACCOUNTS, web3;
+var ACCOUNTS, web3, HEOParameters;
 
 class UserCampaigns extends Component {
     constructor(props) {
@@ -17,7 +18,9 @@ class UserCampaigns extends Component {
             campaigns: [],
             showError:false,
             errorMessage:"",
+            modalMessage:"",
             isLoggedIn:false,
+            whiteListed:false
         };
     }
 
@@ -26,36 +29,102 @@ class UserCampaigns extends Component {
             var ethereum = window.ethereum;
             ACCOUNTS = await ethereum.request({method: 'eth_requestAccounts'});
             web3 = (await import("../remote/" + config.get("CHAIN") + "/web3")).default;
-            this.setState({
-                campaigns : (await this.getCampaigns()),
-                isLoggedIn : true,
-            });
+            HEOParameters = (await import("../remote/" + config.get("CHAIN") + "/HEOParameters")).default;
+            if (typeof window.ethereum !== 'undefined') {
+                try {
+                    // is the user logged in?
+                    let res = await axios.get('/api/auth/status');
+                    if(res.data.addr && ACCOUNTS[0] == res.data.addr) {
+                        this.setState({isLoggedIn: true, showModal: true, errorMessage: i18n.t('processingWait'),
+                            modalMessage: i18n.t('waitingForNetowork'), errorIcon:'HourglassSplit',
+                            modalButtonVariant: "gold", waitToClose: true
+                        });
+                        //is white list enabled?
+                        let wlEnabled = await HEOParameters.methods.intParameterValue(11).call();
+                        if(wlEnabled > 0) {
+                            //is user white listed?
+                            let whiteListed = await HEOParameters.methods.addrParameterValue(5,ACCOUNTS[0]).call();
+                            if(whiteListed > 0) {
+                                this.setState({
+                                    isLoggedIn : true,
+                                    whiteListed: true
+                                });
+                                this.getCampaigns();
+                            } else {
+                                //user is not in the white list
+                                this.setState({showModal:true,
+                                    campaigns: [],
+                                    isLoggedIn: true,
+                                    whiteListed: false,
+                                    errorMessage: 'nonWLTitle',
+                                    modalMessage: 'nonWLMessage',
+                                    errorIcon:'XCircle', modalButtonMessage: i18n.t('closeBtn'),
+                                    modalButtonVariant: "#E63C36", waitToClose: false});
+                            }
+                        } else {
+                            //white list is disabled
+                            this.setState({
+                                isLoggedIn : true,
+                                whiteListed: true
+                            });
+                            this.getCampaigns();
+                        }
+                        return;
+                    }
+                    //must have logged in with different account before
+                    await axios.post('/api/auth/logout');
+                    this.setState({showModal:true,
+                        campaigns : [],
+                        isLoggedIn : false,
+                        whiteListed: false,
+                        errorMessage: 'pleaseLogInTitle',
+                        modalMessage: 'pleaseLogInMessage',
+                        errorIcon:'XCircle', modalButtonMessage: i18n.t('closeBtn'),
+                        modalButtonVariant: "#E63C36", waitToClose: false});
+                } catch (err) {
+                    //need to log in first
+                    this.setState({showModal:true,
+                        campaigns : [],
+                        isLoggedIn : false,
+                        whiteListed: false,
+                        errorMessage: 'pleaseLogInTitle',
+                        modalMessage: 'pleaseLogInMessage',
+                        errorIcon:'XCircle', modalButtonMessage: i18n.t('closeBtn'),
+                        modalButtonVariant: "#E63C36", waitToClose: false});
+                }
+            }
         } else {
-            alert("Please install metamask");
+            this.setState({showModal:true,
+                errorMessage: 'web3WalletRequired',
+                modalMessage: 'pleaseInstallMetamask',
+                errorIcon:'XCircle', modalButtonMessage: i18n.t('closeBtn'),
+                modalButtonVariant: "#E63C36", waitToClose: false});
         }
     }
 
-    async getCampaigns(){
+    getCampaigns() {
+        this.setState({showModal:true, errorMessage: i18n.t('processingWait'),
+            modalMessage: i18n.t('waitingForNetowork'), errorIcon:'HourglassSplit',
+            modalButtonVariant: "gold", waitToClose: true});
         var campaigns = [];
-        var errorMessage = 'Failed to load campaigns';
-        let data = {accounts : ACCOUNTS}
-        await axios.post('/api/campaigns/loadUserCampaigns', data, {headers: {"Content-Type": "application/json"}})
+        var errorMessage = 'failedToLoadCampaigns';
+        var that = this;
+        axios.post('/api/campaigns/loadUserCampaigns', {}, {headers: {"Content-Type": "application/json"}})
         .then(res => {
             campaigns = res.data;
+            that.setState({
+                showModal: false,
+                campaigns:campaigns
+            });
         }).catch(err => {
-            if (err.response) { 
-                errorMessage = 'Failed to load campaigns. We are having technical difficulties'}
-            else if(err.request) {
-                errorMessage = 'Failed to load campaings. Please check your internet connection'
-            }
+            errorMessage = 'failedToLoadCampaigns'
             console.log(err);
-            this.setState({
-                showError: true,
-                errorMessage,
-            })
+            that.setState({showModal:true,
+                errorMessage: errorMessage,
+                modalMessage: 'technicalDifficulties',
+                errorIcon:'XCircle', modalButtonMessage: i18n.t('returnHome'),
+                modalButtonVariant: "#E63C36", waitToClose: false});
         })
-
-        return campaigns;
     }
 
     render() {
@@ -64,23 +133,35 @@ class UserCampaigns extends Component {
                 <Container>
                     {this.state.campaigns.length == 0 && 
                         <h1>
-                            <Trans i18nKey='noUserCampaigns1'/>
-                            <a id='formLink' href='https://docs.google.com/forms/d/e/1FAIpQLSdTo_igaNjF-1E51JmsjJgILv68RN2v5pisTcqTLvZvuUvLDQ/viewform'>form</a>
-                            <Trans i18nKey='noUserCampaigns2'/>
+                            <Trans i18nKey='noUserCampaigns'>You did not create any campaigns yet. Click <Link to="/new">here</Link> to create your first campaign.</Trans>
                         </h1>                       
                     }
                 </Container>
-                <Modal show={this.state.showError} >
-                    <Modal.Header closeButton>
-                    <Modal.Title>Failed to connect to network.</Modal.Title>
-                    </Modal.Header>
-                    <Modal.Body>{this.state.errorMessage}</Modal.Body>
-                    <Modal.Footer>
-                    <Button variant="secondary" onClick={ () => {this.setState({showError:false})}}>
-                        Close
-                    </Button>
-                    </Modal.Footer>
-                </Modal>           
+                <Modal show={this.state.showModal} onHide={this.state.showModal} className='myModal' centered>
+                    <Modal.Body><p className='errorIcon'>
+                        {this.state.errorIcon == 'CheckCircle' && <CheckCircle style={{color:'#588157'}} />}
+                        {this.state.errorIcon == 'ExclamationTriangle' && <ExclamationTriangle/>}
+                        {this.state.errorIcon == 'HourglassSplit' && <HourglassSplit style={{color: 'gold'}}/>}
+                        {this.state.errorIcon == 'XCircle' && <XCircle style={{color: '#E63C36'}}/>}
+                    </p>
+                        <p className='errorMessage'><Trans i18nKey={this.state.errorMessage}/></p>
+                        <p className='modalMessage'>
+                            <Trans i18nKey={this.state.modalMessage}>
+                            Your account has not been cleared to create campaigns.
+                            Please fill out this
+                                <Link  as='a' target='_blank' to='https://docs.google.com/forms/d/e/1FAIpQLSdTo_igaNjF-1E51JmsjJgILv68RN2v5pisTcqTLvZvuUvLDQ/viewform'>form</Link>
+                                to ne granted permission to fundraise on HEO Platform
+                            </Trans>
+                        </p>
+                        {!this.state.waitToClose &&
+                        <Button className='myModalButton'
+                                style={{backgroundColor : this.state.modalButtonVariant, borderColor : this.state.modalButtonVariant}}
+                                onClick={ () => {this.setState({showModal:false})}}>
+                            {this.state.modalButtonMessage}
+                        </Button>
+                        }
+                    </Modal.Body>
+                </Modal>
                 <div id="campaingListMainDiv">
                     <Container>
                         {this.state.campaigns.map((item, i) =>
