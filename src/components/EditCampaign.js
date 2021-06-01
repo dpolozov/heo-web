@@ -10,7 +10,7 @@ import i18n from '../util/i18n';
 import { ChevronLeft, CheckCircle, ExclamationTriangle, HourglassSplit, XCircle } from 'react-bootstrap-icons';
 import { Link } from 'react-router-dom';
 
-var HEOCampaign, web3;
+var HEOCampaign, web3, ACCOUNTS, CAMPAIGNINSTANCE;
 
 class EditCampaign extends React.Component {
     constructor(props) {
@@ -45,7 +45,9 @@ class EditCampaign extends React.Component {
             updateImage: false,
             updateMeta: false,
             updateDB: false,
+            updateMaxAmount: false,
             campaignAddress: "",
+            currentError:""
         };
     }
 
@@ -137,12 +139,14 @@ class EditCampaign extends React.Component {
         const value = e.target.value;
         this.setState({ [name] : value });
         switch (name){
+            case 'maxAmount':
+                this.state.updateMaxAmount = true;
+                break;
             case 'title': case 'vl':
                 this.setState({updateDB : true});
                 if(this.state.dbValuesToUpdate.indexOf(name) === -1){
                     this.state.dbValuesToUpdate.push(name);
                 }
-                break;
             case 'fn': case 'ln': case 'cn': case'org':
                 this.setState({updateMeta : true});
                 break;
@@ -153,31 +157,70 @@ class EditCampaign extends React.Component {
 
     fileSelected = e => {
         this.setState({mainImageFile:e.target.files[0], mainImageURL: URL.createObjectURL(e.target.files[0])});
-        this.setState({updateImage : true});
+        this.setState({updateImage : true, updateDB: true, updateMeta : true});
         if(this.state.dbValuesToUpdate.indexOf('mainImageURL') === -1){
             this.state.dbValuesToUpdate.push('mainImageURL');
         }
     }
 
-    handleClick = (event) => {
+    handleClick = async (event) => {
         event.preventDefault();
-        if(this.state.updateImage) {
-            this.uploadImageS3(this, this.state.metaFileName);
-            return
-        } else if(this.state.updateDB) {
-            this.updateCampaignDB();
-            return
-        } else if(this.state.updateMeta){
-            this.uploadMetaS3(this, this.state.metaFileName);
+        this.setState({showModal:true, errorMessage: i18n.t('processingWait'),
+                errorIcon:'HourglassSplit',
+                modalButtonVariant: "gold", waitToClose: true});
+        if(this.state.updateMaxAmount) {
+            if(!(await this.updateMaxAmount(this))) {
+                this.setState({showModal : true,
+                    errorMessage: i18n.t('updatingAmountFailed'),
+                    modalMessage: i18n.t(`${this.state.currentError}`),
+                    errorIcon:'XCircle', modalButtonMessage: i18n.t('closeBtn'),
+                    modalButtonVariant: "#E63C36", waitToClose: false});
+                return;
+            }    
         }
+        if(this.state.updateImage) {
+            if(!(await this.uploadImageS3(this, this.state.metaFileName))) {
+                this.setState({showModal:true,
+                    errorMessage: i18n.t('imageUploadFailed'),
+                    errorIcon:'XCircle', modalButtonMessage: i18n.t('returnHome'),
+                    modalButtonVariant: "#E63C36", waitToClose: false});
+                return;
+            }    
+        }
+        if(this.state.updateMeta) {
+            if(!this.uploadMetaS3(this, this.state.metaFileName)) {
+                this.setState({showModal:true,
+                    errorMessage: i18n.t('metaUploadFailed'),
+                    errorIcon:'XCircle', modalButtonMessage: i18n.t('returnHome'),
+                    modalMessage: i18n.t(`${this.state.currentError}`),
+                    modalButtonVariant: "#E63C36", waitToClose: false});
+                return;
+            }
+        }
+        if(this.state.updateDB){
+            if(!this.updateCampaignDB()) {
+                this.setState({showModal:true,
+                    errorMessage: i18n.t('metaUploadFailed'),
+                    modalMessage: i18n.t(`${this.state.currentError}`),
+                    errorIcon:'XCircle', modalButtonMessage: i18n.t('returnHome'),
+                    modalButtonVariant: "#E63C36", waitToClose: false});
+                return;
+            }
+        } 
+        this.setState({
+            showModal: true, errorMessage: i18n.t('complete'),
+            modalMessage: i18n.t('updateSuccessfull'),
+            errorIcon: 'CheckCircle', modalButtonMessage: i18n.t('closeBtn'),
+            modalButtonVariant: '#588157', waitToClose: false
+        });
     }
 
     async updateCampaignDB() {
+        if(!this.state.updateDB) return true;
         console.log('update db called');
         let dbValuesToUpdateData = {};
         this.state.dbValuesToUpdate.forEach( item => {
             dbValuesToUpdateData[item] =  this.state[item];
-            console.log(dbValuesToUpdateData);
         });
         //need to go through and change variables to same names through out the app
         //for now just a correction for the mongo db.
@@ -186,41 +229,60 @@ class EditCampaign extends React.Component {
         adjustdata = adjustdata.replace('vl', 'videoLink');
         adjustdata = adjustdata.replace('mainImageURL', 'mainImage');
         let data = JSON.parse(adjustdata);
-
+        console.log(data);
         let dataAndAdress = {dataToUpdate : data, address: this.state.campaignAddress}
-        console.log(dataAndAdress);
         axios.post('/api/updateCampaignDB', {mydata : dataAndAdress}, {headers: {"Content-Type": "application/json"}})
         .then(res => {
-            if(res.data === 'failed') {
-                this.setState({showModal:true,
-                    errorMessage: i18n.t('metaUploadFailed'),
-                    modalMessage: i18n.t('technicalDifficulties'),
-                    errorIcon:'XCircle', modalButtonMessage: i18n.t('returnHome'),
-                    modalButtonVariant: "#E63C36", waitToClose: false});
-                    return;
-            }
-            this.uploadMetaS3(this, this.state.metaFileName);
-        }).catch(err => {
+            console.log('db updated successfully');
+            return true;
+        }).catch(err => {  
+            console.log(err);
             if(err.response){
-                this.setState({showModal:true,
-                    errorMessage: i18n.t('metaUploadFailed'),
-                    modalMessage: i18n.t('technicalDifficulties'),
-                    errorIcon:'XCircle', modalButtonMessage: i18n.t('returnHome'),
-                    modalButtonVariant: "#E63C36", waitToClose: false});
-            } else if(err.request){
-                this.setState({showModal:true,
-                    errorMessage: i18n.t('metaUploadFailed'),
-                    modalMessage: i18n.t('checkYourConnection'),
-                    errorIcon:'XCircle', modalButtonMessage: i18n.t('returnHome'),
-                    modalButtonVariant: "#E63C36", waitToClose: false});
-            } else { 
-                console.log('error updating campaign information ' + err.message);
-                this.setState({showModal:true,
-                    errorMessage: i18n.t('metaUploadFailed'),
-                    errorIcon:'XCircle', modalButtonMessage: i18n.t('returnHome'),
-                    modalButtonVariant: "#E63C36", waitToClose: false});
-            }           
+                this.setState({currentError : 'technicalDifficulties'});
+            } else if (err.request){
+                this.setState({currentError : 'checkYourConnection'});
+            } else {
+                this.setState({currentError : ''});
+            }
+            return false;       
         })
+    }
+
+    async updateMaxAmount(that){
+        if(!that.state.updateMaxAmount) return true;
+        that.setState({showModal:true,
+            modalMessage: i18n.t('confirmMetamask'), errorIcon:'HourglassSplit',
+            modalButtonVariant: "gold", waitToClose: true})
+        try {
+            let result = await CAMPAIGNINSTANCE.methods.changeMaxAmount(web3.utils.toWei(this.state.maxAmount)).send({from:ACCOUNTS[0]}, () => {
+                that.setState({showModal:true, errorMessage: i18n.t('processingWait'),
+                modalMessage: i18n.t('updatingMaxAmount'), errorIcon:'HourglassSplit',
+                modalButtonVariant: "gold", waitToClose: true});
+            });
+            console.log(result);
+            let data = {maxAmount : this.state.maxAmount};
+            let dataAndAdress = {dataToUpdate : data, address: this.state.campaignAddress}
+            try{
+                let update = await axios.post('/api/updateCampaignDB', {mydata : dataAndAdress}, {headers: {"Content-Type": "application/json"}});
+                console.log(update);
+                return true;
+            } catch (err){
+                console.log(err);
+                if(err.response){
+                    this.setState({currentError : 'technicalDifficulties'});
+                } else if (err.request){
+                    this.setState({currentError : 'checkYourConnection'});
+                } else {
+                    this.setState({currentError : ''});
+                }
+                return false; 
+            }
+        } catch (error) {
+            this.setState({currentError : 'checkMetamask'});
+            console.log("updating maxAmount transaction failed");
+            console.log(error);
+            return false;
+        }
     }
 
     async uploadMetaS3(that, metaID) {
@@ -250,38 +312,21 @@ class EditCampaign extends React.Component {
         return axios.post('/api/uploadmeta', formData)
         .then(res => {
             console.log("Success uploading meta data");
-            that.setState({
-                showModal: true, errorMessage: i18n.t('complete'),
-                modalMessage: i18n.t('updateSuccessfull'),
-                errorIcon: 'CheckCircle', modalButtonMessage: i18n.t('closeBtn'),
-                modalButtonVariant: '#588157', waitToClose: false
-            });
+            return true;
         }).catch(err => {
-            if (err.response) { 
-                console.log('response error in uploading meta data- ' + err.response.status);
-                that.setState({showModal:true,
-                    errorMessage: i18n.t('metaUploadFailed'),
-                    modalMessage: i18n.t('technicalDifficulties'),
-                    errorIcon:'XCircle', modalButtonMessage: i18n.t('returnHome'),
-                    modalButtonVariant: "#E63C36", waitToClose: false});
-            } else if (err.request) { 
-                console.log('No response in uploading meta data' + err.message);
-                that.setState({showModal:true,
-                    errorMessage: i18n.t('metaUploadFailed'),
-                    modalMessage: i18n.t('checkYourConnection'),
-                    errorIcon:'XCircle', modalButtonMessage: i18n.t('returnHome'),
-                    modalButtonVariant: "#E63C36", waitToClose: false}); 
-            } else { 
-                console.log('error uploading campaign information ' + err.message);
-                that.setState({showModal:true,
-                    errorMessage: i18n.t('metaUploadFailed'),
-                    errorIcon:'XCircle', modalButtonMessage: i18n.t('returnHome'),
-                    modalButtonVariant: "#E63C36", waitToClose: false});
-            }           
+            if(err.response){
+                this.setState({currentError : 'technicalDifficulties'});
+            } else if (err.request){
+                this.setState({currentError : 'checkYourConnection'});
+            } else {
+                this.setState({currentError : ''});
+            }
+            return false;                      
         });
     }
 
     async uploadImageS3 (that, imgID) {
+        if(that.state.updateImage === false) return true;
         console.log(`Uploading ${this.state.mainImageFile.name} of type ${this.state.mainImageFile.type} to S3`);
         that.setState({showModal:true, errorMessage: i18n.t('processingWait'),
         modalMessage: i18n.t('uploadingImageWait'), errorIcon:'HourglassSplit',
@@ -300,43 +345,18 @@ class EditCampaign extends React.Component {
             
         return axios.post('/api/uploadimage', formData)
         .then(res => {
-            if(res.data == 'failed') {
-                console.log('failed to upload main image');
-                that.setState({
-                    errorMessage: i18n.t('imageUploadFailed'),
-                    modalMessage: i18n.t('technicalDifficulties'),
-                    errorIcon:'XCircle', modalButtonMessage: i18n.t('returnHome'),
-                    modalButtonVariant: "#E63C36", waitToClose: false
-                });
-                return;
-            }
             console.log("Success uploading main image");
-            console.log(res.data);
             that.setState({showModal:false, mainImageURL:res.data});
-            this.updateCampaignDB();
-            this.uploadMetaS3(this, this.state.metaFileName);
+            return true;
         }).catch(err => {
-            if (err.response) { 
-                console.log('response error in uploading main image- ' + err.response.status);
-                that.setState({showModal:true,
-                    errorMessage: i18n.t('imageUploadFailed'),
-                    modalMessage: i18n.t('technicalDifficulties'),
-                    errorIcon:'XCircle', modalButtonMessage: i18n.t('returnHome'),
-                    modalButtonVariant: "#E63C36", waitToClose: false});
-            } else if (err.request) { 
-                console.log('No response in uploading main image' + err.message);
-                that.setState({showModal:true,
-                    errorMessage: i18n.t('imageUploadFailed'),
-                    modalMessage: i18n.t('checkYourConnection'),
-                    errorIcon:'XCircle', modalButtonMessage: i18n.t('returnHome'),
-                    modalButtonVariant: "#E63C36", waitToClose: false}); 
-            } else { 
-                console.log('error uploading image ' + err.message);
-                that.setState({showModal:true,
-                    errorMessage: i18n.t('imageUploadFailed'),
-                    errorIcon:'XCircle', modalButtonMessage: i18n.t('returnHome'),
-                    modalButtonVariant: "#E63C36", waitToClose: false});
-            }           
+            if(err.response){
+                this.setState({currentError : 'technicalDifficulties'});
+            } else if (err.request){
+                this.setState({currentError : 'checkYourConnection'});
+            } else {
+                this.setState({currentError : ''});
+            }
+            return false;                      
         });
     }
 
@@ -402,7 +422,7 @@ class EditCampaign extends React.Component {
                         <div className='titles'> <Trans i18nKey='campaignDetails'/></div>
                         <Form.Group>
                             <Form.Label>{i18n.t('howMuchYouNeed', { currencyName: this.state.currencyName })}<span className='redAsterisk'>*</span></Form.Label>
-                            <Form.Control disabled required type="number" className="createFormPlaceHolder"
+                            <Form.Control required type="number" className="createFormPlaceHolder"
                                           value={this.state.maxAmount} placeholder={this.state.maxAmount}
                                           name='maxAmount' onChange={this.handleChange}/>
                         </Form.Group>
@@ -444,10 +464,13 @@ class EditCampaign extends React.Component {
     async componentDidMount() {
         let toks = this.props.location.pathname.split("/");
         let address = toks[toks.length -1];
+        var ethereum = window.ethereum;
+        ACCOUNTS = await ethereum.request({method: 'eth_requestAccounts'});
         web3 = (await import("../remote/"+ config.get("CHAIN") + "/web3")).default;
         HEOCampaign = (await import("../remote/"+ config.get("CHAIN") + "/HEOCampaign")).default;
-        let campaignInstance = new web3.eth.Contract(HEOCampaign, address);
-        let metaDataUrl = await campaignInstance.methods.metaDataUrl().call();
+        ACCOUNTS = await ethereum.request({method: 'eth_requestAccounts'});
+        CAMPAIGNINSTANCE = new web3.eth.Contract(HEOCampaign, address);
+        let metaDataUrl = await CAMPAIGNINSTANCE.methods.metaDataUrl().call();
         this.getMetaData(metaDataUrl);
         this.setState({
             campaign : (await this.getCampaign(address)),
@@ -461,6 +484,7 @@ class EditCampaign extends React.Component {
             mainImageURL : this.state.campaign.mainImage,
             campaignAddress : address,
         });   
+        console.log( web3.utils.fromWei(await CAMPAIGNINSTANCE.methods.maxAmount().call()));
     }
 }
 

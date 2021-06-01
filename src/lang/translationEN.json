@@ -66,5 +66,7 @@
     "nonWLTitle": "Account not whitelisted",
     "nonWLMessage": "Your account has not been cleared to create campaigns. Please fill out this <1>form</1> to ne granted permission to fundraise on HEO Platform",
     "addToDbFailedMessage": "Your campaign has been deployed on the blockchain and will appear on the website in several minutes.",
-    "addToDbFailedTitle": "Campaign pending"
+    "addToDbFailedTitle": "Campaign pending",
+    "updatingMaxAmount": "updating how much you need to raise",
+    "updatingAmountFailed" : "Failed to updated how much you need to raise"
 }

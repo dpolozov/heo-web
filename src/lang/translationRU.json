@@ -54,5 +54,7 @@
     "complete" : "Complete!",
     "updateSuccessfull" : "Updated Campaign information successfully",
     "closeBtn" : "CLOSE",
-    "nonWLMessage": "Вам не разрешено заводить кампании. Пожалуйста заполните эту <1>форму</1> чтобы быть получить разрешение на сбор пожертвований через HEO Platform"
+    "nonWLMessage": "Вам не разрешено заводить кампании. Пожалуйста заполните эту <1>форму</1> чтобы быть получить разрешение на сбор пожертвований через HEO Platform",
+    "updatingMaxAmount": "updating how much you need to raise",
+    "updatingAmountFailed" : "Failed to updated how much you need to raise"
 }
