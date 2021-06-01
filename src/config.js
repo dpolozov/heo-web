@@ -22,12 +22,12 @@ const config = {
         },
         "ganache":{
             "currencyOptions":[
-                {"text":"TUSD", "value":"0xeBF76ADA62Cd2d5c9Eb41d7Db0A3a733c9A5a0C5"},
-                {"text":"ETH", "value":"0x0000000000000000000000000000000000000000"}
+                {"text":"BUSD", "value":"0x40C141AC46835eC8dc7Dc81A5eBd09b3926Aa784"},
+                {"text":"BNB", "value":"0x0000000000000000000000000000000000000000"}
             ],
             "currencies":{
-                "0xeBF76ADA62Cd2d5c9Eb41d7Db0A3a733c9A5a0C5":"TUSD",
-                "0x0000000000000000000000000000000000000000":"ETH"
+                "0x40C141AC46835eC8dc7Dc81A5eBd09b3926Aa784":"BUSD",
+                "0x0000000000000000000000000000000000000000":"BNB"
             }
         }
     }

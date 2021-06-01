@@ -67,39 +67,41 @@ APP.post('/api/updateCampaignDB', (req, res) => {
         if(err){
             res.sendStatus(500);
             console.log(err);
+        } else {
+            res.send('success');
         }
-        res.send('success');
     });     
 });
 
-APP.post('/api/campaigns/sendToDB', (req, res) => {
-    let campaigns = JSON.parse(req.files.myFile.data);
-    let i = 0;
-    campaigns.forEach(element => {
-        i++;
-        let date = Date.now();
+APP.post('/api/campaigns/addCampaignToDB', (req, res) => {
+    if(req.user && req.user.address) {
         const ITEM = {
-            _id : element.address.toLowerCase(),
-            beneficiaryId : element.beneficiaryId.toLowerCase(),
-            ownerId : element.ownerId.toLowerCase(),
-            title : element.title,
-            mainImage : element.mainImage,
-            videoLink : element.videoLink,
-            campaignDesc : element.description,
-            coinName: element.coinName,
-            maxAmount: element.maxAmount,
-            raisedAmount: element.raisedAmount,
-            creationDate : date,
+            _id: req.body.mydata.address.toLowerCase(),
+            beneficiaryId: req.body.mydata.beneficiaryId.toLowerCase(),
+            ownerId: req.user.address.toLowerCase(),
+            title: req.body.mydata.title,
+            mainImage: req.body.mydata.mainImage,
+            videoLink: req.body.mydata.videoLink,
+            campaignDesc: req.body.mydata.description,
+            coinName: req.body.mydata.coinName,
+            maxAmount: req.body.mydata.maxAmount,
+            raisedAmount: 0,
+            creationDate: Date.now(),
         }
         const DB = CLIENT.db(DBNAME);
         DB.collection('campaigns')
-        .insertOne( ITEM, function (err, res){
-            if(err) console.log(err);
-            console.log("1 entry was insterted in db");
-        })
-        
-    });  
-
+            .insertOne(ITEM, function (err, result) {
+                if (err) {
+                    res.sendStatus(500);
+                    console.log(err);
+                } else {
+                    res.send('success');
+                    console.log("1 entry was insterted in db");
+                }
+            });
+    } else {
+        res.sendStatus(401);
+    }
 });
 
 APP.post('/api/campaigns/load', (req, res) => {
@@ -179,15 +181,13 @@ APP.get('/api/env', (req,res) => {
 });
 
 APP.get('/api/auth/msg', (req, res) => {
-    let ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1';
-    res.json({dataToSign:`My IP address is ${ip} and today is ${(new Date()).toDateString()}`});
+    res.json({dataToSign:`Today is ${(new Date()).toDateString()}`});
 });
 
 APP.post('/api/auth/jwt', async(req, res) => {
     //extract Address from signature
     try {
-        let ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1';
-        let dataToSign = `My IP address is ${ip} and today is ${(new Date()).toDateString()}`;
+        let dataToSign = `Today is ${(new Date()).toDateString()}`;
         const {v, r, s} = ethereumutil.fromRpcSig(req.body.signature);
         let signedData = ethereumutil.keccak("\x19Ethereum Signed Message:\n" + dataToSign.length + dataToSign);
         const pubKey = ethereumutil.ecrecover(signedData, v, r, s);

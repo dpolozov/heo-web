@@ -49,22 +49,6 @@ class CampaignList extends Component {
         return campaigns;
     }
     
-    //initial upload to mongo db
-    async sendToDB(campaigns){
-        let data2 = new Blob([JSON.stringify(campaigns)], {type : 'application/jason'});
-        const formData2 = new FormData();
-        formData2.append(
-            "myFile",
-            data2,
-            )
-        axios.post('api/campaigns/sendToDB', formData2)
-        .then(res => {
-            console.log("Success sending campaings");
-        }).catch(err => {
-            console.log(err);
-        });
-    }
-
     render() {
         return (
             <div> 
