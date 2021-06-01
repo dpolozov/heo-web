@@ -26,7 +26,7 @@ class CreateCampaign2 extends React.Component {
             showError:false,
             showModal: false,
             modalMessage:"",
-            errorMessage:"",
+            modalTitle:"",
             errorIcon:"",
             modalButtonMessage: "",
             modalButtonVariant: "",
@@ -89,21 +89,50 @@ class CreateCampaign2 extends React.Component {
             this.state.currencyAddress, this.state.metaDataURL, ACCOUNTS[0]).send({from:ACCOUNTS[0]}).on(
             'receipt', function(receipt) {
                 console.log("Received receipt from createCampaign transaction");
-                that.setState({showModal:true, goHome: true,
-                    modalMessage: 'campaignCreateSuccess',
-                    errorMessage: 'success', errorIcon: 'CheckCircle',
-                    modalButtonMessage: 'returnHome',
-                    modalButtonVariant: "#588157", waitToClose: false });
+                if(receipt && receipt.events && receipt.events.CampaignDeployed && receipt.events.CampaignDeployed.address) {
+                    let campaignData = {
+                        address: receipt.events.CampaignDeployed.returnValues.campaignAddress,
+                        beneficiaryId: receipt.events.CampaignDeployed.returnValues.beneficiary,
+                        title: that.state.title,
+                        coinName: that.state.currencyName,
+                        description: that.state.description,
+                        mainImage: that.state.mainImageURL,
+                        videoLink: that.state.vl,
+                        maxAmount: that.state.maxAmount
+                    };
+                    // Add campaign to local Mongo database for faster access
+                    axios.post('/api/campaigns/addCampaignToDB', {mydata : campaignData}, {headers: {"Content-Type": "application/json"}})
+                    .then(res => {
+                        that.setState({showModal:true, goHome: true,
+                            modalMessage: 'campaignCreateSuccess',
+                            modalTitle: 'success',
+                            errorIcon: 'CheckCircle',
+                            modalButtonMessage: 'returnHome',
+                            modalButtonVariant: "#588157", waitToClose: false
+                        });
+                    }).catch(err => {
+                        //at this point, campaign already exists on the blockchain, it is just not cached
+                        // in MongoDB
+                        console.log('error adding campaign to the database ' + err.message);
+                        that.setState({showModal: true, goHome: true,
+                            modalTitle: 'addToDbFailedTitle',
+                            modalMessage: 'addToDbFailedMessage',
+                            errorIcon: 'CheckCircle',
+                            modalButtonMessage: 'returnHome',
+                            modalButtonVariant: "#588157", waitToClose: false
+                        });
+                    });
+                }
             }).on('error', function(error) {
                 that.setState({showModal: true,
-                    errorMessage: 'blockChainTransactionFailed',
+                    modalTitle: 'blockChainTransactionFailed',
                     modalMessage: 'checkMetamask',
                     errorIcon: 'XCircle', modalButtonMessage: 'returnHome',
                     modalButtonVariant: "#E63C36", waitToClose: false});
                 console.log("createCampaign transaction failed");
                 console.log(error);
             }).on('transactionHash', function(transactionHash){
-                that.setState({showModal:true, errorMessage: 'processingWait',
+                that.setState({showModal:true, modalTitle: 'processingWait',
                     modalMessage: 'waitingForNetowork', errorIcon: 'HourglassSplit',
                     modalButtonVariant: "gold", waitToClose: true});
             });
@@ -113,9 +142,11 @@ class CreateCampaign2 extends React.Component {
     //vl - video link(youtube)
     async uploadMetaS3(that, metaID) {
         console.log(`Generating metadata file ${metaID}`);
-        that.setState({showModal:true, errorMessage: 'processingWait',
+        that.setState({showModal:true, modalTitle: 'processingWait',
             modalMessage: 'uploadingMetaWait', errorIcon: 'HourglassSplit',
-            modalButtonVariant: "gold", waitToClose: true});
+            modalButtonVariant: "gold",
+            waitToClose: true
+        });
         let data = new Blob([JSON.stringify({title:that.state.title,
             description:that.state.description,
             mainImageURL:that.state.mainImageURL,
@@ -146,21 +177,21 @@ class CreateCampaign2 extends React.Component {
             if (err.response) { 
                 console.log('response error in uploading meta data- ' + err.response.status);
                 that.setState({showModal: true, goHome: false,
-                    errorMessage: 'metaUploadFailed',
+                    modalTitle: 'metaUploadFailed',
                     modalMessage: 'technicalDifficulties',
                     errorIcon: 'XCircle', modalButtonMessage: 'returnHome',
                     modalButtonVariant: "#E63C36", waitToClose: false});
             } else if (err.request) { 
                 console.log('No response in uploading meta data' + err.message);
                 that.setState({showModal: true, goHome: false,
-                    errorMessage: 'metaUploadFailed',
+                    modalTitle: 'metaUploadFailed',
                     modalMessage: 'checkYourConnection',
                     errorIcon: 'XCircle', modalButtonMessage: 'returnHome',
                     modalButtonVariant: "#E63C36", waitToClose: false}); 
             } else { 
                 console.log('error uploading campaign information ' + err.message);
                 that.setState({showModal: true, goHome: false,
-                    errorMessage: 'metaUploadFailed',
+                    modalTitle: 'metaUploadFailed',
                     errorIcon: 'XCircle', modalButtonMessage: 'returnHome',
                     modalButtonVariant: "#E63C36", waitToClose: false});
             }           
@@ -170,7 +201,7 @@ class CreateCampaign2 extends React.Component {
 
     async uploadImageS3 (that, imgID) {
         console.log(`Uploading ${this.state.mainImageFile.name} of type ${this.state.mainImageFile.type} to S3`);
-        that.setState({showModal:true, errorMessage: 'processingWait',
+        that.setState({showModal:true, modalTitle: 'processingWait',
         modalMessage: 'uploadingImageWait', errorIcon: 'HourglassSplit',
         modalButtonVariant: "gold", waitToClose: true});
         let fileType = this.state.mainImageFile.type.split("/")[1];
@@ -190,21 +221,21 @@ class CreateCampaign2 extends React.Component {
             if (err.response) { 
                 console.log('response error in uploading main image- ' + err.response.status);
                 that.setState({showModal: true, goHome: false,
-                    errorMessage: 'imageUploadFailed',
+                    modalTitle: 'imageUploadFailed',
                     modalMessage: 'technicalDifficulties',
                     errorIcon: 'XCircle', modalButtonMessage: 'returnHome',
                     modalButtonVariant: "#E63C36", waitToClose: false});
             } else if (err.request) { 
                 console.log('No response in uploading main image' + err.message);
                 that.setState({showModal: true, goHome: false,
-                    errorMessage: 'imageUploadFailed',
+                    modalTitle: 'imageUploadFailed',
                     modalMessage: 'checkYourConnection',
                     errorIcon: 'XCircle', modalButtonMessage: 'returnHome',
                     modalButtonVariant: "#E63C36", waitToClose: false}); 
             } else { 
                 console.log('error uploading image ' + err.message);
                 that.setState({showModal: true, goHome: false,
-                    errorMessage: 'imageUploadFailed',
+                    modalTitle: 'imageUploadFailed',
                     errorIcon: 'XCircle', modalButtonMessage: 'returnHome',
                     modalButtonVariant: "#E63C36", waitToClose: false});
             }           
@@ -222,7 +253,7 @@ class CreateCampaign2 extends React.Component {
                         {this.state.errorIcon == 'HourglassSplit' && <HourglassSplit style={{color: 'gold'}}/>}
                         {this.state.errorIcon == 'XCircle' && <XCircle style={{color: '#E63C36'}}/>}
                         </p>
-                        <p className='errorMessage'><Trans i18nKey={this.state.errorMessage}/></p>
+                        <p className='modalTitle'><Trans i18nKey={this.state.modalTitle}/></p>
                         <p className='modalMessage'><Trans i18nKey={this.state.modalMessage}>
                             Your account has not been cleared to create campaigns.
                             Please fill out this
@@ -342,7 +373,7 @@ class CreateCampaign2 extends React.Component {
 
     async componentDidMount() {
         if (typeof window.ethereum !== 'undefined') {
-            this.setState({showModal:true, errorMessage: 'processingWait',
+            this.setState({showModal:true, modalTitle: 'processingWait',
                 modalMessage: 'waitingForNetowork', errorIcon: 'HourglassSplit',
                 modalButtonVariant: "gold", waitToClose: true});
 
@@ -382,7 +413,7 @@ class CreateCampaign2 extends React.Component {
                                     showModal:true,
                                     isLoggedIn: true,
                                     whiteListed: false,
-                                    errorMessage: 'nonWLTitle',
+                                    modalTitle: 'nonWLTitle',
                                     modalMessage: 'nonWLMessage',
                                     errorIcon: 'XCircle', modalButtonMessage: 'closeBtn',
                                     modalButtonVariant: "#E63C36", waitToClose: false
@@ -401,7 +432,7 @@ class CreateCampaign2 extends React.Component {
                         this.setState({
                             showModal: true,
                             goHome: true,
-                            errorMessage: 'authFailedTitle',
+                            modalTitle: 'authFailedTitle',
                             modalMessage: 'technicalDifficulties',
                             errorIcon: 'XCircle', modalButtonMessage: 'returnHome',
                             modalButtonVariant: "#E63C36", waitToClose: false});
@@ -416,7 +447,7 @@ class CreateCampaign2 extends React.Component {
                     isLoggedIn : false,
                     whiteListed: false,
                     goHome: true,
-                    errorMessage: 'pleaseLogInTitle',
+                    modalTitle: 'pleaseLogInTitle',
                     modalMessage: 'pleaseLogInToCreateMessage',
                     errorIcon: 'XCircle', modalButtonMessage: 'closeBtn',
                     modalButtonVariant: "#E63C36", waitToClose: false});
@@ -432,14 +463,14 @@ class CreateCampaign2 extends React.Component {
                 isLoggedIn : false,
                 whiteListed: false,
                 goHome: true,
-                errorMessage: 'pleaseLogInTitle',
+                modalTitle: 'pleaseLogInTitle',
                 modalMessage: 'pleaseLogInToCreateMessage',
                 errorIcon: 'XCircle', modalButtonMessage: 'closeBtn',
                 modalButtonVariant: "#E63C36", waitToClose: false});
         } else {
             this.setState({
                 showModal:true,
-                errorMessage: 'web3WalletRequired',
+                modalTitle: 'web3WalletRequired',
                 goHome: true,
                 modalMessage: 'pleaseInstallMetamask',
                 errorIcon: 'XCircle', modalButtonMessage: 'closeBtn',
