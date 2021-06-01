@@ -5,9 +5,11 @@ import { Container, Row, Col, Card, ProgressBar, Button, Modal } from 'react-boo
 import { ChevronLeft, CheckCircle, ExclamationTriangle, HourglassSplit, XCircle } from 'react-bootstrap-icons';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
-import { DescriptionPreview } from '../util/Utilities';
+import { DescriptionPreview, LogIn } from '../util/Utilities';
 import { Trans } from 'react-i18next';
 import i18n from '../util/i18n';
+import {UserContext} from './UserContext';
+
 var ACCOUNTS, web3, HEOParameters;
 
 class UserCampaigns extends Component {
@@ -17,97 +19,123 @@ class UserCampaigns extends Component {
         this.state = {
             campaigns: [],
             showError:false,
-            errorMessage:"",
+            modalTitle:"",
             modalMessage:"",
             isLoggedIn:false,
             whiteListed:false
         };
     }
 
+    async checkWL() {
+        //is white list enabled?
+        let wlEnabled = await HEOParameters.methods.intParameterValue(11).call();
+        if(wlEnabled > 0) {
+            //is user white listed?
+            let whiteListed = await HEOParameters.methods.addrParameterValue(5,ACCOUNTS[0]).call();
+            if(whiteListed > 0) {
+                this.setState({
+                    isLoggedIn : true,
+                    whiteListed: true,
+                    showModal: false,
+                    goHome: false
+                });
+                this.getCampaigns();
+            } else {
+                //user is not in the white list
+                this.setState({
+                    campaigns : [],
+                    goHome: true,
+                    showModal:true,
+                    isLoggedIn: true,
+                    whiteListed: false,
+                    modalTitle: 'nonWLTitle',
+                    modalMessage: 'nonWLMessage',
+                    errorIcon: 'XCircle', modalButtonMessage: 'closeBtn',
+                    modalButtonVariant: "#E63C36", waitToClose: false
+                });
+            }
+        } else {
+            //white list is disabled
+            this.setState({
+                isLoggedIn : true,
+                whiteListed: true,
+                goHome: false,
+                showModal: false
+            });
+            this.getCampaigns();
+        }
+    }
+
     async componentDidMount() {
         if (typeof window.ethereum !== 'undefined') {
             var ethereum = window.ethereum;
-            ACCOUNTS = await ethereum.request({method: 'eth_requestAccounts'});
+            try {
+                ACCOUNTS = await ethereum.request({method: 'eth_requestAccounts'});
+            } catch {
+                this.setState({
+                    showModal:true,
+                    campaigns : [],
+                    modalTitle: 'web3WalletRequired',
+                    goHome: true,
+                    modalMessage: 'pleaseUnlockMetamask',
+                    errorIcon: 'XCircle', modalButtonMessage: 'closeBtn',
+                    modalButtonVariant: "#E63C36", waitToClose: false});
+            }
             web3 = (await import("../remote/" + config.get("CHAIN") + "/web3")).default;
             HEOParameters = (await import("../remote/" + config.get("CHAIN") + "/HEOParameters")).default;
-            if (typeof window.ethereum !== 'undefined') {
+            // is the user logged in?
+            if(!this.state.isLoggedIn) {
                 try {
-                    // is the user logged in?
                     let res = await axios.get('/api/auth/status');
-                    if(res.data.addr && ACCOUNTS[0] == res.data.addr) {
-                        this.setState({isLoggedIn: true, showModal: true, errorMessage: i18n.t('processingWait'),
-                            modalMessage: i18n.t('waitingForNetowork'), errorIcon:'HourglassSplit',
-                            modalButtonVariant: "gold", waitToClose: true
-                        });
-                        //is white list enabled?
-                        let wlEnabled = await HEOParameters.methods.intParameterValue(11).call();
-                        if(wlEnabled > 0) {
-                            //is user white listed?
-                            let whiteListed = await HEOParameters.methods.addrParameterValue(5,ACCOUNTS[0]).call();
-                            if(whiteListed > 0) {
-                                this.setState({
-                                    isLoggedIn : true,
-                                    whiteListed: true
-                                });
-                                this.getCampaigns();
-                            } else {
-                                //user is not in the white list
-                                this.setState({showModal:true,
-                                    campaigns: [],
-                                    isLoggedIn: true,
-                                    whiteListed: false,
-                                    errorMessage: 'nonWLTitle',
-                                    modalMessage: 'nonWLMessage',
-                                    errorIcon:'XCircle', modalButtonMessage: i18n.t('closeBtn'),
-                                    modalButtonVariant: "#E63C36", waitToClose: false});
-                            }
-                        } else {
-                            //white list is disabled
-                            this.setState({
-                                isLoggedIn : true,
-                                whiteListed: true
-                            });
-                            this.getCampaigns();
-                        }
-                        return;
+                    if (res.data.addr && ACCOUNTS[0] == res.data.addr) {
+                        this.setState({isLoggedIn: true, showModal: false});
+                    } else {
+                        //must have logged in with different account before
+                        await axios.post('/api/auth/logout');
                     }
-                    //must have logged in with different account before
-                    await axios.post('/api/auth/logout');
-                    this.setState({showModal:true,
-                        campaigns : [],
-                        isLoggedIn : false,
-                        whiteListed: false,
-                        errorMessage: 'pleaseLogInTitle',
-                        modalMessage: 'pleaseLogInMessage',
-                        errorIcon:'XCircle', modalButtonMessage: i18n.t('closeBtn'),
-                        modalButtonVariant: "#E63C36", waitToClose: false});
                 } catch (err) {
-                    //need to log in first
-                    this.setState({showModal:true,
+                    this.setState({
+                        showModal: true,
+                        isLoggedIn: false,
                         campaigns : [],
-                        isLoggedIn : false,
-                        whiteListed: false,
-                        errorMessage: 'pleaseLogInTitle',
-                        modalMessage: 'pleaseLogInMessage',
-                        errorIcon:'XCircle', modalButtonMessage: i18n.t('closeBtn'),
+                        goHome: true,
+                        modalTitle: 'authFailedTitle',
+                        modalMessage: 'technicalDifficulties',
+                        errorIcon: 'XCircle', modalButtonMessage: 'returnHome',
                         modalButtonVariant: "#E63C36", waitToClose: false});
                 }
             }
+            if(this.state.isLoggedIn) {
+                await this.checkWL();
+            } else {
+                //need to log in first
+                this.setState({
+                    showModal: true,
+                    campaigns : [],
+                    isLoggedIn : false,
+                    whiteListed: false,
+                    goHome: false,
+                    modalTitle: 'pleaseLogInTitle',
+                    modalMessage: 'pleaseLogInToCreateMessage',
+                    errorIcon: 'XCircle', modalButtonMessage: 'login',
+                    modalButtonVariant: "#E63C36", waitToClose: false});
+            }
         } else {
             this.setState({showModal:true,
-                errorMessage: 'web3WalletRequired',
+                modalTitle: 'web3WalletRequired',
+                campaigns : [],
                 modalMessage: 'pleaseInstallMetamask',
-                errorIcon:'XCircle', modalButtonMessage: i18n.t('closeBtn'),
+                errorIcon:'XCircle', modalButtonMessage: 'closeBtn',
                 modalButtonVariant: "#E63C36", waitToClose: false});
         }
     }
 
     getCampaigns() {
-        this.setState({showModal:true, errorMessage: i18n.t('processingWait'),
-            modalMessage: i18n.t('waitingForNetowork'), errorIcon:'HourglassSplit',
+        this.setState({showModal:true, modalTitle: 'processingWait',
+            modalMessage: 'waitingForNetowork', errorIcon:'HourglassSplit',
             modalButtonVariant: "gold", waitToClose: true});
         var campaigns = [];
-        var errorMessage = 'failedToLoadCampaigns';
+        var modalTitle = 'failedToLoadCampaigns';
         var that = this;
         axios.post('/api/campaigns/loadUserCampaigns', {}, {headers: {"Content-Type": "application/json"}})
         .then(res => {
@@ -117,12 +145,12 @@ class UserCampaigns extends Component {
                 campaigns:campaigns
             });
         }).catch(err => {
-            errorMessage = 'failedToLoadCampaigns'
+            modalTitle = 'failedToLoadCampaigns'
             console.log(err);
             that.setState({showModal:true,
-                errorMessage: errorMessage,
+                modalTitle: modalTitle,
                 modalMessage: 'technicalDifficulties',
-                errorIcon:'XCircle', modalButtonMessage: i18n.t('returnHome'),
+                errorIcon:'XCircle', modalButtonMessage: 'returnHome',
                 modalButtonVariant: "#E63C36", waitToClose: false});
         })
     }
@@ -144,7 +172,7 @@ class UserCampaigns extends Component {
                         {this.state.errorIcon == 'HourglassSplit' && <HourglassSplit style={{color: 'gold'}}/>}
                         {this.state.errorIcon == 'XCircle' && <XCircle style={{color: '#E63C36'}}/>}
                     </p>
-                        <p className='errorMessage'><Trans i18nKey={this.state.errorMessage}/></p>
+                        <p className='modalTitle'><Trans i18nKey={this.state.modalTitle}/></p>
                         <p className='modalMessage'>
                             <Trans i18nKey={this.state.modalMessage}>
                             Your account has not been cleared to create campaigns.
@@ -154,11 +182,38 @@ class UserCampaigns extends Component {
                             </Trans>
                         </p>
                         {!this.state.waitToClose &&
-                        <Button className='myModalButton'
-                                style={{backgroundColor : this.state.modalButtonVariant, borderColor : this.state.modalButtonVariant}}
-                                onClick={ () => {this.setState({showModal:false})}}>
-                            {this.state.modalButtonMessage}
-                        </Button>
+                        <UserContext.Consumer>
+                            {({isLoggedIn, toggleLoggedIn}) => (
+                                <Button className='myModalButton'
+                                        style={{backgroundColor : this.state.modalButtonVariant, borderColor : this.state.modalButtonVariant}}
+                                        onClick={ async () => {
+                                            this.setState({showModal:false})
+                                            if(this.state.goHome) {
+                                                this.props.history.push('/');
+                                            } else if(!this.state.isLoggedIn) {
+                                                try {
+                                                    if(await LogIn(ACCOUNTS[0], web3)) {
+                                                        toggleLoggedIn(true);
+                                                        this.setState({isLoggedIn: true, showModal: false});
+                                                        await this.checkWL();
+                                                    }
+                                                } catch (err) {
+                                                    this.setState({showModal:true,
+                                                        goHome: true,
+                                                        isLoggedIn: false,
+                                                        campaigns: [],
+                                                        errorMessage: 'authFailedTitle',
+                                                        modalMessage: 'authFailedMessage',
+                                                        modalButtonMessage: 'closeBtn',
+                                                        modalButtonVariant: "#E63C36"}
+                                                    );
+                                                }
+                                            }
+                                        }}>
+                                    <Trans i18nKey={this.state.modalButtonMessage} />
+                                </Button>
+                            )}
+                        </UserContext.Consumer>
                         }
                     </Modal.Body>
                 </Modal>

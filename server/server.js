@@ -199,7 +199,7 @@ APP.post('/api/auth/jwt', async(req, res) => {
         } else {
             let token = jsonwebtoken.sign({ address:addr }, process.env.JWT_SECRET, { expiresIn: '7d' });
             console.log(`JWT token ${token}`);
-            res.cookie('authToken', token, { httpOnly: true }).send({sucess:true});
+            res.cookie('authToken', token, { httpOnly: true }).send({success:true});
         }
     } catch (err) {
         console.log(err);

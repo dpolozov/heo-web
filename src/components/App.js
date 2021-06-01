@@ -1,4 +1,5 @@
-import {React, Component, Suspense} from 'react';
+import {Component, Suspense} from 'react';
+import React from 'react';
 import CampaignPage from './CampaignPage';
 import CreateCampaign from './CreateCampaign';
 import UserCampaigns from './UserCampaigns';
@@ -11,17 +12,23 @@ import { BrowserRouter as Router, Switch, Route, Link, withRouter } from "react-
 import { Nav, Navbar, Container, Button, Modal } from 'react-bootstrap';
 import { XCircle } from 'react-bootstrap-icons';
 import { Trans } from 'react-i18next';
-import { GetLanguage } from '../util/Utilities';
+import { GetLanguage, LogIn } from '../util/Utilities';
 import axios from 'axios';
 import config from 'react-global-configuration';
 import i18n from '../util/i18n';
+import {UserContext} from './UserContext';
 
 var ACCOUNTS, web3;
 
 class App extends Component {
     constructor(props) {
         super(props);
+        this.toggleLoggedIn = (val) => {
+            this.setState({isLoggedIn: val});
+        };
+
         this.state = {
+            toggleLoggedIn: this.toggleLoggedIn,
             language: 'en',
             isLoggedIn: false,
             showError: false,
@@ -68,12 +75,7 @@ class App extends Component {
                 ACCOUNTS = await ethereum.request({method: 'eth_requestAccounts'});
                 web3 = (await import("../remote/" + config.get("CHAIN") + "/web3")).default;
                 try {
-                    let res = await axios.get('/api/auth/msg');
-                    let dataToSign = res.data.dataToSign;
-                    let signature = await web3.eth.personal.sign(dataToSign, ACCOUNTS[0]);
-                    let authRes = await axios.post('/api/auth/jwt', {signature:signature, addr:ACCOUNTS[0]}, {headers: {"Content-Type": "application/json"}});
-                    let sucess = authRes.data.sucess;
-                    if(sucess) {
+                    if(await LogIn(ACCOUNTS[0], web3)) {
                         this.setState({isLoggedIn : true});
                         this.props.history.push('/');
                     }
@@ -99,6 +101,7 @@ class App extends Component {
 
     render() {
         return (
+            <UserContext.Provider value={this.state}>
             <Suspense fallback="...is loading">
                 <main>
                     <div>
@@ -134,13 +137,10 @@ class App extends Component {
                             <Navbar.Toggle aria-controls="basic-navbar-nav" />
                             <Navbar.Collapse id="basic-navbar-nav">
                                 <Nav className="mr-auto" bg="light">
-                                    <Nav.Link className='mainNavText' href="/"><Trans i18nKey='browse'/></Nav.Link>
-                                    <Nav.Link className='mainNavText' href="/new"><Trans i18nKey='startFundraiser'/></Nav.Link>
-                                    {this.state.isLoggedIn &&
-                                        <Nav.Link className='mainNavText' href="/myCampaigns"><Trans i18nKey='myFundraisers'/></Nav.Link>
-                                    }
-
-                                    <Nav.Link className='mainNavText' as='a' target='_blank' href='https://heo.finance'><Trans i18nKey='about'/></Nav.Link>
+                                    <Nav.Link as={Link} eventKey="1" className='mainNavText' to="/"><Trans i18nKey='browse'/></Nav.Link>
+                                    <Nav.Link as={Link} eventKey="2" className='mainNavText' to={{pathname:"/new", state:{isLoggedIn: this.state.isLoggedIn}}} ><Trans i18nKey='startFundraiser'/></Nav.Link>
+                                    <Nav.Link as={Link} eventKey="3" className='mainNavText' to={{pathname:"/myCampaigns", state:{isLoggedIn: this.state.isLoggedIn}}} ><Trans i18nKey='myFundraisers'/></Nav.Link>
+                                    <Nav.Link as={Link} eventKey="4" className='mainNavText' as='a' target='_blank' href='https://heo.finance'><Trans i18nKey='about'/></Nav.Link>
                                 </Nav>
                             </Navbar.Collapse>
                         </Navbar>
@@ -173,6 +173,7 @@ class App extends Component {
                     </div>
                 </main>
             </Suspense>
+            </UserContext.Provider>
         );
     }
 }

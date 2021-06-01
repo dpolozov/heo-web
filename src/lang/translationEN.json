@@ -56,6 +56,7 @@
     "closeBtn" : "CLOSE",
     "web3WalletRequired": "Web3 Wallet is Required",
     "pleaseInstallMetamask": "Please install MetaMask or visit this page via MetaMask mobile app",
+    "pleaseUnlockMetamask": "Please unlock MetaMask to authenticate",
     "authFailedTitle": "Login failed",
     "authFailedMessage": "Authentication failed. Please check MetaMask for details",
     "pleaseLogInTitle": "Authentication Required",

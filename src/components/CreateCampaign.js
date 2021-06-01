@@ -9,6 +9,8 @@ import uuid from 'react-uuid';
 import axios from 'axios';
 import { Trans } from 'react-i18next';
 import i18n from '../util/i18n';
+import {UserContext} from './UserContext';
+import { LogIn } from '../util/Utilities';
 
 import { ChevronLeft, CheckCircle, ExclamationTriangle, HourglassSplit, XCircle } from 'react-bootstrap-icons';
 
@@ -261,16 +263,37 @@ class CreateCampaign extends React.Component {
                             to ne granted permission to fundraise on HEO Platform
                         </Trans></p>
                         {!this.state.waitToClose &&
-                        <Button className='myModalButton' 
-                            style={{backgroundColor : this.state.modalButtonVariant, borderColor : this.state.modalButtonVariant}} 
-                            onClick={ () => {
-                                this.setState({showModal:false})
-                                if(this.state.goHome) {
-                                    this.props.history.push('/');
-                                }
-                            }}>
-                            <Trans i18nKey={this.state.modalButtonMessage} />
-                        </Button>
+                        <UserContext.Consumer>
+                            {({isLoggedIn, toggleLoggedIn}) => (
+                                <Button className='myModalButton'
+                                    style={{backgroundColor : this.state.modalButtonVariant, borderColor : this.state.modalButtonVariant}}
+                                    onClick={ async () => {
+                                        this.setState({showModal:false})
+                                        if(this.state.goHome) {
+                                            this.props.history.push('/');
+                                        } else if(!this.state.isLoggedIn) {
+                                            try {
+                                                if(await LogIn(ACCOUNTS[0], web3)) {
+                                                    toggleLoggedIn(true);
+                                                    this.setState({isLoggedIn: true, showModal: false});
+                                                    await this.checkWL();
+                                                }
+                                            } catch (err) {
+                                                this.setState({showModal:true,
+                                                    goHome: true,
+                                                    isLoggedIn: false,
+                                                    errorMessage: 'authFailedTitle',
+                                                    modalMessage: 'authFailedMessage',
+                                                    modalButtonMessage: 'closeBtn',
+                                                    modalButtonVariant: "#E63C36"}
+                                                );
+                                            }
+                                        }
+                                    }}>
+                                    <Trans i18nKey={this.state.modalButtonMessage} />
+                                </Button>
+                                )}
+                        </UserContext.Consumer>
                         }
                     </Modal.Body>                
                 </Modal>
@@ -371,6 +394,43 @@ class CreateCampaign extends React.Component {
         );
     }
 
+    async checkWL() {
+        //is white list enabled?
+        let wlEnabled = await HEOParameters.methods.intParameterValue(11).call();
+        if(wlEnabled > 0) {
+            //is user white listed?
+            let whiteListed = await HEOParameters.methods.addrParameterValue(5,ACCOUNTS[0]).call();
+            if(whiteListed > 0) {
+                this.setState({
+                    isLoggedIn : true,
+                    whiteListed: true,
+                    showModal: false,
+                    goHome: false
+                });
+            } else {
+                //user is not in the white list
+                this.setState({
+                    goHome: true,
+                    showModal:true,
+                    isLoggedIn: true,
+                    whiteListed: false,
+                    modalTitle: 'nonWLTitle',
+                    modalMessage: 'nonWLMessage',
+                    errorIcon: 'XCircle', modalButtonMessage: 'closeBtn',
+                    modalButtonVariant: "#E63C36", waitToClose: false
+                });
+            }
+        } else {
+            //white list is disabled
+            this.setState({
+                isLoggedIn : true,
+                whiteListed: true,
+                goHome: false,
+                showModal: false
+            });
+        }
+    }
+
     async componentDidMount() {
         if (typeof window.ethereum !== 'undefined') {
             this.setState({showModal:true, modalTitle: 'processingWait',
@@ -380,7 +440,17 @@ class CreateCampaign extends React.Component {
             HEOCampaignFactory = (await import("../remote/" + config.get("CHAIN") + "/HEOCampaignFactory")).default;
             HEOParameters = (await import("../remote/" + config.get("CHAIN") + "/HEOParameters")).default;
             var ethereum = window.ethereum;
-            ACCOUNTS = await ethereum.request({method: 'eth_requestAccounts'});
+            try {
+                ACCOUNTS = await ethereum.request({method: 'eth_requestAccounts'});
+            } catch {
+                this.setState({
+                    showModal:true,
+                    modalTitle: 'web3WalletRequired',
+                    goHome: true,
+                    modalMessage: 'pleaseUnlockMetamask',
+                    errorIcon: 'XCircle', modalButtonMessage: 'closeBtn',
+                    modalButtonVariant: "#E63C36", waitToClose: false});
+            }
             web3 = (await import("../remote/" + config.get("CHAIN") + "/web3")).default;
             let options = (config.get("chainconfigs")[config.get("CHAIN")]["currencyOptions"]);
             let currencyOptions= (config.get("chainconfigs")[config.get("CHAIN")]["currencies"]);
@@ -390,83 +460,40 @@ class CreateCampaign extends React.Component {
                 currencyName:options[0].text}
             );
             // is the user logged in?
-            try {
-                let res = await axios.get('/api/auth/status');
-                if(res.data.addr && ACCOUNTS[0] == res.data.addr) {
-                    try {
-                        //is white list enabled?
-                        let wlEnabled = await HEOParameters.methods.intParameterValue(11).call();
-                        if(wlEnabled > 0) {
-                            //is user white listed?
-                            let whiteListed = await HEOParameters.methods.addrParameterValue(5,ACCOUNTS[0]).call();
-                            if(whiteListed > 0) {
-                                this.setState({
-                                    isLoggedIn : true,
-                                    whiteListed: true,
-                                    showModal: false,
-                                    goHome: false
-                                });
-                            } else {
-                                //user is not in the white list
-                                this.setState({
-                                    goHome: true,
-                                    showModal:true,
-                                    isLoggedIn: true,
-                                    whiteListed: false,
-                                    modalTitle: 'nonWLTitle',
-                                    modalMessage: 'nonWLMessage',
-                                    errorIcon: 'XCircle', modalButtonMessage: 'closeBtn',
-                                    modalButtonVariant: "#E63C36", waitToClose: false
-                                });
-                            }
-                        } else {
-                            //white list is disabled
-                            this.setState({
-                                isLoggedIn : true,
-                                whiteListed: true,
-                                goHome: false,
-                                showModal: false
-                            });
-                        }
-                    } catch (err) {
-                        this.setState({
-                            showModal: true,
-                            goHome: true,
-                            modalTitle: 'authFailedTitle',
-                            modalMessage: 'technicalDifficulties',
-                            errorIcon: 'XCircle', modalButtonMessage: 'returnHome',
-                            modalButtonVariant: "#E63C36", waitToClose: false});
+            if(!this.state.isLoggedIn) {
+                try {
+                    let res = await axios.get('/api/auth/status');
+                    if (res.data.addr && ACCOUNTS[0] == res.data.addr) {
+                        this.setState({isLoggedIn: true, showModal: false});
+                    } else {
+                        //must have logged in with different account before
+                        await axios.post('/api/auth/logout');
                     }
-
-                    return;
+                } catch (err) {
+                    this.setState({
+                        showModal: true,
+                        isLoggedIn: false,
+                        goHome: true,
+                        modalTitle: 'authFailedTitle',
+                        modalMessage: 'technicalDifficulties',
+                        errorIcon: 'XCircle', modalButtonMessage: 'returnHome',
+                        modalButtonVariant: "#E63C36", waitToClose: false});
                 }
-                //must have logged in with different account before
-                await axios.post('/api/auth/logout');
+            }
+            if(this.state.isLoggedIn) {
+                await this.checkWL();
+            } else {
+                //need to log in first
                 this.setState({
                     showModal: true,
                     isLoggedIn : false,
                     whiteListed: false,
-                    goHome: true,
+                    goHome: false,
                     modalTitle: 'pleaseLogInTitle',
                     modalMessage: 'pleaseLogInToCreateMessage',
-                    errorIcon: 'XCircle', modalButtonMessage: 'closeBtn',
+                    errorIcon: 'XCircle', modalButtonMessage: 'login',
                     modalButtonVariant: "#E63C36", waitToClose: false});
-            } catch (err) {
-                //
-                console.log("Exception");
-                console.log(err);
             }
-            //need to log in first
-            this.setState({
-                showModal: true,
-                campaigns : [],
-                isLoggedIn : false,
-                whiteListed: false,
-                goHome: true,
-                modalTitle: 'pleaseLogInTitle',
-                modalMessage: 'pleaseLogInToCreateMessage',
-                errorIcon: 'XCircle', modalButtonMessage: 'closeBtn',
-                modalButtonVariant: "#E63C36", waitToClose: false});
         } else {
             this.setState({
                 showModal:true,
