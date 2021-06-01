@@ -14,7 +14,7 @@ import { ChevronLeft, CheckCircle, ExclamationTriangle, HourglassSplit, XCircle 
 
 var HEOCampaignFactory, HEOParameters, ACCOUNTS, web3;
 
-class CreateCampaign2 extends React.Component {
+class CreateCampaign extends React.Component {
     constructor(props) {
         super(props);
 
@@ -479,4 +479,4 @@ class CreateCampaign2 extends React.Component {
     }
 }
 
-export default withRouter(CreateCampaign2);
+export default withRouter(CreateCampaign);
