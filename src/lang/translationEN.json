@@ -68,5 +68,11 @@
     "addToDbFailedMessage": "Your campaign has been deployed on the blockchain and will appear on the website in several minutes.",
     "addToDbFailedTitle": "Campaign pending",
     "updatingMaxAmount": "updating how much you need to raise",
-    "updatingAmountFailed" : "Failed to updated how much you need to raise"
+    "updatingAmountFailed" : "Failed to updated how much you need to raise",
+    "close" : "CLOSE",
+    "closeCampaing" : "Close Campaign?",
+    "final" : "This action cannot be undone",
+    "yes" : "YES",
+    "no" : "NO",
+    "ok" : "OK"
 }

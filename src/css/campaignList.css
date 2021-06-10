@@ -156,6 +156,18 @@ color: #0E161C;
     border-top-style: inset;
 }
 
+#closeCampaign{
+    background-color: #588157;
+    border-color: #588157;
+    float: right;
+}
+
+#cancelClose{
+    background-color: #E63C36;
+    border-color: #E63C36;
+    float: left;
+}
+
 @media (max-width: 530px) {
     #buttonsRow{
         flex-direction: column;

@@ -9,8 +9,9 @@ import { DescriptionPreview, LogIn } from '../util/Utilities';
 import { Trans } from 'react-i18next';
 import i18n from '../util/i18n';
 import {UserContext} from './UserContext';
+import i18next from 'i18next';
 
-var ACCOUNTS, web3, HEOParameters;
+var ACCOUNTS, web3, HEOParameters, HEOCampaign, CAMPAIGNINSTANCE;
 
 class UserCampaigns extends Component {
     constructor(props) {
@@ -22,7 +23,10 @@ class UserCampaigns extends Component {
             modalTitle:"",
             modalMessage:"",
             isLoggedIn:false,
-            whiteListed:false
+            whiteListed:false,
+            closingCampaign: false,
+            campaignAddress: '',
+            fileName: '',
         };
     }
 
@@ -155,6 +159,64 @@ class UserCampaigns extends Component {
         })
     }
 
+    async closeCampaignPrep(address, imageURL){
+        console.log(this.state.campaigns);
+        console.log('close campaign');
+        this.setState({
+            closingCampaign: true, waitToClose: true,
+            showModal : true, errorIcon:'ExclamationTriangle',
+            modalTitle : i18n.t('closeCampaing'),
+            modalMessage : 'final',
+            campaignAddress : address
+        })
+        HEOCampaign = (await import("../remote/"+ config.get("CHAIN") + "/HEOCampaign")).default;
+        CAMPAIGNINSTANCE = new web3.eth.Contract(HEOCampaign, address);
+        let splits = imageURL.split('/');
+        this.setState({fileName : splits[splits.length -1]});          
+    }
+
+    async closeCampaign() {
+        this.setState({modalTitle: 'processingWait',
+        modalMessage: 'waitingForNetowork', errorIcon:'HourglassSplit',
+        modalButtonVariant: "gold", waitToClose: true, closingCampaign: false})
+        try {          
+            let result = await CAMPAIGNINSTANCE.methods.close().send({from:ACCOUNTS[0]});
+            console.log(result);
+            this.deleteimage();
+            this.deleteFromDB();
+            this.setState({showModal: true, errorMessage: i18n.t('complete'),
+            errorIcon: 'CheckCircle', modalButtonMessage: i18n.t('ok'),
+            modalButtonVariant: '#588157', waitToClose: false, closingCampaign: false})
+        } catch (err){
+            console.log(err);
+            this.setState({
+                waitToClose : false, modalMessage: 'technicalDifficulties',
+                errorIcon:'XCircle', modalButtonMessage: 'closeBtn',
+                modalButtonVariant: "#E63C36", waitToClose: false, closingCampaign: false})
+        }
+    }
+
+    async deleteimage () {
+        let data = {name : this.state.fileName};           
+        return axios.post('/api/deleteimage', data, {headers: {"Content-Type": "application/json"}})
+        .then(res => {
+            console.log("Success deleting image");
+        }).catch(err => {              
+            console.log(err);                   
+        });
+    }
+
+    async deleteFromDB (){
+        let data = {address : this.state.campaignAddress};
+        return axios.post('/api/deleteCampaign', data, {headers: {"Content-Type": "application/json"}})
+        .then(res => {
+            console.log("Success deleting db entry");
+        }).catch(err => {              
+            console.log(err);                   
+        });
+
+    }
+
     render() {
         return (
             <div> 
@@ -168,7 +230,7 @@ class UserCampaigns extends Component {
                 <Modal show={this.state.showModal} onHide={this.state.showModal} className='myModal' centered>
                     <Modal.Body><p className='errorIcon'>
                         {this.state.errorIcon == 'CheckCircle' && <CheckCircle style={{color:'#588157'}} />}
-                        {this.state.errorIcon == 'ExclamationTriangle' && <ExclamationTriangle/>}
+                        {this.state.errorIcon == 'ExclamationTriangle' && <ExclamationTriangle style={{color: '#E63C36'}}/>}
                         {this.state.errorIcon == 'HourglassSplit' && <HourglassSplit style={{color: 'gold'}}/>}
                         {this.state.errorIcon == 'XCircle' && <XCircle style={{color: '#E63C36'}}/>}
                     </p>
@@ -181,6 +243,12 @@ class UserCampaigns extends Component {
                                 to ne granted permission to fundraise on HEO Platform
                             </Trans>
                         </p>
+                        {this.state.closingCampaign &&
+                            <Container>
+                                <Button id='closeCampaign'onClick={() => this.closeCampaign()}>{i18n.t('yes')}</Button>
+                                <Button id='cancelClose' onClick={() => this.setState({showModal:false})}>{i18n.t('no')}</Button>
+                            </Container>
+                        }
                         {!this.state.waitToClose &&
                         <UserContext.Consumer>
                             {({isLoggedIn, toggleLoggedIn}) => (
@@ -208,6 +276,9 @@ class UserCampaigns extends Component {
                                                         modalButtonVariant: "#E63C36"}
                                                     );
                                                 }
+                                            } else {
+                                                this.getCampaigns();
+                                                this.setState({showModal:false});
                                             }
                                         }}>
                                     <Trans i18nKey={this.state.modalButtonMessage} />
@@ -221,13 +292,13 @@ class UserCampaigns extends Component {
                     <Container>
                         {this.state.campaigns.map((item, i) =>
                             <Row style={{marginBottom: '20px'}} key={i}>
-                                <Link to={'/campaign/' + item._id} id='cardLink'>
                                 <Card>
                                     <Row>
                                         <Col sm='3' id='picColumn'>
                                             <Card.Img src={item.mainImage} fluid='true' />
                                         </Col>
                                         <Col >
+                                            <Link to={'/campaign/' + item._id} id='cardLink'>
                                             <Row>                                  
                                                 <Card.Body>
                                                     <Card.Title>{item.title}</Card.Title> 
@@ -236,14 +307,14 @@ class UserCampaigns extends Component {
                                                     <ProgressBar now={item.percentRaised} /> 
                                                 </Card.Body>
                                             </Row>
+                                            </Link>
                                             <Row id='buttonsRow'>
-                                                <Col className='buttonCol'><div id='rewardsBtn' className='cardButtons'><p><Trans i18nKey='reward'/> {item.reward}</p></div></Col>                                                  
+                                                <Col className='buttonCol'><Button variant="danger" id='donateBtn' block onClick={() => this.closeCampaignPrep(item._id, item.mainImage)}><Trans i18nKey='close'/></Button></Col>                                                  
                                                 <Col className='buttonCol'><Link to={'/editCampaign/' + item._id} id='cardLink'><Button id='editBtn' block>EDIT</Button></Link></Col>
                                             </Row> 
                                         </Col>
                                     </Row>
                                 </Card>
-                                </Link>
                             </Row>                           
                         )} 
                     </Container>

@@ -61,20 +61,58 @@ APP.post('/api/uploadimage', (req,res) => {
 });
 
 APP.post('/api/updateCampaignDB', (req, res) => {
+    if (req.user && req.user.address) {
+        const DB = CLIENT.db(DBNAME);
+        DB.collection('campaigns')
+            .updateOne({'_id': req.body.mydata.address}, {$set: req.body.mydata.dataToUpdate}, (err, result) => {
+                if (err) {
+                    res.sendStatus(500);
+                    console.log(err);
+                } else {
+                    res.send('success');
+                }
+            });
+    } else {
+        res.sendStatus(401);
+    }
+});
+
+APP.post('/api/deleteimage', (req,res) => {
+    if(req.user && req.user.address) {
+        const PARAMS = {
+            Bucket: process.env.SERVER_APP_BUCKET_NAME,
+            Key: process.env.SERVER_APP_IMG_DIR_NAME + '/' + req.body.name,
+        }
+        S3.deleteObject(PARAMS, (error, data) => {
+            if (error) {
+                console.log(error, error.stack);
+                res.sendStatus(500);
+            } else {
+                res.send('complete');
+            }
+        });
+    }  else {
+        console.log('failed to delete');
+        res.sendStatus(401);
+    }
+});
+
+APP.post('/api/deleteCampaign', (req, res) => {   
     if(req.user && req.user.address) {
         const DB = CLIENT.db(DBNAME);
         DB.collection('campaigns')
-        .updateOne({'_id': req.body.mydata.address}, {$set: req.body.mydata.dataToUpdate}, (err, result) => {
+        .deleteOne({'_id': req.body.address}, (err, result) => {
             if(err){
                 res.sendStatus(500);
                 console.log(err);
             } else {
                 res.send('success');
             }
-        });
-    } else {
+        });  
+    }  else {
+        console.log('failed to delete');
         res.sendStatus(401);
-    }
+    }   
 });
 
 APP.post('/api/campaigns/addCampaignToDB', (req, res) => {
