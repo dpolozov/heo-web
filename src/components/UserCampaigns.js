@@ -140,18 +140,17 @@ class UserCampaigns extends Component {
             modalButtonVariant: "gold", waitToClose: true});
         var campaigns = [];
         var modalTitle = 'failedToLoadCampaigns';
-        var that = this;
         axios.post('/api/campaigns/loadUserCampaigns', {}, {headers: {"Content-Type": "application/json"}})
         .then(res => {
             campaigns = res.data;
-            that.setState({
+            this.setState({
                 showModal: false,
                 campaigns:campaigns
             });
         }).catch(err => {
             modalTitle = 'failedToLoadCampaigns'
             console.log(err);
-            that.setState({showModal:true,
+            this.setState({showModal:true,
                 modalTitle: modalTitle,
                 modalMessage: 'technicalDifficulties',
                 errorIcon:'XCircle', modalButtonMessage: 'returnHome',
@@ -184,14 +183,16 @@ class UserCampaigns extends Component {
             console.log(result);
             this.deleteimage();
             this.deleteFromDB();
-            this.setState({showModal: true, errorMessage: i18n.t('complete'),
-            errorIcon: 'CheckCircle', modalButtonMessage: i18n.t('ok'),
-            modalButtonVariant: '#588157', waitToClose: false, closingCampaign: false})
+            this.setState({
+                modalMessage : 'campaignDeleted', modalTitle: 'complete',
+                errorIcon: 'CheckCircle', modalButtonMessage: i18n.t('ok'),
+                modalButtonVariant: '#588157', waitToClose: false, closingCampaign: false,
+            })
         } catch (err){
             console.log(err);
             this.setState({
                 waitToClose : false, modalMessage: 'technicalDifficulties',
-                errorIcon:'XCircle', modalButtonMessage: 'closeBtn',
+                errorIcon:'XCircle', modalButtonMessage: 'closeBtn', errorMessage : 'failed',
                 modalButtonVariant: "#E63C36", waitToClose: false, closingCampaign: false})
         }
     }
