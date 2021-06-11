@@ -60,17 +60,21 @@ APP.post('/api/uploadimage', (req,res) => {
     }
 });
 
-APP.post('/api/updateCampaignDB', (req, res) => {   
-    const DB = CLIENT.db(DBNAME);
-    DB.collection('campaigns')
-    .updateOne({'_id': req.body.mydata.address}, {$set: req.body.mydata.dataToUpdate}, (err, result) => {
-        if(err){
-            res.sendStatus(500);
-            console.log(err);
-        } else {
-            res.send('success');
-        }
-    });     
+APP.post('/api/updateCampaignDB', (req, res) => {
+    if(req.user && req.user.address) {
+        const DB = CLIENT.db(DBNAME);
+        DB.collection('campaigns')
+        .updateOne({'_id': req.body.mydata.address}, {$set: req.body.mydata.dataToUpdate}, (err, result) => {
+            if(err){
+                res.sendStatus(500);
+                console.log(err);
+            } else {
+                res.send('success');
+            }
+        });
+    } else {
+        res.sendStatus(401);
+    }
 });
 
 APP.post('/api/campaigns/addCampaignToDB', (req, res) => {
