@@ -210,7 +210,7 @@ class CampaignPage extends Component {
                 <Container id='mainContainer'>
                     <Row id='topRow'>
                         <Col id='imgCol'>
-                            <Image src={this.state.campaign.mainImage} id='mainImage'/>
+                            <Image src={this.state.campaign.mainImageURL} id='mainImage'/>
                         </Col>
                         <Col id='infoCol'>
                             <Row id='titleRow'>
@@ -222,7 +222,7 @@ class CampaignPage extends Component {
                             </Row>
                             <Row id='acceptingRow'>
                                 <div id='acceptingDiv'>
-                                    <p><Trans i18nKey='accepting'/>: <span className='coinRewardInfo'>{this.state.campaign.coinName}</span></p>
+                                    <p><Trans i18nKey='accepting'/>: <span className='coinRewardInfo'>{this.state.campaign.currencyName}</span></p>
                                 </div>
                             </Row>
                             <Row id='donateRow'>
@@ -242,12 +242,12 @@ class CampaignPage extends Component {
                     </Row>
                     <Row id='videoRow'>
                         <Container id='videoRowContainer'>
-                            { this.state.campaign.videoLink && <ReactPlayer url={this.state.campaign.videoLink} id='videoPlayer' />}
+                            { this.state.campaign.vl && <ReactPlayer url={this.state.campaign.vl} id='videoPlayer' />}
                         </Container>
                     </Row>
                     <Row id='descriptionRow'>
                         <Container>
-                            <p id='description'>{this.state.campaign.campaignDesc}</p>
+                            <p id='description'>{this.state.campaign.description}</p>
                         </Container>
                     </Row>
                 </Container>

@@ -71,19 +71,19 @@ class CampaignList extends Component {
                                 <Card>
                                     <Row>
                                         <Col sm='3' id='picColumn'>
-                                            <Card.Img src={item.mainImage} fluid='true' />
+                                            <Card.Img src={item.mainImageURL} fluid='true' />
                                         </Col>
                                         <Col >
                                             <Row>                                  
                                                 <Card.Body>
                                                     <Card.Title>{item.title}</Card.Title> 
-                                                    <Card.Text>{`${DescriptionPreview(item.campaignDesc)}...`}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span id='readMore'>Read More</span></Card.Text>
+                                                    <Card.Text>{`${DescriptionPreview(item.description)}...`}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span id='readMore'>Read More</span></Card.Text>
                                                     <p id='progressBarLabel'><span id='progressBarLabelStart'>{`$${item.raisedAmount}`}</span>{i18n.t('raised')}{item.maxAmount} {i18n.t('goal')}</p>
                                                     <ProgressBar now={item.percentRaised} /> 
                                                 </Card.Body>
                                             </Row>
                                             <Row >
-                                                <Col className='buttonCol'><div id='acceptingBtn' className='cardButtons'><p><Trans i18nKey='accepting'/></p><p id='coinName'>{item.coinName}</p></div></Col>
+                                                <Col className='buttonCol'><div id='acceptingBtn' className='cardButtons'><p><Trans i18nKey='accepting'/></p><p id='currencyName'>{item.currencyName}</p></div></Col>
                                                 <Col className='buttonCol'><Button variant="danger" id='donateBtn' block><Trans i18nKey='donate'/></Button></Col>
                                             </Row> 
                                         </Col>
