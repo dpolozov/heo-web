@@ -89,8 +89,12 @@ class CreateCampaign extends React.Component {
             campaignData.currencyName = this.state.currencyName;
             campaignData.description = this.state.description;
             campaignData.mainImageURL = this.state.mainImageURL;
-            campaignData.vl = this.state.vl;
             campaignData.maxAmount = this.state.maxAmount;
+            campaignData.vl = this.state.vl;
+            campaignData.fn = this.state.fn;
+            campaignData.ln = this.state.ln;
+            campaignData.org = this.state.org;
+            campaignData.cn = this.state.cn;
             let res = await axios.post('/api/campaign/add', {mydata : campaignData},
                 {headers: {"Content-Type": "application/json"}});
             this.setState({showModal:true, goHome: true,
