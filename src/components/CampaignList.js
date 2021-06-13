@@ -29,7 +29,7 @@ class CampaignList extends Component {
     async getCampaigns(){
         var campaigns = [];
         var errorMessage = 'Failed to load campaigns';
-        await axios.post('/api/campaigns/load')
+        await axios.post('/api/campaign/loadAll')
         .then(res => {
             //console.log(res.data);
             campaigns = res.data;

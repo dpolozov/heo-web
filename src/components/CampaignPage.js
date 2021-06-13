@@ -35,7 +35,7 @@ class CampaignPage extends Component {
         var campaign = {};
         var errorMessage = 'Failed to load campaign';
         let data = {ID : address};
-        await axios.post('/api/campaign/load', data, {headers: {"Content-Type": "application/json"}})
+        await axios.post('/api/campaign/loadOne', data, {headers: {"Content-Type": "application/json"}})
         .then(res => {
             console.log(res.data);
             campaign = res.data;

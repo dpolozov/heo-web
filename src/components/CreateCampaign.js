@@ -103,7 +103,7 @@ class CreateCampaign extends React.Component {
                         maxAmount: that.state.maxAmount
                     };
                     // Add campaign to local Mongo database for faster access
-                    axios.post('/api/campaigns/addCampaignToDB', {mydata : campaignData}, {headers: {"Content-Type": "application/json"}})
+                    axios.post('/api/campaign/add', {mydata : campaignData}, {headers: {"Content-Type": "application/json"}})
                     .then(res => {
                         that.setState({showModal:true, goHome: true,
                             modalMessage: 'campaignCreateSuccess',

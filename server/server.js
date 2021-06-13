@@ -60,7 +60,7 @@ APP.post('/api/uploadimage', (req,res) => {
     }
 });
 
-APP.post('/api/updateCampaignDB', (req, res) => {
+APP.post('/api/campaign/update', (req, res) => {
     if (req.user && req.user.address) {
         const DB = CLIENT.db(DBNAME);
         DB.collection('campaigns')
@@ -97,7 +97,7 @@ APP.post('/api/deleteimage', (req,res) => {
     }
 });
 
-APP.post('/api/deleteCampaign', (req, res) => {   
+APP.post('/api/campaign/delete', (req, res) => {
     if(req.user && req.user.address) {
         const DB = CLIENT.db(DBNAME);
         DB.collection('campaigns')
@@ -115,7 +115,7 @@ APP.post('/api/deleteCampaign', (req, res) => {
     }   
 });
 
-APP.post('/api/campaigns/addCampaignToDB', (req, res) => {
+APP.post('/api/campaign/add', (req, res) => {
     if(req.user && req.user.address) {
         const ITEM = {
             _id: req.body.mydata.address.toLowerCase(),
@@ -146,7 +146,7 @@ APP.post('/api/campaigns/addCampaignToDB', (req, res) => {
     }
 });
 
-APP.post('/api/campaigns/load', (req, res) => {
+APP.post('/api/campaign/loadAll', (req, res) => {
     const DB = CLIENT.db(DBNAME);
     DB.collection("campaigns").find().toArray(function(err, result) {
         if (err) throw err;
@@ -154,23 +154,13 @@ APP.post('/api/campaigns/load', (req, res) => {
       });
 })
 
-APP.post('/api/campaign/load', async (req, res) => {
+APP.post('/api/campaign/loadOne', async (req, res) => {
     const DB = CLIENT.db(DBNAME);
     let result = await DB.collection("campaigns").findOne({"_id" : req.body.ID});
     res.send(result);
 })
 
-/*APP.post('/api/campaign/updateRaisedAmount', (req, res) =>{
-    const DB = CLIENT.db(DBNAME);
-    DB.collection("campaigns").findOneAndUpdate({ "_id" : req.body.ID}, { "$set" : {"raisedAmount" : req.body.amount}})
-    .then( res.send('db updated successfully'))
-    .catch( err => {
-        console.log(err);
-        res.send('db update failed');
-    })
-})*/
-
-APP.post('/api/campaigns/loadUserCampaigns',
+APP.post('/api/campaign/loadUserCampaigns',
     (req, res) => {
     if(req.user && req.user.address) {
         const DB = CLIENT.db(DBNAME);
