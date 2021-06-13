@@ -140,7 +140,7 @@ class UserCampaigns extends Component {
             modalButtonVariant: "gold", waitToClose: true});
         var campaigns = [];
         var modalTitle = 'failedToLoadCampaigns';
-        axios.post('/api/campaigns/loadUserCampaigns', {}, {headers: {"Content-Type": "application/json"}})
+        axios.post('/api/campaign/loadUserCampaigns', {}, {headers: {"Content-Type": "application/json"}})
         .then(res => {
             campaigns = res.data;
             this.setState({
@@ -209,13 +209,12 @@ class UserCampaigns extends Component {
 
     async deleteFromDB (){
         let data = {address : this.state.campaignAddress};
-        return axios.post('/api/deleteCampaign', data, {headers: {"Content-Type": "application/json"}})
+        return axios.post('/api/campaign/delete', data, {headers: {"Content-Type": "application/json"}})
         .then(res => {
             console.log("Success deleting db entry");
         }).catch(err => {              
             console.log(err);                   
         });
-
     }
 
     render() {

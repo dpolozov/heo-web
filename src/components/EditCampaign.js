@@ -55,7 +55,7 @@ class EditCampaign extends React.Component {
         var campaign = {};
         let data = {ID : address};
 
-        await axios.post('/api/campaign/load', data, {headers: {"Content-Type": "application/json"}})
+        await axios.post('/api/campaign/loadOne', data, {headers: {"Content-Type": "application/json"}})
         .then(res => {
             campaign = res.data;
             console.log(res.data);
@@ -231,7 +231,7 @@ class EditCampaign extends React.Component {
         let data = JSON.parse(adjustdata);
         console.log(data);
         let dataAndAdress = {dataToUpdate : data, address: this.state.campaignAddress}
-        axios.post('/api/updateCampaignDB', {mydata : dataAndAdress}, {headers: {"Content-Type": "application/json"}})
+        axios.post('/api/campaign/update', {mydata : dataAndAdress}, {headers: {"Content-Type": "application/json"}})
         .then(res => {
             console.log('db updated successfully');
             return true;
@@ -254,17 +254,17 @@ class EditCampaign extends React.Component {
             modalMessage: i18n.t('confirmMetamask'), errorIcon:'HourglassSplit',
             modalButtonVariant: "gold", waitToClose: true})
         try {
-            let result = await CAMPAIGNINSTANCE.methods.changeMaxAmount(web3.utils.toWei(this.state.maxAmount)).send({from:ACCOUNTS[0]}, () => {
-                that.setState({showModal:true, errorMessage: i18n.t('processingWait'),
-                modalMessage: i18n.t('updatingMaxAmount'), errorIcon:'HourglassSplit',
-                modalButtonVariant: "gold", waitToClose: true});
-            });
-            console.log(result);
+            let result = await CAMPAIGNINSTANCE.methods.changeMaxAmount(
+                web3.utils.toWei(this.state.maxAmount)).send({from:ACCOUNTS[0]}, () => {
+                    that.setState({showModal:true, errorMessage: i18n.t('processingWait'),
+                    modalMessage: i18n.t('updatingMaxAmount'), errorIcon:'HourglassSplit',
+                    modalButtonVariant: "gold", waitToClose: true});
+                });
             let data = {maxAmount : this.state.maxAmount};
             let dataAndAdress = {dataToUpdate : data, address: this.state.campaignAddress}
             try{
-                let update = await axios.post('/api/updateCampaignDB', {mydata : dataAndAdress}, {headers: {"Content-Type": "application/json"}});
-                console.log(update);
+                let update = await axios.post('/api/campaign/update', {mydata : dataAndAdress},
+                    {headers: {"Content-Type": "application/json"}});
                 return true;
             } catch (err){
                 console.log(err);
@@ -487,6 +487,5 @@ class EditCampaign extends React.Component {
         console.log( web3.utils.fromWei(await CAMPAIGNINSTANCE.methods.maxAmount().call()));
     }
 }
-
 
 export default EditCampaign;
