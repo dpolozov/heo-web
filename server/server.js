@@ -77,7 +77,7 @@ APP.post('/api/campaign/update', (req, res) => {
     }
 });
 
-APP.post('/api/deleteimage', (req,res) => {
+APP.post('/api/deleteimage', (req, res) => {
     if(req.user && req.user.address) {
         const PARAMS = {
             Bucket: process.env.SERVER_APP_BUCKET_NAME,
@@ -122,9 +122,9 @@ APP.post('/api/campaign/add', (req, res) => {
             beneficiaryId: req.body.mydata.beneficiaryId.toLowerCase(),
             ownerId: req.user.address.toLowerCase(),
             title: req.body.mydata.title,
-            mainImage: req.body.mydata.mainImage,
-            videoLink: req.body.mydata.videoLink,
-            campaignDesc: req.body.mydata.description,
+            mainImageURL: req.body.mydata.mainImageURL,
+            vl: req.body.mydata.vl,
+            description: req.body.mydata.description,
             coinName: req.body.mydata.coinName,
             maxAmount: req.body.mydata.maxAmount,
             raisedAmount: 0,
@@ -177,33 +177,6 @@ APP.post('/api/campaign/loadUserCampaigns',
     }
 })
 
-APP.post('/api/uploadmeta', (req,res) => {
-    if(req.user && req.user.address) {
-        const PARAMS = {
-            Bucket: process.env.SERVER_APP_BUCKET_NAME,
-            Key: process.env.SERVER_APP_META_DIR_NAME + '/' + req.files.myFile.name,
-            ContentType: 'application/json',
-            Body: req.files.myFile.data,
-        }
-
-        S3.upload(PARAMS, (error, data) => {
-            if (error) {
-                console.log(error);
-                res.sendStatus(500);
-            } else {
-                res.send(data.Location);
-            }
-        });
-    } else {
-        res.sendStatus(401);
-    }
-});
-
-APP.post('/api/getMetaData', async (req,res) => {
-    let metaData = await axios.get(req.body.metaUrl).catch(e => {console.log(e)});
-    res.send(JSON.stringify(metaData.data));
-});
-
 APP.get('/api/env', (req,res) => {
     res.json(
         {
@@ -230,7 +203,6 @@ APP.post('/api/auth/jwt', async(req, res) => {
             res.sendStatus(401);
         } else {
             let token = jsonwebtoken.sign({ address:addr }, process.env.JWT_SECRET, { expiresIn: '7d' });
-            console.log(`JWT token ${token}`);
             res.cookie('authToken', token, { httpOnly: true }).send({success:true});
         }
     } catch (err) {

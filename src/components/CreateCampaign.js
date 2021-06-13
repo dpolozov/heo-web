@@ -13,6 +13,7 @@ import {UserContext} from './UserContext';
 import { LogIn } from '../util/Utilities';
 
 import { ChevronLeft, CheckCircle, ExclamationTriangle, HourglassSplit, XCircle } from 'react-bootstrap-icons';
+import { compress } from 'shrink-string';
 
 var HEOCampaignFactory, HEOParameters, ACCOUNTS, web3;
 
@@ -23,7 +24,6 @@ class CreateCampaign extends React.Component {
         this.state = {
             whiteListed: false,
             isLoggedIn: false,
-            showLoader:false,
             loaderMessage:"Please wait",
             showError:false,
             showModal: false,
@@ -44,7 +44,6 @@ class CreateCampaign extends React.Component {
             raisedAmount:0,
             percentRaised: "0%",
             mainImageURL: "",
-            metaDataURL:"",
             mainImageFile:"",
             currencyAddress:"",
             currencyName:"",
@@ -69,180 +68,143 @@ class CreateCampaign extends React.Component {
         this.setState({mainImageFile:e.target.files[0], mainImageURL: URL.createObjectURL(e.target.files[0])});
     }
 
-    handleClick = (event) => {
-        event.preventDefault();
-        var that = this;
+    async handleClick (event) {
         let imgID = uuid();
-        this.uploadImageS3(that, imgID).then(() => {
-                that.uploadMetaS3(that, imgID).then(() => {
-                    that.createCampaign(that);
-            }).catch((error) => {
-                console.log(error);
-            });
-        }).catch((error) => {
-            console.log(error);
-        });
-    }
-
-    async createCampaign(that) {
-        console.log("Creating campaign");
-        var that = this;
-        HEOCampaignFactory.methods.createCampaign(web3.utils.toWei(`${this.state.maxAmount}`),
-            this.state.currencyAddress, this.state.metaDataURL, ACCOUNTS[0]).send({from:ACCOUNTS[0]}).on(
-            'receipt', function(receipt) {
-                console.log("Received receipt from createCampaign transaction");
-                if(receipt && receipt.events && receipt.events.CampaignDeployed && receipt.events.CampaignDeployed.address) {
-                    let campaignData = {
-                        address: receipt.events.CampaignDeployed.returnValues.campaignAddress,
-                        beneficiaryId: receipt.events.CampaignDeployed.returnValues.beneficiary,
-                        title: that.state.title,
-                        coinName: that.state.currencyName,
-                        description: that.state.description,
-                        mainImage: that.state.mainImageURL,
-                        videoLink: that.state.vl,
-                        maxAmount: that.state.maxAmount
-                    };
-                    // Add campaign to local Mongo database for faster access
-                    axios.post('/api/campaign/add', {mydata : campaignData}, {headers: {"Content-Type": "application/json"}})
-                    .then(res => {
-                        that.setState({showModal:true, goHome: true,
-                            modalMessage: 'campaignCreateSuccess',
-                            modalTitle: 'success',
-                            errorIcon: 'CheckCircle',
-                            modalButtonMessage: 'returnHome',
-                            modalButtonVariant: "#588157", waitToClose: false
-                        });
-                    }).catch(err => {
-                        //at this point, campaign already exists on the blockchain, it is just not cached
-                        // in MongoDB
-                        console.log('error adding campaign to the database ' + err.message);
-                        that.setState({showModal: true, goHome: true,
-                            modalTitle: 'addToDbFailedTitle',
-                            modalMessage: 'addToDbFailedMessage',
-                            errorIcon: 'CheckCircle',
-                            modalButtonMessage: 'returnHome',
-                            modalButtonVariant: "#588157", waitToClose: false
-                        });
-                    });
+        try {
+            let imgUrl = await this.uploadImageS3(imgID);
+            if(imgUrl) {
+                let campaignData = await this.createCampaign(imgUrl);
+                if(campaignData) {
+                    await this.addCampaignToDb(campaignData);
                 }
-            }).on('error', function(error) {
-                that.setState({showModal: true,
-                    modalTitle: 'blockChainTransactionFailed',
-                    modalMessage: 'checkMetamask',
-                    errorIcon: 'XCircle', modalButtonMessage: 'returnHome',
-                    modalButtonVariant: "#E63C36", waitToClose: false});
-                console.log("createCampaign transaction failed");
-                console.log(error);
-            }).on('transactionHash', function(transactionHash){
-                that.setState({showModal:true, modalTitle: 'processingWait',
-                    modalMessage: 'waitingForNetowork', errorIcon: 'HourglassSplit',
-                    modalButtonVariant: "gold", waitToClose: true});
-            });
-        that.setState({showLoader:true, loaderMessage: i18n.t('confirmMetamask')})
+            }
+        } catch(error)  {
+            console.log(error);
+        }
     }
 
-    //vl - video link(youtube)
-    async uploadMetaS3(that, metaID) {
-        console.log(`Generating metadata file ${metaID}`);
-        that.setState({showModal:true, modalTitle: 'processingWait',
-            modalMessage: 'uploadingMetaWait', errorIcon: 'HourglassSplit',
-            modalButtonVariant: "gold",
-            waitToClose: true
-        });
-        let data = new Blob([JSON.stringify({title:that.state.title,
-            description:that.state.description,
-            mainImageURL:that.state.mainImageURL,
-            fn:that.state.fn,
-            ln:that.state.ln,
-            org:that.state.org,
-            cn:that.state.cn,
-            vl:that.state.vl
-        })], {
-            type: 'applicaton/json'
-        });
-        const formData = new FormData();
-        formData.append(
-            "myFile",
-            data,
-            `${metaID}.json`
+    async addCampaignToDb(campaignData) {
+        try {
+            campaignData.title = this.state.title;
+            campaignData.currencyName = this.state.currencyName;
+            campaignData.description = this.state.description;
+            campaignData.mainImageURL = this.state.mainImageURL;
+            campaignData.vl = this.state.vl;
+            campaignData.maxAmount = this.state.maxAmount;
+            let res = await axios.post('/api/campaign/add', {mydata : campaignData},
+                {headers: {"Content-Type": "application/json"}});
+            this.setState({showModal:true, goHome: true,
+                modalMessage: 'campaignCreateSuccess',
+                modalTitle: 'success',
+                errorIcon: 'CheckCircle',
+                modalButtonMessage: 'returnHome',
+                modalButtonVariant: "#588157", waitToClose: false
+            });
+        } catch (err) {
+            this.setState({showModal: true, goHome: true,
+                modalTitle: 'addToDbFailedTitle',
+                modalMessage: 'addToDbFailedMessage',
+                errorIcon: 'CheckCircle',
+                modalButtonMessage: 'returnHome',
+                modalButtonVariant: "#588157", waitToClose: false
+            });
+            console.log('error adding campaign to the database ' + err.message);
+        }
+    }
+
+    async createCampaign(imgUrl) {
+        console.log("Creating campaign");
+        let compressed_meta = await compress(JSON.stringify(
+            {   title: this.state.title,
+                description: this.state.description,
+                mainImageURL: imgUrl,
+                fn: this.state.fn,
+                ln: this.state.ln,
+                org: this.state.org,
+                cn: this.state.cn,
+                vl: this.state.vl,
+                currencyName: this.state.currencyName
+            })
         );
-        var options = {
-            header: { 'Content-Type': 'multipart/form-data' }
-        };
-
-        return axios.post('/api/uploadmeta', formData)
-        .then(res => {
-            console.log("Success uploading meta data");
-            that.setState({showModal: false, metaDataURL:res.data
-            });
-        }).catch(err => {
-            if (err.response) { 
-                console.log('response error in uploading meta data- ' + err.response.status);
-                that.setState({showModal: true, goHome: false,
-                    modalTitle: 'metaUploadFailed',
-                    modalMessage: 'technicalDifficulties',
-                    errorIcon: 'XCircle', modalButtonMessage: 'returnHome',
-                    modalButtonVariant: "#E63C36", waitToClose: false});
-            } else if (err.request) { 
-                console.log('No response in uploading meta data' + err.message);
-                that.setState({showModal: true, goHome: false,
-                    modalTitle: 'metaUploadFailed',
-                    modalMessage: 'checkYourConnection',
-                    errorIcon: 'XCircle', modalButtonMessage: 'returnHome',
-                    modalButtonVariant: "#E63C36", waitToClose: false}); 
-            } else { 
-                console.log('error uploading campaign information ' + err.message);
-                that.setState({showModal: true, goHome: false,
-                    modalTitle: 'metaUploadFailed',
-                    errorIcon: 'XCircle', modalButtonMessage: 'returnHome',
-                    modalButtonVariant: "#E63C36", waitToClose: false});
-            }           
-            throw new Error(`Failed to upload compaign information.`); 
-        });
+        try {
+            this.setState({showModal:true,
+                modalMessage: 'confirmMetamask', errorIcon:'HourglassSplit',
+                modalButtonVariant: "gold", waitToClose: true});
+            var that = this;
+            let result = await HEOCampaignFactory.methods.createCampaign(
+                web3.utils.toWei(`${this.state.maxAmount}`), this.state.currencyAddress, ACCOUNTS[0], compressed_meta)
+                    .send({from:ACCOUNTS[0]})
+                    .on('transactionHash',
+                        function(transactionHash) {
+                            that.setState({showModal:true, modalTitle: 'processingWait',
+                            modalMessage: 'waitingForNetowork', errorIcon: 'HourglassSplit',
+                            modalButtonVariant: "gold", waitToClose: true});
+                        });
+            console.log("Received result from createCampaign transaction");
+            if(result && result.events && result.events.CampaignDeployed && result.events.CampaignDeployed.address) {
+                return {
+                    address: result.events.CampaignDeployed.returnValues.campaignAddress,
+                    beneficiaryId: result.events.CampaignDeployed.returnValues.beneficiary
+                };
+            } else {
+                return false;
+            }
+        } catch (error) {
+            this.setState({showModal: true,
+                modalTitle: 'blockChainTransactionFailed',
+                modalMessage: 'checkMetamask',
+                errorIcon: 'XCircle', modalButtonMessage: 'returnHome',
+                modalButtonVariant: "#E63C36", waitToClose: false});
+            console.log("createCampaign transaction failed");
+            console.log(error);
+            return false;
+        }
+        return false;
     }
 
-    async uploadImageS3 (that, imgID) {
+    async uploadImageS3 (imgID) {
         console.log(`Uploading ${this.state.mainImageFile.name} of type ${this.state.mainImageFile.type} to S3`);
-        that.setState({showModal:true, modalTitle: 'processingWait',
-        modalMessage: 'uploadingImageWait', errorIcon: 'HourglassSplit',
-        modalButtonVariant: "gold", waitToClose: true});
+        this.setState(
+            {showModal:true, modalTitle: 'processingWait',
+            modalMessage: 'uploadingImageWait', errorIcon: 'HourglassSplit',
+            modalButtonVariant: "gold", waitToClose: true
+            });
         let fileType = this.state.mainImageFile.type.split("/")[1];
-        let newName = `${imgID}.${fileType}`;
         const formData = new FormData();
         formData.append(
             "myFile",
             this.state.mainImageFile,
-            newName,
+            imgID,
         );
-            
-        return axios.post('/api/uploadimage', formData)
-        .then(res => {
+        try {
+            let res = await axios.post('/api/uploadimage', formData);
             console.log("Success uploading main image");
-            that.setState({showModal:false, mainImageURL:res.data});
-        }).catch(err => {
-            if (err.response) { 
+            this.setState({showModal:false, mainImageURL: res.data});
+            return res.data;
+        }  catch(err) {
+            if (err.response) {
                 console.log('response error in uploading main image- ' + err.response.status);
-                that.setState({showModal: true, goHome: false,
+                this.setState({showModal: true, goHome: false,
                     modalTitle: 'imageUploadFailed',
                     modalMessage: 'technicalDifficulties',
                     errorIcon: 'XCircle', modalButtonMessage: 'returnHome',
                     modalButtonVariant: "#E63C36", waitToClose: false});
-            } else if (err.request) { 
+            } else if (err.request) {
                 console.log('No response in uploading main image' + err.message);
-                that.setState({showModal: true, goHome: false,
+                this.setState({showModal: true, goHome: false,
                     modalTitle: 'imageUploadFailed',
                     modalMessage: 'checkYourConnection',
                     errorIcon: 'XCircle', modalButtonMessage: 'returnHome',
-                    modalButtonVariant: "#E63C36", waitToClose: false}); 
-            } else { 
+                    modalButtonVariant: "#E63C36", waitToClose: false});
+            } else {
                 console.log('error uploading image ' + err.message);
-                that.setState({showModal: true, goHome: false,
+                this.setState({showModal: true, goHome: false,
                     modalTitle: 'imageUploadFailed',
                     errorIcon: 'XCircle', modalButtonMessage: 'returnHome',
                     modalButtonVariant: "#E63C36", waitToClose: false});
-            }           
-            throw new Error(`Failed to upload image file.`); 
-        });
+            }
+            return false;
+        }
     }
 
     render() {
@@ -302,7 +264,7 @@ class CreateCampaign extends React.Component {
                 </Container>
                 {(this.state.isLoggedIn && this.state.whiteListed) &&
                 <Container id='mainContainer'>
-                    <Form onSubmit={this.handleClick}>
+                    <Form>
                         <div className='titles'><Trans i18nKey='aboutYou'/></div>
                         <Form.Row>
                             <Form.Group as={Col} className='name'>
@@ -384,7 +346,7 @@ class CreateCampaign extends React.Component {
                                           name='description' value={this.state.description}
                                           onChange={this.handleTextArea}/>
                         </Form.Group>
-                        <Button type="submit" id='createCampaignBtn' name='ff3'>
+                        <Button onClick={() => this.handleClick()} id='createCampaignBtn' name='ff3'>
                             {i18n.t('createCampaignBtn')}
                         </Button>
                     </Form>

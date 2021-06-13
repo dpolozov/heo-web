@@ -145,7 +145,7 @@ class UserCampaigns extends Component {
             campaigns = res.data;
             this.setState({
                 showModal: false,
-                campaigns:campaigns
+                campaigns: campaigns
             });
         }).catch(err => {
             modalTitle = 'failedToLoadCampaigns'
@@ -170,8 +170,11 @@ class UserCampaigns extends Component {
         })
         HEOCampaign = (await import("../remote/"+ config.get("CHAIN") + "/HEOCampaign")).default;
         CAMPAIGNINSTANCE = new web3.eth.Contract(HEOCampaign, address);
-        let splits = imageURL.split('/');
-        this.setState({fileName : splits[splits.length -1]});          
+        var splits;
+        if(imageURL) {
+            splits = imageURL.split('/');
+            this.setState({fileName : splits[splits.length -1]});
+        }
     }
 
     async closeCampaign() {
@@ -180,7 +183,6 @@ class UserCampaigns extends Component {
         modalButtonVariant: "gold", waitToClose: true, closingCampaign: false})
         try {          
             let result = await CAMPAIGNINSTANCE.methods.close().send({from:ACCOUNTS[0]});
-            console.log(result);
             this.deleteimage();
             this.deleteFromDB();
             this.setState({
@@ -239,13 +241,13 @@ class UserCampaigns extends Component {
                             <Trans i18nKey={this.state.modalMessage}>
                             Your account has not been cleared to create campaigns.
                             Please fill out this
-                                <Link  as='a' target='_blank' to='https://docs.google.com/forms/d/e/1FAIpQLSdTo_igaNjF-1E51JmsjJgILv68RN2v5pisTcqTLvZvuUvLDQ/viewform'>form</Link>
+                                <a target='_blank' href='https://docs.google.com/forms/d/e/1FAIpQLSdTo_igaNjF-1E51JmsjJgILv68RN2v5pisTcqTLvZvuUvLDQ/viewform'>form</a>
                                 to ne granted permission to fundraise on HEO Platform
                             </Trans>
                         </p>
                         {this.state.closingCampaign &&
                             <Container>
-                                <Button id='closeCampaign'onClick={() => this.closeCampaign()}>{i18n.t('yes')}</Button>
+                                <Button id='closeCampaign' onClick={() => this.closeCampaign()}>{i18n.t('yes')}</Button>
                                 <Button id='cancelClose' onClick={() => this.setState({showModal:false})}>{i18n.t('no')}</Button>
                             </Container>
                         }
@@ -295,21 +297,21 @@ class UserCampaigns extends Component {
                                 <Card>
                                     <Row>
                                         <Col sm='3' id='picColumn'>
-                                            <Card.Img src={item.mainImage} fluid='true' />
+                                            <Card.Img src={item.mainImageURL} fluid='true' />
                                         </Col>
                                         <Col >
                                             <Link to={'/campaign/' + item._id} id='cardLink'>
                                             <Row>                                  
                                                 <Card.Body>
                                                     <Card.Title>{item.title}</Card.Title> 
-                                                    <Card.Text>{`${DescriptionPreview(item.campaignDesc)}...`}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span id='readMore'>Read More</span></Card.Text>
+                                                    <Card.Text>{`${DescriptionPreview(item.description)}...`}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span id='readMore'>Read More</span></Card.Text>
                                                     <p id='progressBarLabel'><span id='progressBarLabelStart'>{`$${item.raisedAmount}`}</span>{i18n.t('raised')}{item.maxAmount} {i18n.t('goal')}</p>
                                                     <ProgressBar now={item.percentRaised} /> 
                                                 </Card.Body>
                                             </Row>
                                             </Link>
                                             <Row id='buttonsRow'>
-                                                <Col className='buttonCol'><Button variant="danger" id='donateBtn' block onClick={() => this.closeCampaignPrep(item._id, item.mainImage)}><Trans i18nKey='close'/></Button></Col>                                                  
+                                                <Col className='buttonCol'><Button variant="danger" id='donateBtn' block onClick={() => this.closeCampaignPrep(item._id, item.mainImageURL)}><Trans i18nKey='close'/></Button></Col>
                                                 <Col className='buttonCol'><Link to={'/editCampaign/' + item._id} id='cardLink'><Button id='editBtn' block>EDIT</Button></Link></Col>
                                             </Row> 
                                         </Col>
