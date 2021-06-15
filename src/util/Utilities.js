@@ -36,7 +36,8 @@ function DescriptionPreview(description) {
 }
 
 function GetLanguage() {
-    let language = navigator.language || navigator.userLanguage;
+    let language = window.localStorage.getItem("heolang");
+    language = language || navigator.language || navigator.userLanguage;
     return language;
 }
 
