@@ -30,11 +30,13 @@ i18n
   // init i18next
   // for all options read: https://www.i18next.com/overview/configuration-options
   .init({
-    detection: { order: ["navigator"] },
+    detection: {
+        order: ["localStorage","navigator"],
+        lookupLocalStorage: "heolang"
+    },
     fallbackLng: 'en',
-    debug: true,
+    debug: false,
     resources: resource,
-
 
     interpolation: {
       escapeValue: false, // not needed for react as it escapes by default
@@ -48,7 +50,6 @@ i18n
     react: {
       wait: true
     }
-    
   });
 
 
