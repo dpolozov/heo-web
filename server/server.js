@@ -39,6 +39,14 @@ const S3 = new AWS.S3({
 
 APP.use(cookieParser());
 APP.use(jwt({ secret: process.env.JWT_SECRET, credentialsRequired:false, getToken: req => req.cookies.authToken, algorithms: ['HS256'] }));
+APP.use(jwtErrorCatch);
+function jwtErrorCatch (err, req, res, next) {
+    if(err && err.code == "invalid_token") {
+        next(null, req, res.clearCookie('authToken'));
+    } else {
+        next(err, req, res);
+    }
+}
 APP.post('/api/uploadimage', (req,res) => {
     if(req.user && req.user.address) {
         const PARAMS = {
