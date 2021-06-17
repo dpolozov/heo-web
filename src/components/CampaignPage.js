@@ -8,6 +8,7 @@ import { Link } from "react-router-dom";
 import { Trans } from 'react-i18next';
 import i18n from '../util/i18n';
 import '../css/campaignPage.css';
+import { Editor, EditorState, convertFromRaw } from "draft-js";
 
 var HEOCampaign, ERC20Coin, web3;
 
@@ -25,8 +26,9 @@ class CampaignPage extends Component {
             errorIcon:"",
             modalButtonMessage: "",
             modalButtonVariant: "",
-            
+            editorState: EditorState.createEmpty()          
         };
+        
     }
 
     handleDonationAmount = (e) => {this.setState({donationAmount: e.target.value})};
@@ -37,8 +39,11 @@ class CampaignPage extends Component {
         let data = {ID : address};
         await axios.post('/api/campaign/loadOne', data, {headers: {"Content-Type": "application/json"}})
         .then(res => {
-            console.log(res.data);
+            //console.log(res.data);
             campaign = res.data;
+            const contentState = convertFromRaw(campaign.descriptionEditor);
+            this.state.editorState = EditorState.createWithContent(contentState);
+
         }).catch(err => {
             if (err.response) { 
                 errorMessage = 'Failed to load campaigns. We are having technical difficulties'}
@@ -247,7 +252,7 @@ class CampaignPage extends Component {
                     </Row>
                     <Row id='descriptionRow'>
                         <Container>
-                            <p id='description'>{this.state.campaign.description}</p>
+                            <Editor editorState={this.state.editorState} readOnly={true}/>  
                         </Container>
                     </Row>
                 </Container>

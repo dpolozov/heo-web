@@ -131,6 +131,7 @@ APP.post('/api/campaign/add', (req, res) => {
             description: req.body.mydata.description,
             currencyName: req.body.mydata.currencyName,
             maxAmount: req.body.mydata.maxAmount,
+            descriptionEditor: req.body.mydata.descriptionEditor,
             raisedAmount: 0,
             creationDate: Date.now(),
         }

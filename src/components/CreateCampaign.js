@@ -11,16 +11,17 @@ import { Trans } from 'react-i18next';
 import i18n from '../util/i18n';
 import {UserContext} from './UserContext';
 import { LogIn } from '../util/Utilities';
-
+import TextEditor, { getEditorState, setEditorState } from '../components/TextEditor';
 import { ChevronLeft, CheckCircle, ExclamationTriangle, HourglassSplit, XCircle } from 'react-bootstrap-icons';
 import { compress } from 'shrink-string';
+import '../css/RichEditor.css'
+import '../../node_modules/draft-js/dist/Draft.css'
 
 var HEOCampaignFactory, HEOParameters, ACCOUNTS, web3;
 
 class CreateCampaign extends React.Component {
     constructor(props) {
         super(props);
-
         this.state = {
             whiteListed: false,
             isLoggedIn: false,
@@ -49,7 +50,9 @@ class CreateCampaign extends React.Component {
             currencyName:"",
             coinOptions: [],
             waitToClose: false,
-            goHome:false
+            goHome:false,
+            getContent: false,
+            editorContent: {}
         };
 
     }
@@ -69,6 +72,7 @@ class CreateCampaign extends React.Component {
     }
 
     async handleClick (event) {
+        //this.showHtml();
         let imgID = uuid();
         try {
             let imgUrl = await this.uploadImageS3(imgID);
@@ -95,6 +99,7 @@ class CreateCampaign extends React.Component {
             campaignData.ln = this.state.ln;
             campaignData.org = this.state.org;
             campaignData.cn = this.state.cn;
+            campaignData.descriptionEditor = getEditorState();
             let res = await axios.post('/api/campaign/add', {mydata : campaignData},
                 {headers: {"Content-Type": "application/json"}});
             this.setState({showModal:true, goHome: true,
@@ -127,7 +132,8 @@ class CreateCampaign extends React.Component {
                 org: this.state.org,
                 cn: this.state.cn,
                 vl: this.state.vl,
-                currencyName: this.state.currencyName
+                currencyName: this.state.currencyName,
+                descriptionEditor : getEditorState(),
             })
         );
         try {
@@ -344,11 +350,13 @@ class CreateCampaign extends React.Component {
                                           name='title' value={this.state.title} onChange={this.handleChange}/>
                         </Form.Group>
                         <Form.Group>
-                            <Form.Label><Trans i18nKey='campaignDescription'/></Form.Label>
-                            <Form.Control as="textarea" rows={5} className="createFormPlaceHolder"
+                            <Form.Label><Trans i18nKey='shortDescription'/></Form.Label>  
+                            <Form.Control as="textarea" rows={3} className="createFormPlaceHolder"
                                           placeholder={i18n.t('descriptionOfCampaign')}
                                           name='description' value={this.state.description}
-                                          onChange={this.handleTextArea}/>
+                                          maxLength='200' onChange={this.handleTextArea}/>  
+                            <Form.Label><Trans i18nKey='campaignDescription'/></Form.Label> 
+                            <TextEditor />                  
                         </Form.Group>
                         <Button onClick={() => this.handleClick()} id='createCampaignBtn' name='ff3'>
                             {i18n.t('createCampaignBtn')}
