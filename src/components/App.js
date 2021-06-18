@@ -8,17 +8,19 @@ import MyDonations from "./MyDonations";
 import logo from '../images/heo-logo.png';
 import Home from "./Home";
 import '../css/app.css';
+import '../css/modal.css';
 import { BrowserRouter as Router, Switch, Route, Link, withRouter } from "react-router-dom";
 import { Nav, Navbar, Container, Button, Modal } from 'react-bootstrap';
-import { XCircle } from 'react-bootstrap-icons';
+import { ChevronLeft, CheckCircle, ExclamationTriangle, HourglassSplit, XCircle } from 'react-bootstrap-icons';
 import { Trans } from 'react-i18next';
-import { GetLanguage, LogIn } from '../util/Utilities';
+import { GetLanguage, LogIn, checkAuth, initWeb3, initWeb3Modal } from '../util/Utilities';
 import axios from 'axios';
 import config from 'react-global-configuration';
 import i18n from '../util/i18n';
 import {UserContext} from './UserContext';
-
-var ACCOUNTS, web3;
+import Web3Modal from 'web3modal';
+import Web3 from 'web3';
+import WalletConnectProvider from '@walletconnect/web3-provider';
 
 class App extends Component {
     constructor(props) {
@@ -33,8 +35,9 @@ class App extends Component {
             isLoggedIn: false,
             showError: false,
             showModal: false,
+            waitToClose: false,
             modalMessage: "",
-            errorMessage: "",
+            modalTitle: "",
             modalButtonMessage: "",
             modalButtonVariant: ""
         };
@@ -43,20 +46,8 @@ class App extends Component {
     async componentDidMount() {
         let lang = GetLanguage();
         this.setState({language : lang});
-        try {
-            if (typeof window.ethereum !== 'undefined') {
-                let res = await axios.get('/api/auth/status');
-                if(res.data.addr) {
-                    var ethereum = window.ethereum;
-                    ACCOUNTS = await ethereum.request({method: 'eth_requestAccounts'});
-                    if(ACCOUNTS[0] == res.data.addr) {
-                        this.setState({isLoggedIn : true});
-                    }
-                }
-            }
-        } catch (err) {
-            this.setState({isLoggedIn : false});
-        }
+        await initWeb3Modal(this);
+        await checkAuth(this, true);
     }
 
     async setLanguage(lang) {
@@ -66,36 +57,38 @@ class App extends Component {
 
     async setLoggedIn() {
         if(this.state.isLoggedIn) {
+            if(this.state.web3 && this.state.web3.currentProvider && this.state.web3.currentProvider.close) {
+                await this.state.web3.currentProvider.close();
+                await this.web3Modal.clearCachedProvider();
+            }
             await axios.post('/api/auth/logout');
             this.setState({isLoggedIn : false});
             this.props.history.push('/');
         } else {
-            if (typeof window.ethereum !== 'undefined') {
-                var ethereum = window.ethereum;
-                ACCOUNTS = await ethereum.request({method: 'eth_requestAccounts'});
-                web3 = (await import("../remote/" + config.get("CHAIN") + "/web3")).default;
-                try {
-                    if(await LogIn(ACCOUNTS[0], web3)) {
-                        this.setState({isLoggedIn : true});
-                        this.props.history.push('/');
-                    }
-                } catch (err) {
+            await initWeb3(this);
+
+            try {
+                await LogIn(this.state.accounts[0], this.state.web3, this);
+                if(this.state.isLoggedIn) {
+                    this.props.history.push('/');
+                } else {
                     this.setState({showModal:true,
-                        errorMessage: i18n.t('authFailedTitle'),
-                        modalMessage: i18n.t('authFailedMessage'),
-                        modalButtonMessage: i18n.t('closeBtn'),
+                        modalTitle: 'authFailedTitle',
+                        modalMessage: 'authFailedMessage',
+                        modalButtonMessage: 'closeBtn',
                         modalButtonVariant: "#E63C36"}
                     );
                 }
-            } else {
-                this.setState({
-                    showModal: true,
-                    errorMessage: i18n.t('web3WalletRequired'),
-                    modalMessage: i18n.t('pleaseInstallMetamask'),
-                    modalButtonMessage: i18n.t('closeBtn'),
-                    modalButtonVariant: "#E63C36"
-                });
+            } catch (err) {
+                console.log(err);
+                this.setState({showModal:true,
+                    modalTitle: 'authFailedTitle',
+                    modalMessage: 'authFailedMessage',
+                    modalButtonMessage: 'closeBtn',
+                    modalButtonVariant: "#E63C36"}
+                );
             }
+
         }
     }
 
@@ -138,25 +131,48 @@ class App extends Component {
                             <Navbar.Collapse id="basic-navbar-nav">
                                 <Nav className="mr-auto" bg="light">
                                     <Nav.Link as={Link} eventKey="1" className='mainNavText' to="/"><Trans i18nKey='browse'/></Nav.Link>
-                                    <Nav.Link as={Link} eventKey="2" className='mainNavText' to={{pathname:"/new", state:{isLoggedIn: this.state.isLoggedIn}}} ><Trans i18nKey='startFundraiser'/></Nav.Link>
-                                    <Nav.Link as={Link} eventKey="3" className='mainNavText' to={{pathname:"/myCampaigns", state:{isLoggedIn: this.state.isLoggedIn}}} ><Trans i18nKey='myFundraisers'/></Nav.Link>
+                                    <Nav.Link as={Link} eventKey="2" className='mainNavText' to={{pathname:"/new",
+                                        state:{
+                                            isLoggedIn: this.state.isLoggedIn,
+                                            accounts: this.state.accounts
+                                        }}} >
+                                        <Trans i18nKey='startFundraiser'/>
+                                    </Nav.Link>
+                                    <Nav.Link as={Link} eventKey="3" className='mainNavText' to={{pathname:"/myCampaigns",
+                                        state:{
+                                            isLoggedIn: this.state.isLoggedIn,
+                                            accounts: this.state.accounts
+                                        }}} >
+                                        <Trans i18nKey='myFundraisers'/>
+                                    </Nav.Link>
                                     <Nav.Link as={Link} eventKey="4" className='mainNavText' as='a' target='_blank' href='https://heo.finance'><Trans i18nKey='about'/></Nav.Link>
                                 </Nav>
                             </Navbar.Collapse>
                         </Navbar>
                     </div>
                     <div>
-                        <Modal show={this.state.showModal} onHide={this.state.showModal} className='myModal' centered>
-                            <Modal.Body><p className='errorIcon'>
-                                <XCircle style={{color: '#E63C36'}}/>
-                            </p>
-                                <p className='errorMessage'>{this.state.errorMessage}</p>
-                                <p className='modalMessage'>{this.state.modalMessage}</p>
+                        <Modal show={this.state.showModal} className='myModal' centered>
+                            <Modal.Body>
+                                <p className='modalIcon'>
+                                    {this.state.modalIcon == 'CheckCircle' && <CheckCircle style={{color:'#588157'}} />}
+                                    {this.state.modalIcon == 'ExclamationTriangle' && <ExclamationTriangle/>}
+                                    {this.state.modalIcon == 'HourglassSplit' && <HourglassSplit style={{color: 'gold'}}/>}
+                                    {this.state.modalIcon == 'XCircle' && <XCircle style={{color: '#E63C36'}}/>}
+                                </p>
+                                <p className='modalTitle'><Trans i18nKey={this.state.modalTitle} /></p>
+                                <p className='modalMessage'><Trans i18nKey={this.state.modalMessage} /></p>
+                                {!this.state.waitToClose &&
                                 <Button className='myModalButton'
-                                        style={{backgroundColor : this.state.modalButtonVariant, borderColor : this.state.modalButtonVariant}}
-                                        onClick={ () => {this.setState({showModal:false})}}>
-                                    {this.state.modalButtonMessage}
+                                        style={{
+                                            backgroundColor: this.state.modalButtonVariant,
+                                            borderColor: this.state.modalButtonVariant
+                                        }}
+                                        onClick={() => {
+                                            this.setState({showModal: false})
+                                        }}>
+                                    <Trans i18nKey={this.state.modalButtonMessage} />
                                 </Button>
+                                }
                             </Modal.Body>
                         </Modal>
                         <Container  style={{ marginTop: '7em' }}>

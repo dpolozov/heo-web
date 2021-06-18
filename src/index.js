@@ -14,8 +14,9 @@ import 'semantic-ui-css/semantic.min.css'
 (function clientJS() {
     //Load configs from server
     loadServerProps().then(jsonConfig => {
-        configuration["CHAIN"] =  jsonConfig.REACT_APP_CHAIN_ID;
-        configuration["CHAIN_NAME"]= jsonConfig.REACT_APP_CHAIN_NAME;
+        for(var a in jsonConfig) {
+            configuration[a] = jsonConfig[a];
+        }
         config.set(configuration);
         ReactDOM.render(
             <Router>

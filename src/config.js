@@ -18,7 +18,7 @@ const config = {
             "currencies": {
                 "0x0000000000000000000000000000000000000000":"BNB",
                 "0xed24fc36d5ee211ea25a80239fb8c4cfd80f12ee":"BUSD"
-            },
+            }
         },
         "ganache":{
             "currencyOptions":[

@@ -193,8 +193,11 @@ APP.post('/api/campaign/loadUserCampaigns',
 APP.get('/api/env', (req,res) => {
     res.json(
         {
-            REACT_APP_CHAIN_ID: process.env.REACT_APP_CHAIN_ID,
-            REACT_APP_CHAIN_NAME: process.env.REACT_APP_CHAIN_NAME
+            CHAIN: process.env.CHAIN    ,
+            CHAIN_NAME: process.env.CHAIN_NAME,
+            WEB3_RPC_NODE_URL: process.env.WEB3_RPC_NODE_URL,
+            WEB3_RPC_CHAIN_ID: process.env.WEB3_RPC_CHAIN_ID,
+            WC_BRIDGE_URL: process.env.WC_BRIDGE_URL
         });
 });
 
@@ -210,8 +213,8 @@ APP.post('/api/auth/jwt', async(req, res) => {
         let signedData = ethereumutil.keccak("\x19Ethereum Signed Message:\n" + dataToSign.length + dataToSign);
         const pubKey = ethereumutil.ecrecover(signedData, v, r, s);
         const addrBuf = ethereumutil.pubToAddress(pubKey);
-        const addr = ethereumutil.bufferToHex(addrBuf);
-        if(addr != req.body.addr) {
+        const addr = ethereumutil.bufferToHex(addrBuf).toLowerCase();
+        if(addr != req.body.addr.toLowerCase()) {
             console.log(`Error: decoded address ${addr} is different from user address ${req.body.addr}`);
             res.sendStatus(401);
         } else {

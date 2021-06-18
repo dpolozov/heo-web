@@ -1,17 +1,22 @@
 import React, { Component, lazy } from 'react';
 import config from 'react-global-configuration';
+import '../css/modal.css';
 import '../css/campaignList.css';
 import { Container, Row, Col, Card, ProgressBar, Button, Modal } from 'react-bootstrap';
 import { ChevronLeft, CheckCircle, ExclamationTriangle, HourglassSplit, XCircle } from 'react-bootstrap-icons';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
-import { DescriptionPreview, LogIn } from '../util/Utilities';
+import { DescriptionPreview, LogIn, initWeb3, checkAuth, initWeb3Modal } from '../util/Utilities';
 import { Trans } from 'react-i18next';
 import i18n from '../util/i18n';
 import {UserContext} from './UserContext';
 import i18next from 'i18next';
 
-var ACCOUNTS, web3, HEOParameters, HEOCampaign, CAMPAIGNINSTANCE;
+import Web3Modal from 'web3modal';
+import Web3 from 'web3';
+import WalletConnectProvider from '@walletconnect/web3-provider';
+
+var CAMPAIGNINSTANCE;
 
 class UserCampaigns extends Component {
     constructor(props) {
@@ -24,117 +29,91 @@ class UserCampaigns extends Component {
             modalMessage:"",
             isLoggedIn:false,
             whiteListed:false,
-            closingCampaign: false,
+            showTwoButtons: false,
             campaignAddress: '',
             fileName: '',
         };
     }
 
     async checkWL() {
-        //is white list enabled?
-        let wlEnabled = await HEOParameters.methods.intParameterValue(11).call();
-        if(wlEnabled > 0) {
-            //is user white listed?
-            let whiteListed = await HEOParameters.methods.addrParameterValue(5,ACCOUNTS[0]).call();
-            if(whiteListed > 0) {
+        try {
+            //is white list enabled?
+            if(!this.state.web3 || !this.state.accounts) {
+                await initWeb3(this);
+            }
+            let abi = (await import("../remote/" + config.get("CHAIN") + "/HEOParameters")).abi;
+            let address = (await import("../remote/" + config.get("CHAIN") + "/HEOParameters")).address;
+            var HEOParameters = new this.state.web3.eth.Contract(abi, address);
+            let wlEnabled = await HEOParameters.methods.intParameterValue(11).call();
+            if(wlEnabled > 0) {
+                //is user white listed?
+                let whiteListed = await HEOParameters.methods.addrParameterValue(5,this.state.accounts[0]).call();
+                if(whiteListed > 0) {
+                    this.setState({
+                        isLoggedIn : true,
+                        whiteListed: true,
+                        showModal: false,
+                        goHome: false
+                    });
+                    this.loadCampaigns();
+                } else {
+                    //user is not in the white list
+                    this.setState({
+                        campaigns : [],
+                        goHome: true,
+                        showModal:true,
+                        isLoggedIn: true,
+                        whiteListed: false,
+                        modalTitle: 'nonWLTitle',
+                        modalMessage: 'nonWLMessage',
+                        errorIcon: 'XCircle', modalButtonMessage: 'closeBtn',
+                        modalButtonVariant: "#E63C36", waitToClose: false
+                    });
+                }
+            } else {
+                //white list is disabled
                 this.setState({
                     isLoggedIn : true,
                     whiteListed: true,
-                    showModal: false,
-                    goHome: false
+                    goHome: false,
+                    showModal: false
                 });
-                this.getCampaigns();
-            } else {
-                //user is not in the white list
-                this.setState({
-                    campaigns : [],
-                    goHome: true,
-                    showModal:true,
-                    isLoggedIn: true,
-                    whiteListed: false,
-                    modalTitle: 'nonWLTitle',
-                    modalMessage: 'nonWLMessage',
-                    errorIcon: 'XCircle', modalButtonMessage: 'closeBtn',
-                    modalButtonVariant: "#E63C36", waitToClose: false
-                });
+                this.loadCampaigns();
             }
-        } else {
-            //white list is disabled
+        } catch (err) {
+            console.log(err);
             this.setState({
-                isLoggedIn : true,
-                whiteListed: true,
-                goHome: false,
-                showModal: false
+                showModal: true, modalTitle: 'Failed',
+                errorIcon: 'XCircle', modalButtonMessage: 'closeBtn',
+                modalButtonVariant: '#E63C36', waitToClose: false,
+                modalMessage: 'blockChainConnectFailed'
             });
-            this.getCampaigns();
         }
     }
 
     async componentDidMount() {
-        if (typeof window.ethereum !== 'undefined') {
-            var ethereum = window.ethereum;
-            try {
-                ACCOUNTS = await ethereum.request({method: 'eth_requestAccounts'});
-            } catch {
-                this.setState({
-                    showModal:true,
-                    campaigns : [],
-                    modalTitle: 'web3WalletRequired',
-                    goHome: true,
-                    modalMessage: 'pleaseUnlockMetamask',
-                    errorIcon: 'XCircle', modalButtonMessage: 'closeBtn',
-                    modalButtonVariant: "#E63C36", waitToClose: false});
-            }
-            web3 = (await import("../remote/" + config.get("CHAIN") + "/web3")).default;
-            HEOParameters = (await import("../remote/" + config.get("CHAIN") + "/HEOParameters")).default;
-            // is the user logged in?
-            if(!this.state.isLoggedIn) {
-                try {
-                    let res = await axios.get('/api/auth/status');
-                    if (res.data.addr && ACCOUNTS[0] == res.data.addr) {
-                        this.setState({isLoggedIn: true, showModal: false});
-                    } else {
-                        //must have logged in with different account before
-                        await axios.post('/api/auth/logout');
-                    }
-                } catch (err) {
-                    this.setState({
-                        showModal: true,
-                        isLoggedIn: false,
-                        campaigns : [],
-                        goHome: true,
-                        modalTitle: 'authFailedTitle',
-                        modalMessage: 'technicalDifficulties',
-                        errorIcon: 'XCircle', modalButtonMessage: 'returnHome',
-                        modalButtonVariant: "#E63C36", waitToClose: false});
-                }
-            }
-            if(this.state.isLoggedIn) {
-                await this.checkWL();
-            } else {
-                //need to log in first
-                this.setState({
-                    showModal: true,
-                    campaigns : [],
-                    isLoggedIn : false,
-                    whiteListed: false,
-                    goHome: false,
-                    modalTitle: 'pleaseLogInTitle',
-                    modalMessage: 'pleaseLogInToCreateMessage',
-                    errorIcon: 'XCircle', modalButtonMessage: 'login',
-                    modalButtonVariant: "#E63C36", waitToClose: false});
-            }
+        await initWeb3Modal(this);
+        // is the user logged in?
+        if(!this.state.isLoggedIn) {
+            await checkAuth(this);
+        }
+        if(this.state.isLoggedIn) {
+            await this.checkWL();
         } else {
-            this.setState({showModal:true,
-                modalTitle: 'web3WalletRequired',
-                campaigns : [],
-                modalMessage: 'pleaseInstallMetamask',
-                errorIcon:'XCircle', modalButtonMessage: 'closeBtn',
+            //need to log in first
+            this.setState({
+                showModal: true,
+                isLoggedIn : false,
+                whiteListed: false,
+                goHome: false,
+                modalTitle: 'pleaseLogInTitle',
+                modalMessage: 'pleaseLogInToCreateMessage',
+                modalIcon: 'XCircle', modalButtonMessage: 'login',
                 modalButtonVariant: "#E63C36", waitToClose: false});
         }
     }
 
-    getCampaigns() {
+    loadCampaigns() {
         this.setState({showModal:true, modalTitle: 'processingWait',
             modalMessage: 'waitingForNetowork', errorIcon:'HourglassSplit',
             modalButtonVariant: "gold", waitToClose: true});
@@ -159,17 +138,19 @@ class UserCampaigns extends Component {
     }
 
     async closeCampaignPrep(address, imageURL){
-        console.log(this.state.campaigns);
+        if(!this.state.web3 || !this.state.accounts) {
+            await initWeb3(this);
+        }
         console.log('close campaign');
         this.setState({
-            closingCampaign: true, waitToClose: true,
-            showModal : true, errorIcon:'ExclamationTriangle',
-            modalTitle : i18n.t('closeCampaing'),
-            modalMessage : 'final',
-            campaignAddress : address
+            showTwoButtons: true, waitToClose: true,
+            showModal: true, errorIcon:'ExclamationTriangle',
+            modalTitle: 'closeCampaign',
+            modalMessage: 'final',
+            campaignAddress: address
         })
-        HEOCampaign = (await import("../remote/"+ config.get("CHAIN") + "/HEOCampaign")).default;
-        CAMPAIGNINSTANCE = new web3.eth.Contract(HEOCampaign, address);
+        let abi = (await import("../remote/"+ config.get("CHAIN") + "/HEOCampaign")).default;
+        CAMPAIGNINSTANCE = new this.state.web3.eth.Contract(abi, address);
         var splits;
         if(imageURL) {
             splits = imageURL.split('/');
@@ -178,24 +159,29 @@ class UserCampaigns extends Component {
     }
 
     async closeCampaign() {
-        this.setState({modalTitle: 'processingWait',
-        modalMessage: 'waitingForNetowork', errorIcon:'HourglassSplit',
-        modalButtonVariant: "gold", waitToClose: true, closingCampaign: false})
-        try {          
-            let result = await CAMPAIGNINSTANCE.methods.close().send({from:ACCOUNTS[0]});
+        this.setState({showModal: true, modalMessage: 'confirmMetamask', modalIcon:'HourglassSplit',
+            showTwoButtons: false, modalButtonVariant: "gold", waitToClose: true});
+        try {
+            var that = this;
+            let result = await CAMPAIGNINSTANCE.methods.close().send({from:this.state.accounts[0]}).on('transactionHash',
+                    function(transactionHash) {
+                        that.setState({showModal:true, modalTitle: 'processingWait',
+                            modalMessage: 'waitingForNetowork', modalIcon: 'HourglassSplit',
+                            modalButtonVariant: "gold", waitToClose: true});
+                    });
             this.deleteimage();
             this.deleteFromDB();
             this.setState({
                 modalMessage : 'campaignDeleted', modalTitle: 'complete',
                 errorIcon: 'CheckCircle', modalButtonMessage: i18n.t('ok'),
-                modalButtonVariant: '#588157', waitToClose: false, closingCampaign: false,
+                modalButtonVariant: '#588157', waitToClose: false, showTwoButtons: false,
             })
         } catch (err){
             console.log(err);
             this.setState({
                 waitToClose : false, modalMessage: 'technicalDifficulties',
                 errorIcon:'XCircle', modalButtonMessage: 'closeBtn', errorMessage : 'failed',
-                modalButtonVariant: "#E63C36", waitToClose: false, closingCampaign: false})
+                modalButtonVariant: "#E63C36", waitToClose: false, showTwoButtons: false})
         }
     }
 
@@ -245,7 +231,7 @@ class UserCampaigns extends Component {
                                 to ne granted permission to fundraise on HEO Platform
                             </Trans>
                         </p>
-                        {this.state.closingCampaign &&
+                        {this.state.showTwoButtons &&
                             <Container>
                                 <Button id='closeCampaign' onClick={() => this.closeCampaign()}>{i18n.t('yes')}</Button>
                                 <Button id='cancelClose' onClick={() => this.setState({showModal:false})}>{i18n.t('no')}</Button>
@@ -262,9 +248,12 @@ class UserCampaigns extends Component {
                                                 this.props.history.push('/');
                                             } else if(!this.state.isLoggedIn) {
                                                 try {
-                                                    if(await LogIn(ACCOUNTS[0], web3)) {
+                                                    if(!this.state.accounts || !this.state.web3) {
+                                                        await initWeb3(this);
+                                                    }
+                                                    await LogIn(this.state.accounts[0], this.state.web3, this);
+                                                    if(this.state.isLoggedIn) {
                                                         toggleLoggedIn(true);
-                                                        this.setState({isLoggedIn: true, showModal: false});
                                                         await this.checkWL();
                                                     }
                                                 } catch (err) {
@@ -279,8 +268,7 @@ class UserCampaigns extends Component {
                                                     );
                                                 }
                                             } else {
-                                                this.getCampaigns();
-                                                this.setState({showModal:false});
+                                                this.loadCampaigns();
                                             }
                                         }}>
                                     <Trans i18nKey={this.state.modalButtonMessage} />

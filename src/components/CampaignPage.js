@@ -6,11 +6,19 @@ import { ChevronLeft, Gift, CheckCircle, ExclamationTriangle, HourglassSplit, XC
 import ReactPlayer from 'react-player';
 import { Link } from "react-router-dom";
 import { Trans } from 'react-i18next';
+import { initWeb3, initWeb3Modal } from '../util/Utilities';
 import i18n from '../util/i18n';
-import '../css/campaignPage.css';
 import { Editor, EditorState, convertFromRaw } from "draft-js";
+import '../css/campaignPage.css';
+import '../css/modal.css';
 
-var HEOCampaign, ERC20Coin, web3;
+import Web3Modal from 'web3modal';
+import Web3 from 'web3';
+import WalletConnectProvider from '@walletconnect/web3-provider';
+
+var HEOCampaign, ERC20Coin;
+const donationAmount="";
+const currencyName="";
 
 class CampaignPage extends Component {
     constructor(props) {
@@ -18,15 +26,16 @@ class CampaignPage extends Component {
         this.state = {
             donationAmount:"10",
             campaign:{},
+            address:"",
             waitToClose:false,
             raisedAmount:0,
             showModal: false,
             modalMessage:"",
-            errorMessage:"",
+            modalTitle:"",
             errorIcon:"",
             modalButtonMessage: "",
             modalButtonVariant: "",
-            editorState: EditorState.createEmpty()          
+            editorState: EditorState.createEmpty()
         };
         
     }
@@ -35,7 +44,7 @@ class CampaignPage extends Component {
 
     async getCampaign(address){
         var campaign = {};
-        var errorMessage = 'Failed to load campaign';
+        var modalMessage = 'failedToLoadCampaign';
         let data = {ID : address};
         await axios.post('/api/campaign/loadOne', data, {headers: {"Content-Type": "application/json"}})
         .then(res => {
@@ -45,22 +54,21 @@ class CampaignPage extends Component {
             this.state.editorState = EditorState.createWithContent(contentState);
 
         }).catch(err => {
-            if (err.response) { 
-                errorMessage = 'Failed to load campaigns. We are having technical difficulties'}
+            if (err.response) {
+                modalMessage = 'technicalDifficulties'}
             else if(err.request) {
-                errorMessage = 'Failed to load campaings. Please check your internet connection'
+                modalMessage = 'checkYourConnection'
             }
             console.log(err);
             this.setState({
                 showError: true,
-                errorMessage,
+                modalMessage,
             })
         })
         return campaign;
     }
 
-    updateRaisedAmount = async (accounts) => {
-        var campaignInstance = this.state.campaignInstance;
+    updateRaisedAmount = async (accounts, campaignInstance, web3) => {
         var campaign = this.state.campaign;
         var that = this;
         campaignInstance.methods.raisedAmount().call({from:accounts[0]}, function(err, result) {
@@ -76,135 +84,132 @@ class CampaignPage extends Component {
     }
 
     handleDonateClick = async event => {
-        var campaignInstance = this.state.campaignInstance;
-        if (typeof window.ethereum !== 'undefined') {
-            var ethereum = window.ethereum;
-            this.setState({
-                showModal: true, errorMessage: 'Processing...',
-                modalMessage: "Processing your Donation, please wait",
-                errorIcon: 'HourglassSplit', modalButtonVariant: "gold", waitToClose: true
-            });
-            try {
-                var accounts = await ethereum.request({ method: 'eth_requestAccounts' });
-                if(accounts[0] == this.state.campaign.beneficiaryId){
+        try {
+            if(!this.web3Modal) {
+                await initWeb3Modal(this);
+            }
+            if(!this.state.web3 ||!this.state.accounts) {
+                await initWeb3(this);
+            }
+            var web3 = this.state.web3;
+            var accounts = this.state.accounts;
+            var campaignInstance = new web3.eth.Contract(HEOCampaign, this.state.address);
+            var coinAddress = (await campaignInstance.methods.currency().call()).toLowerCase();
+            if(accounts[0].toLowerCase() == this.state.campaign.beneficiaryId.toLowerCase()){
+                this.setState({
+                    showModal: true, modalTitle: 'notAllowed',
+                    modalMessage: 'donateToYourSelf',
+                    errorIcon: 'ExclamationTriangle', modalButtonMessage: 'closeBtn',
+                    modalButtonVariant: '#E63C36', waitToClose: false
+                });
+                return;
+            }
+            var toDonate = web3.utils.toWei(this.state.donationAmount);
+            var that = this;
+            //for native donations
+            if(coinAddress == "0x0000000000000000000000000000000000000000") {
+                this.setState({
+                    showModal: true, modalTitle: 'processingWait',
+                    modalMessage: "confirmDonation",
+                    errorIcon: 'HourglassSplit', modalButtonVariant: "gold", waitToClose: true
+                });
+                try {
+                    let result = await campaignInstance.methods.donateNative().send(
+                        {from:accounts[0], value:toDonate}
+                    ).on('transactionHash', function(transactionHash){
+                        that.setState({modalMessage: "waitingForNetowork"})
+                    });
+                } catch (err) {
                     this.setState({
-                        showModal: true, errorMessage: 'Transaction not available',
-                        modalMessage: 'Donating to yourself is not allowed',
-                        errorIcon: 'ExclamationTriangle', modalButtonMessage: 'CLOSE',
+                        showModal: true, modalTitle: 'Failed', modalMessage: 'blockChainTransactionFailed',
+                        errorIcon: 'XCircle', modalButtonMessage: 'closeBtn',
                         modalButtonVariant: '#E63C36', waitToClose: false
                     });
-                    return;
+                    console.log("donateNative transaction failed");
+                    console.log(err);
                 }
-                var toDonate = web3.utils.toWei(this.state.donationAmount);
-                var that = this;
-                //for native donations
-                if(this.state.coinAddress == "0x0000000000000000000000000000000000000000") {
-                    campaignInstance.methods.donateNative().send({from:accounts[0], value:toDonate}).on(
-                    'receipt', function(receipt) {
-                            console.log("Received receipt from donation transaction");
-                            that.updateRaisedAmount(accounts);
-                            that.setState({
-                                showModal: true, errorMessage: 'Complete!',
-                                modalMessage: 'Thank you for your donation!',
-                                errorIcon: 'CheckCircle', modalButtonMessage: 'Close',
-                                modalButtonVariant: '#588157', waitToClose: false
-                            });
-                    }).on('error', function(error) {
-                            that.setState({
-                                showModal: true, errorMessage: 'Failed',
-                                errorIcon: 'XCircle', modalButtonMessage: 'CLOSE',
-                                modalButtonVariant: '#E63C36', waitToClose: false
-                            });
-                            console.log("donateNative transaction failed");
-                            console.log(error);
-                            if(error.toString().indexOf("cannot donate to yourself") > -1) {
-                                that.setState({modalMessage:"As the creator of this fundraiser, you cannot donate to yourself."});
-                            } else {
-                                that.setState({modalMessage:"Donation transaction has failed. Please check MetaMask for details."});
-                            }
-                    }).on('transactionHash', function(transactionHash){
-                        that.setState({modalMessage:"Waiting for the network to confirm transaction."})
-                    })
-                    that.setState({modalMessage:"Please confirm transaction in MetaMask."});
-                } else {
-                    //for ERC20 donations
-                    var coinInstance = new web3.eth.Contract(ERC20Coin, this.state.coinAddress);
-                    coinInstance.methods.approve(this.state.campaign._id, toDonate).send({from:accounts[0]}).on(
-                        'receipt', function(receipt) {
-                        console.log("Received receipt from approval transaction");
-                        campaignInstance.methods.donateERC20(toDonate).send({from:accounts[0]}).on('receipt',
-                            function(receipt) {
-                                console.log("Received receipt from donation transaction");
-                                that.updateRaisedAmount(accounts);
-                                that.setState({
-                                    showModal: true, errorMessage: 'Complete!',
-                                    modalMessage: 'Thank you for your donation!',
-                                    errorIcon: 'CheckCircle', modalButtonMessage: 'Close',
-                                    modalButtonVariant: '#588157', waitToClose: false
-                                });
-                            }
-                        ).on('error', function(error) {
-                            that.setState({
-                                showModal: true, errorMessage: 'Failed',
-                                errorIcon: 'XCircle', modalButtonMessage: 'CLOSE',
-                                modalButtonVariant: '#E63C36', waitToClose: false
-                            });
-                            console.log("donateERC20 transaction failed");
-                            console.log(error);
-                            if(error.toString().indexOf("cannot donate to yourself") > -1) {
-                                that.setState({modalMessage:"As the creator of this fundraiser, you cannot donate to yourself."});
-                            } else {
-                                that.setState({modalMessage:"Donation transaction has failed. Please check MetaMask for details."});
-                            }
-                        }).on('transactionHash', function(transactionHash){
-                            that.setState({modalMessage:"Waiting for the network to confirm transaction."})
-                        })
-                        that.setState({modalMessage:"Please confirm transaction in MetaMask."});
-                    }).on('error', function(error) {
-                        that.setState({
-                            showModal: true, errorMessage: 'Failed',
-                            errorIcon: 'XCircle', modalButtonMessage: 'CLOSE',
-                            modalButtonVariant: '#E63C36', waitToClose: false
-                        });
-                        console.log("Approval transaction failed");
-                        console.log(error);
-                    }).on('transactionHash', function(transactionHash){
-                        that.setState({modalMessage:"Waiting for the network to confirm transaction."})
-                    });
-                }
-                that.setState({modalMessage:"Please confirm transaction in MetaMask."})
-            } catch (err) {
-                console.log(err);
+                await this.updateRaisedAmount(accounts, campaignInstance, web3);
                 this.setState({
-                    showModal: true, errorMessage: 'Failed',
-                    errorIcon: 'XCircle', modalButtonMessage: 'CLOSE',
-                    modalButtonVariant: '#E63C36', waitToClose: false,
-                    modalMessage:"Failed to connect to blockchain network. If you are using a browser wallet like MetaMask, " +
-                        "please make sure that it is configured for " + config.get("CHAIN_NAME")
+                    showModal: true, modalTitle: 'complete',
+                    modalMessage: 'thankYouDonation',
+                    errorIcon: 'CheckCircle', modalButtonMessage: 'closeBtn',
+                    modalButtonVariant: '#588157', waitToClose: false
                 });
+            } else {
+                //for ERC20 donations
+                var coinInstance = new web3.eth.Contract(ERC20Coin, coinAddress);
+                this.setState({
+                    showModal: true, modalTitle: 'processingWait',
+                    modalMessage: "approveSpend",
+                    errorIcon: 'HourglassSplit', modalButtonVariant: "gold", waitToClose: true
+                });
+                try {
+                    let result = await coinInstance.methods.approve(this.state.campaign._id, toDonate).send(
+                        {from:accounts[0]}
+                    ).on('transactionHash', function(transactionHash){
+                        that.setState({modalMessage: "waitingForNetowork"})
+                    });
+                    this.setState({
+                        showModal: true, modalTitle: 'processingWait',
+                        modalMessage: "approveDonate",
+                        errorIcon: 'HourglassSplit', modalButtonVariant: "gold", waitToClose: true
+                    });
+                    result = await campaignInstance.methods.donateERC20(toDonate).send(
+                        {from:accounts[0]}
+                    ).on('transactionHash', function(transactionHash){
+                        that.setState({modalMessage: "waitingForNetowork"})
+                    });
+                    await this.updateRaisedAmount(accounts, campaignInstance, web3);
+                    this.setState({
+                        showModal: true, modalTitle: 'complete',
+                        modalMessage: 'thankYouDonation',
+                        errorIcon: 'CheckCircle', modalButtonMessage: 'closeBtn',
+                        modalButtonVariant: '#588157', waitToClose: false
+                    });
+                } catch (err) {
+                    this.setState({
+                        showModal: true, modalTitle: 'Failed',
+                        errorIcon: 'XCircle', modalButtonMessage: 'closeBtn',
+                        modalButtonVariant: '#E63C36', waitToClose: false
+                    });
+                    console.log(err);
+                }
             }
-        } else {
-            alert("Please install metamask");
+            if(web3.currentProvider && web3.currentProvider.close) {
+                await web3.currentProvider.close();
+            }
+            await this.web3Modal.clearCachedProvider();
+        } catch (err) {
+            console.log(err);
+            this.setState({
+                showModal: true, modalTitle: 'Failed',
+                errorIcon: 'XCircle', modalButtonMessage: 'closeBtn',
+                modalButtonVariant: '#E63C36', waitToClose: false,
+                modalMessage: 'blockChainConnectFailed'
+            });
         }
     }
 
     render() {
         return (
             <div>
-                <Modal show={this.state.showModal} onHide={this.state.showModal} className='myModal' centered>
+                <Modal show={this.state.showModal} className='myModal' centered>
                     <Modal.Body><p className='errorIcon'>
                         {this.state.errorIcon == 'CheckCircle' && <CheckCircle style={{color:'#588157'}} />}
                         {this.state.errorIcon == 'ExclamationTriangle' && <ExclamationTriangle style={{color: '#E63C36'}}/>}
                         {this.state.errorIcon == 'HourglassSplit' && <HourglassSplit style={{color: 'gold'}}/>}
                         {this.state.errorIcon == 'XCircle' && <XCircle style={{color: '#E63C36'}}/>}
                         </p>
-                        <p className='errorMessage'>{this.state.errorMessage}</p>
-                        <p className='modalMessage'>{this.state.modalMessage}</p>
+                        <p className='modalTitle'><Trans i18nKey={this.state.modalTitle} /></p>
+                        <p className='modalMessage'>
+                            <Trans i18nKey={this.state.modalMessage}
+                                   values={{donationAmount: this.state.donationAmount, currencyName: this.state.campaign.currencyName }} />
+                        </p>
                         {!this.state.waitToClose &&
                         <Button className='myModalButton' 
                             style={{backgroundColor : this.state.modalButtonVariant, borderColor : this.state.modalButtonVariant}} 
                             onClick={ () => {this.setState({showModal:false})}}>
-                            {this.state.modalButtonMessage}
+                            <Trans i18nKey={this.state.modalButtonMessage} />
                         </Button>
                         }
                     </Modal.Body>                
@@ -265,18 +270,12 @@ class CampaignPage extends Component {
         let toks = this.props.location.pathname.split("/");
         let address = toks[toks.length -1];
         this.setState({
+            address: address,
             campaign : (await this.getCampaign(address)),
         });
-        web3 = (await import("../remote/"+ config.get("CHAIN") + "/web3")).default;
         HEOCampaign = (await import("../remote/"+ config.get("CHAIN") + "/HEOCampaign")).default;
         ERC20Coin = (await import("../remote/"+ config.get("CHAIN") + "/ERC20")).default;
-        let campaignInstance = new web3.eth.Contract(HEOCampaign, address);
-        let coinAddress = (await campaignInstance.methods.currency().call()).toLowerCase();
-        this.setState({
-            campaignInstance, coinAddress, address,
-        });
     }
 }
-
 
 export default CampaignPage;
