@@ -10,6 +10,7 @@ import i18n from '../util/i18n';
 import { ChevronLeft, CheckCircle, ExclamationTriangle, HourglassSplit, XCircle } from 'react-bootstrap-icons';
 import { Link } from 'react-router-dom';
 import { compress, decompress } from 'shrink-string';
+import TextEditor, { setEditorState, getEditorState, editorStateHasChanged } from '../components/TextEditor';
 var HEOCampaign, web3, ACCOUNTS, CAMPAIGNINSTANCE;
 
 class EditCampaign extends React.Component {
@@ -41,7 +42,8 @@ class EditCampaign extends React.Component {
             updateImage: false,
             updateMeta: false,
             campaignAddress: "",
-            currentError:""
+            currentError:"",
+            updatedEditorState: false,
         };
     }
 
@@ -64,6 +66,9 @@ class EditCampaign extends React.Component {
     }
 
     handleClick = async (event) => {
+        if(editorStateHasChanged()){
+            this.state.updateMeta = true;
+        }
         event.preventDefault();
         this.setState({showModal:true, errorMessage: i18n.t('processingWait'),
                 errorIcon:'HourglassSplit',
@@ -111,7 +116,8 @@ class EditCampaign extends React.Component {
                 org: this.state.org,
                 cn: this.state.cn,
                 vl: this.state.vl,
-                currencyName: this.state.currencyName
+                currencyName: this.state.currencyName,
+                descriptionEditor : getEditorState()
             };
             let compressed_meta = await compress(JSON.stringify(data));
             let result = await CAMPAIGNINSTANCE.methods.update(
@@ -268,6 +274,7 @@ class EditCampaign extends React.Component {
                             <Form.Control as="textarea" rows={5} className="createFormPlaceHolder" placeholder={i18n.t('descriptionOfCampaign')}
                                 name='description' value={this.state.description} onChange={this.handleTextArea} />
                         </Form.Group>
+                        {this.state.updatedEditorState && <TextEditor  />}
                         <Button type="submit" id='createCampaignBtn' name='ff3'>
                             {i18n.t('saveCampaignBtn')}
                         </Button>
@@ -310,7 +317,15 @@ class EditCampaign extends React.Component {
             maxAmount : maxAmount,
             currencyName: metaData.currencyName
         });
+        if(metaData.descriptionEditor){
+            setEditorState(metaData.descriptionEditor, true);
+            this.setState({updatedEditorState : true});
+        } else {
+            setEditorState({}, false);
+            this.setState({updatedEditorState : true});
+        }
     }
+
 }
 
 export default EditCampaign;
