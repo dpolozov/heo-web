@@ -170,11 +170,26 @@ body {
         min-width: 100%;
         margin-bottom: 20px;
     }
+    #videoPlayer{
+        height: 300px !important;
+    }
+}
+
+@media  (max-width: 530px) {
+    #videoPlayer{
+        height: 260px !important;
+    }
 }
 
 @media (max-width: 470px){
     #donateRow{
         width: 95%;
+    }
+    #videoPlayer{
+        height: 300px;
+    }
+    #videoPlayer{
+        height: 200px !important ;
     }
 }
 

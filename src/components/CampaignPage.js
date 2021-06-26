@@ -2,7 +2,7 @@ import React, {lazy, useState, Component} from 'react';
 import config from "react-global-configuration";
 import axios from 'axios';
 import { Container, Row, Col, Card, ProgressBar, Button, Modal, Image, InputGroup, FormControl } from 'react-bootstrap';
-import { ChevronLeft, Gift, CheckCircle, ExclamationTriangle, HourglassSplit, XCircle } from 'react-bootstrap-icons';
+import { ChevronLeft, Gift, CheckCircle, ExclamationTriangle, HourglassSplit, XCircle} from 'react-bootstrap-icons';
 import ReactPlayer from 'react-player';
 import { Link } from "react-router-dom";
 import { Trans } from 'react-i18next';
@@ -247,7 +247,7 @@ class CampaignPage extends Component {
                     </Row>
                     <Row id='videoRow'>
                         <Container id='videoRowContainer'>
-                            { this.state.campaign.vl && <ReactPlayer url={this.state.campaign.vl} id='videoPlayer' />}
+                            { this.state.campaign.vl && <ReactPlayer controls={true} url={this.state.campaign.vl} id='videoPlayer' />}
                         </Container>
                     </Row>
                     <Row id='descriptionRow'>
@@ -256,7 +256,6 @@ class CampaignPage extends Component {
                         </Container>
                     </Row>
                 </Container>
-                
             </div>
         );
     }
