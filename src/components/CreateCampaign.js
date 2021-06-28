@@ -1,6 +1,5 @@
 import React from 'react';
 import countries from '../countries';
-import '../css/createCampaign.css';
 import {Container, Form, Col, Button, Image, Modal} from 'react-bootstrap';
 import ReactPlayer from 'react-player';
 import config from "react-global-configuration";
@@ -10,27 +9,28 @@ import axios from 'axios';
 import { Trans } from 'react-i18next';
 import i18n from '../util/i18n';
 import {UserContext} from './UserContext';
-import { LogIn } from '../util/Utilities';
+import { LogIn, initWeb3, checkAuth, initWeb3Modal } from '../util/Utilities';
 import TextEditor, { getEditorState, setEditorState } from '../components/TextEditor';
 import { ChevronLeft, CheckCircle, ExclamationTriangle, HourglassSplit, XCircle } from 'react-bootstrap-icons';
 import { compress } from 'shrink-string';
-import '../css/RichEditor.css'
-import '../../node_modules/draft-js/dist/Draft.css'
+import '../css/createCampaign.css';
+import '../css/modal.css';
 
-var HEOCampaignFactory, HEOParameters, ACCOUNTS, web3;
+import Web3Modal from 'web3modal';
+import Web3 from 'web3';
+import WalletConnectProvider from '@walletconnect/web3-provider';
 
 class CreateCampaign extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
             whiteListed: false,
-            isLoggedIn: false,
             loaderMessage:"Please wait",
             showError:false,
             showModal: false,
             modalMessage:"",
             modalTitle:"",
-            errorIcon:"",
+            modalIcon:"",
             modalButtonMessage: "",
             modalButtonVariant: "",
             fn:"",
@@ -105,7 +105,7 @@ class CreateCampaign extends React.Component {
             this.setState({showModal:true, goHome: true,
                 modalMessage: 'campaignCreateSuccess',
                 modalTitle: 'success',
-                errorIcon: 'CheckCircle',
+                modalIcon: 'CheckCircle',
                 modalButtonMessage: 'returnHome',
                 modalButtonVariant: "#588157", waitToClose: false
             });
@@ -113,7 +113,7 @@ class CreateCampaign extends React.Component {
             this.setState({showModal: true, goHome: true,
                 modalTitle: 'addToDbFailedTitle',
                 modalMessage: 'addToDbFailedMessage',
-                errorIcon: 'CheckCircle',
+                modalIcon: 'CheckCircle',
                 modalButtonMessage: 'returnHome',
                 modalButtonVariant: "#588157", waitToClose: false
             });
@@ -122,7 +122,6 @@ class CreateCampaign extends React.Component {
     }
 
     async createCampaign(imgUrl) {
-        console.log("Creating campaign");
         let compressed_meta = await compress(JSON.stringify(
             {   title: this.state.title,
                 description: this.state.description,
@@ -138,19 +137,25 @@ class CreateCampaign extends React.Component {
         );
         try {
             this.setState({showModal:true,
-                modalMessage: 'confirmMetamask', errorIcon:'HourglassSplit',
-                modalButtonVariant: "gold", waitToClose: true});
+                modalMessage: 'confirmMetamask', modalIcon:'HourglassSplit',
+                modalButtonMessage: 'closeBtn',
+                modalButtonVariant: "#E63C36", waitToClose: false});
             var that = this;
+            if(!this.state.web3 ||!this.state.accounts) {
+                await initWeb3(this);
+            }
+            let abi = (await import("../remote/" + config.get("CHAIN") + "/HEOCampaignFactory")).abi;
+            let address = (await import("../remote/" + config.get("CHAIN") + "/HEOCampaignFactory")).address;
+            var HEOCampaignFactory = new this.state.web3.eth.Contract(abi, address);
             let result = await HEOCampaignFactory.methods.createCampaign(
-                web3.utils.toWei(`${this.state.maxAmount}`), this.state.currencyAddress, ACCOUNTS[0], compressed_meta)
-                    .send({from:ACCOUNTS[0]})
+                this.state.web3.utils.toWei(`${this.state.maxAmount}`), this.state.currencyAddress, this.state.accounts[0], compressed_meta)
+                    .send({from:this.state.accounts[0]})
                     .on('transactionHash',
                         function(transactionHash) {
                             that.setState({showModal:true, modalTitle: 'processingWait',
-                            modalMessage: 'waitingForNetowork', errorIcon: 'HourglassSplit',
+                            modalMessage: 'waitingForNetowork', modalIcon: 'HourglassSplit',
                             modalButtonVariant: "gold", waitToClose: true});
                         });
-            console.log("Received result from createCampaign transaction");
             if(result && result.events && result.events.CampaignDeployed && result.events.CampaignDeployed.address) {
                 return {
                     address: result.events.CampaignDeployed.returnValues.campaignAddress,
@@ -163,7 +168,7 @@ class CreateCampaign extends React.Component {
             this.setState({showModal: true,
                 modalTitle: 'blockChainTransactionFailed',
                 modalMessage: 'checkMetamask',
-                errorIcon: 'XCircle', modalButtonMessage: 'returnHome',
+                modalIcon: 'XCircle', modalButtonMessage: 'returnHome',
                 modalButtonVariant: "#E63C36", waitToClose: false});
             console.log("createCampaign transaction failed");
             console.log(error);
@@ -173,10 +178,9 @@ class CreateCampaign extends React.Component {
     }
 
     async uploadImageS3 (imgID) {
-        console.log(`Uploading ${this.state.mainImageFile.name} of type ${this.state.mainImageFile.type} to S3`);
         this.setState(
             {showModal:true, modalTitle: 'processingWait',
-            modalMessage: 'uploadingImageWait', errorIcon: 'HourglassSplit',
+            modalMessage: 'uploadingImageWait', modalIcon: 'HourglassSplit',
             modalButtonVariant: "gold", waitToClose: true
             });
         let fileType = this.state.mainImageFile.type.split("/")[1];
@@ -188,7 +192,6 @@ class CreateCampaign extends React.Component {
         );
         try {
             let res = await axios.post('/api/uploadimage', formData);
-            console.log("Success uploading main image");
             this.setState({showModal:false, mainImageURL: res.data});
             return res.data;
         }  catch(err) {
@@ -197,20 +200,20 @@ class CreateCampaign extends React.Component {
                 this.setState({showModal: true, goHome: false,
                     modalTitle: 'imageUploadFailed',
                     modalMessage: 'technicalDifficulties',
-                    errorIcon: 'XCircle', modalButtonMessage: 'returnHome',
+                    modalIcon: 'XCircle', modalButtonMessage: 'returnHome',
                     modalButtonVariant: "#E63C36", waitToClose: false});
             } else if (err.request) {
                 console.log('No response in uploading main image' + err.message);
                 this.setState({showModal: true, goHome: false,
                     modalTitle: 'imageUploadFailed',
                     modalMessage: 'checkYourConnection',
-                    errorIcon: 'XCircle', modalButtonMessage: 'returnHome',
+                    modalIcon: 'XCircle', modalButtonMessage: 'returnHome',
                     modalButtonVariant: "#E63C36", waitToClose: false});
             } else {
                 console.log('error uploading image ' + err.message);
                 this.setState({showModal: true, goHome: false,
                     modalTitle: 'imageUploadFailed',
-                    errorIcon: 'XCircle', modalButtonMessage: 'returnHome',
+                    modalIcon: 'XCircle', modalButtonMessage: 'returnHome',
                     modalButtonVariant: "#E63C36", waitToClose: false});
             }
             return false;
@@ -221,11 +224,11 @@ class CreateCampaign extends React.Component {
         return (
             <div>
                 <Modal show={this.state.showModal} onHide={this.state.showModal} className='myModal' centered>
-                    <Modal.Body><p className='errorIcon'>
-                        {this.state.errorIcon == 'CheckCircle' && <CheckCircle style={{color:'#588157'}} />}
-                        {this.state.errorIcon == 'ExclamationTriangle' && <ExclamationTriangle/>}
-                        {this.state.errorIcon == 'HourglassSplit' && <HourglassSplit style={{color: 'gold'}}/>}
-                        {this.state.errorIcon == 'XCircle' && <XCircle style={{color: '#E63C36'}}/>}
+                    <Modal.Body><p className='modalIcon'>
+                        {this.state.modalIcon == 'CheckCircle' && <CheckCircle style={{color:'#588157'}} />}
+                        {this.state.modalIcon == 'ExclamationTriangle' && <ExclamationTriangle/>}
+                        {this.state.modalIcon == 'HourglassSplit' && <HourglassSplit style={{color: 'gold'}}/>}
+                        {this.state.modalIcon == 'XCircle' && <XCircle style={{color: '#E63C36'}}/>}
                         </p>
                         <p className='modalTitle'><Trans i18nKey={this.state.modalTitle}/></p>
                         <p className='modalMessage'><Trans i18nKey={this.state.modalMessage}>
@@ -245,16 +248,20 @@ class CreateCampaign extends React.Component {
                                             this.props.history.push('/');
                                         } else if(!this.state.isLoggedIn) {
                                             try {
-                                                if(await LogIn(ACCOUNTS[0], web3)) {
+                                                if(!this.state.accounts || !this.state.web3) {
+                                                    await initWeb3(this);
+                                                }
+                                                await LogIn(this.state.accounts[0], this.state.web3, this);
+                                                if(this.state.isLoggedIn) {
                                                     toggleLoggedIn(true);
-                                                    this.setState({isLoggedIn: true, showModal: false});
                                                     await this.checkWL();
                                                 }
                                             } catch (err) {
+                                                console.log(err);
                                                 this.setState({showModal:true,
                                                     goHome: true,
                                                     isLoggedIn: false,
-                                                    errorMessage: 'authFailedTitle',
+                                                    modalTitle: 'authFailedTitle',
                                                     modalMessage: 'authFailedMessage',
                                                     modalButtonMessage: 'closeBtn',
                                                     modalButtonVariant: "#E63C36"}
@@ -370,111 +377,84 @@ class CreateCampaign extends React.Component {
 
     async checkWL() {
         //is white list enabled?
-        let wlEnabled = await HEOParameters.methods.intParameterValue(11).call();
-        if(wlEnabled > 0) {
-            //is user white listed?
-            let whiteListed = await HEOParameters.methods.addrParameterValue(5,ACCOUNTS[0]).call();
-            if(whiteListed > 0) {
+        try {
+            if(!this.state.web3 || !this.state.accounts) {
+                await initWeb3(this);
+            }
+            let abi = (await import("../remote/" + config.get("CHAIN") + "/HEOParameters")).abi;
+            let address = (await import("../remote/" + config.get("CHAIN") + "/HEOParameters")).address;
+            var HEOParameters = new this.state.web3.eth.Contract(abi, address);
+            let wlEnabled = await HEOParameters.methods.intParameterValue(11).call();
+            if(wlEnabled > 0) {
+                //is user white listed?
+                let accounts = await this.state.web3.eth.getAccounts();
+                this.setState({accounts: accounts});
+                let whiteListed = await HEOParameters.methods.addrParameterValue(5, accounts[0].toLowerCase()).call();
+                if(whiteListed > 0) {
+                    this.setState({
+                        isLoggedIn : true,
+                        whiteListed: true,
+                        showModal: false,
+                        goHome: false
+                    });
+                } else {
+                    //user is not in the white list
+                    this.setState({
+                        goHome: true,
+                        showModal:true,
+                        isLoggedIn: true,
+                        whiteListed: false,
+                        modalTitle: 'nonWLTitle',
+                        modalMessage: 'nonWLMessage',
+                        modalIcon: 'XCircle', modalButtonMessage: 'closeBtn',
+                        modalButtonVariant: "#E63C36", waitToClose: false
+                    });
+                }
+            } else {
+                //white list is disabled
                 this.setState({
                     isLoggedIn : true,
                     whiteListed: true,
-                    showModal: false,
-                    goHome: false
-                });
-            } else {
-                //user is not in the white list
-                this.setState({
-                    goHome: true,
-                    showModal:true,
-                    isLoggedIn: true,
-                    whiteListed: false,
-                    modalTitle: 'nonWLTitle',
-                    modalMessage: 'nonWLMessage',
-                    errorIcon: 'XCircle', modalButtonMessage: 'closeBtn',
-                    modalButtonVariant: "#E63C36", waitToClose: false
+                    goHome: false,
+                    showModal: false
                 });
             }
-        } else {
-            //white list is disabled
+        } catch (err) {
+            console.log(err);
             this.setState({
-                isLoggedIn : true,
-                whiteListed: true,
-                goHome: false,
-                showModal: false
+                showModal: true, modalTitle: 'Failed',
+                errorIcon: 'XCircle', modalButtonMessage: 'closeBtn',
+                modalButtonVariant: '#E63C36', waitToClose: false,
+                modalMessage: 'blockChainConnectFailed'
             });
         }
     }
 
     async componentDidMount() {
-        if (typeof window.ethereum !== 'undefined') {
-            this.setState({showModal:true, modalTitle: 'processingWait',
-                modalMessage: 'waitingForNetowork', errorIcon: 'HourglassSplit',
-                modalButtonVariant: "gold", waitToClose: true});
-
-            HEOCampaignFactory = (await import("../remote/" + config.get("CHAIN") + "/HEOCampaignFactory")).default;
-            HEOParameters = (await import("../remote/" + config.get("CHAIN") + "/HEOParameters")).default;
-            var ethereum = window.ethereum;
-            try {
-                ACCOUNTS = await ethereum.request({method: 'eth_requestAccounts'});
-            } catch {
-                this.setState({
-                    showModal:true,
-                    modalTitle: 'web3WalletRequired',
-                    goHome: true,
-                    modalMessage: 'pleaseUnlockMetamask',
-                    errorIcon: 'XCircle', modalButtonMessage: 'closeBtn',
-                    modalButtonVariant: "#E63C36", waitToClose: false});
-            }
-            web3 = (await import("../remote/" + config.get("CHAIN") + "/web3")).default;
-            let options = (config.get("chainconfigs")[config.get("CHAIN")]["currencyOptions"]);
-            let currencyOptions= (config.get("chainconfigs")[config.get("CHAIN")]["currencies"]);
-            this.setState({currencies: currencyOptions,
-                coinOptions: options,
-                currencyAddress: options[0].value,
-                currencyName:options[0].text}
-            );
-            // is the user logged in?
-            if(!this.state.isLoggedIn) {
-                try {
-                    let res = await axios.get('/api/auth/status');
-                    if (res.data.addr && ACCOUNTS[0] == res.data.addr) {
-                        this.setState({isLoggedIn: true, showModal: false});
-                    } else {
-                        //must have logged in with different account before
-                        await axios.post('/api/auth/logout');
-                    }
-                } catch (err) {
-                    this.setState({
-                        showModal: true,
-                        isLoggedIn: false,
-                        goHome: true,
-                        modalTitle: 'authFailedTitle',
-                        modalMessage: 'technicalDifficulties',
-                        errorIcon: 'XCircle', modalButtonMessage: 'returnHome',
-                        modalButtonVariant: "#E63C36", waitToClose: false});
-                }
-            }
-            if(this.state.isLoggedIn) {
-                await this.checkWL();
-            } else {
-                //need to log in first
-                this.setState({
-                    showModal: true,
-                    isLoggedIn : false,
-                    whiteListed: false,
-                    goHome: false,
-                    modalTitle: 'pleaseLogInTitle',
-                    modalMessage: 'pleaseLogInToCreateMessage',
-                    errorIcon: 'XCircle', modalButtonMessage: 'login',
-                    modalButtonVariant: "#E63C36", waitToClose: false});
-            }
+        await initWeb3Modal(this);
+        let options = (config.get("chainconfigs")[config.get("CHAIN")]["currencyOptions"]);
+        let currencyOptions = (config.get("chainconfigs")[config.get("CHAIN")]["currencies"]);
+        this.setState({currencies: currencyOptions,
+            coinOptions: options,
+            currencyAddress: options[0].value,
+            currencyName:options[0].text}
+        );
+        // is the user logged in?
+        if(!this.state.isLoggedIn) {
+            await checkAuth(this);
+        }
+        if(this.state.isLoggedIn) {
+            await this.checkWL();
         } else {
+            //need to log in first
             this.setState({
-                showModal:true,
-                modalTitle: 'web3WalletRequired',
-                goHome: true,
-                modalMessage: 'pleaseInstallMetamask',
-                errorIcon: 'XCircle', modalButtonMessage: 'closeBtn',
+                showModal: true,
+                isLoggedIn : false,
+                whiteListed: false,
+                goHome: false,
+                modalTitle: 'pleaseLogInTitle',
+                modalMessage: 'pleaseLogInToCreateMessage',
+                modalIcon: 'XCircle', modalButtonMessage: 'login',
                 modalButtonVariant: "#E63C36", waitToClose: false});
         }
     }

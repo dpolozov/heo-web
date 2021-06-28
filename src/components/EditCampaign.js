@@ -1,6 +1,5 @@
 import React from 'react';
 import countries from '../countries';
-import '../css/createCampaign.css';
 import {Container, Form, Col, Button, Image, Modal} from 'react-bootstrap';
 import ReactPlayer from 'react-player';
 import config from "react-global-configuration";
@@ -11,7 +10,15 @@ import { ChevronLeft, CheckCircle, ExclamationTriangle, HourglassSplit, XCircle 
 import { Link } from 'react-router-dom';
 import { compress, decompress } from 'shrink-string';
 import TextEditor, { setEditorState, getEditorState, editorStateHasChanged } from '../components/TextEditor';
-var HEOCampaign, web3, ACCOUNTS, CAMPAIGNINSTANCE;
+import { LogIn, initWeb3, checkAuth, initWeb3Modal } from '../util/Utilities';
+import '../css/createCampaign.css';
+import '../css/modal.css';
+
+import Web3Modal from 'web3modal';
+import Web3 from 'web3';
+import WalletConnectProvider from '@walletconnect/web3-provider';
+
+var CAMPAIGNINSTANCE;
 
 class EditCampaign extends React.Component {
     constructor(props) {
@@ -121,9 +128,9 @@ class EditCampaign extends React.Component {
             };
             let compressed_meta = await compress(JSON.stringify(data));
             let result = await CAMPAIGNINSTANCE.methods.update(
-                web3.utils.toWei(this.state.maxAmount), compressed_meta).send({from:ACCOUNTS[0]}, () => {
+                this.state.web3.utils.toWei(this.state.maxAmount), compressed_meta).send({from:this.state.accounts[0]}, () => {
                     this.setState({showModal:true, errorMessage: i18n.t('processingWait'),
-                    modalMessage: i18n.t('updatingMaxAmount'), errorIcon:'HourglassSplit',
+                    modalMessage: i18n.t('updatingCampaignOnBlockchain'), errorIcon:'HourglassSplit',
                     modalButtonVariant: "gold", waitToClose: true});
                 });
             data.maxAmount = this.state.maxAmount;
@@ -152,7 +159,6 @@ class EditCampaign extends React.Component {
     }
 
     async uploadImageS3() {
-        console.log(`Uploading ${this.state.mainImageFile.name} of type ${this.state.mainImageFile.type} to S3`);
         this.setState({showModal:true, errorMessage: i18n.t('processingWait'),
         modalMessage: i18n.t('uploadingImageWait'), errorIcon:'HourglassSplit',
         modalButtonVariant: "gold", waitToClose: true});
@@ -287,16 +293,37 @@ class EditCampaign extends React.Component {
     async componentDidMount() {
         let toks = this.props.location.pathname.split("/");
         let address = toks[toks.length -1];
-        var ethereum = window.ethereum;
-        ACCOUNTS = await ethereum.request({method: 'eth_requestAccounts'});
-        web3 = (await import("../remote/"+ config.get("CHAIN") + "/web3")).default;
-        HEOCampaign = (await import("../remote/"+ config.get("CHAIN") + "/HEOCampaign")).default;
-        ACCOUNTS = await ethereum.request({method: 'eth_requestAccounts'});
-        CAMPAIGNINSTANCE = new web3.eth.Contract(HEOCampaign, address);
+
+        await initWeb3Modal(this);
+        let options = (config.get("chainconfigs")[config.get("CHAIN")]["currencyOptions"]);
+        let currencyOptions = (config.get("chainconfigs")[config.get("CHAIN")]["currencies"]);
+        this.setState({currencies: currencyOptions,
+            coinOptions: options,
+            currencyAddress: options[0].value,
+            currencyName:options[0].text}
+        );
+        // is the user logged in?
+        if(!this.state.isLoggedIn) {
+            await checkAuth(this);
+        }
+        if(!this.state.isLoggedIn) {
+            //need to log in first
+            this.setState({
+                showModal: true,
+                isLoggedIn : false,
+                whiteListed: false,
+                goHome: false,
+                modalTitle: 'pleaseLogInTitle',
+                modalMessage: 'pleaseLogInToCreateMessage',
+                modalIcon: 'XCircle', modalButtonMessage: 'login',
+                modalButtonVariant: "#E63C36", waitToClose: false});
+        }
+        let HEOCampaign = (await import("../remote/"+ config.get("CHAIN") + "/HEOCampaign")).default;
+        CAMPAIGNINSTANCE = new this.state.web3.eth.Contract(HEOCampaign, address);
         let compressedMetaData = await CAMPAIGNINSTANCE.methods.metaData().call();
         let rawMetaData = await decompress(compressedMetaData);
         let metaData = JSON.parse(rawMetaData);
-        let maxAmount = web3.utils.fromWei(await CAMPAIGNINSTANCE.methods.maxAmount().call());
+        let maxAmount = this.state.web3.utils.fromWei(await CAMPAIGNINSTANCE.methods.maxAmount().call());
         if(metaData.mainImageURL) {
             let splits = metaData.mainImageURL.split("/");
             if(splits && splits.length) {

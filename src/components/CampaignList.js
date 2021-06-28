@@ -2,6 +2,7 @@ import React, { Component, lazy } from 'react';
 import config from 'react-global-configuration';
 import axios from 'axios';
 import '../css/campaignList.css';
+import '../css/modal.css';
 import { Container, Row, Col, Card, ProgressBar, Button, Modal } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import { DescriptionPreview } from '../util/Utilities';
