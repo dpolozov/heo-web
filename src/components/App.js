@@ -46,7 +46,7 @@ class App extends Component {
     async componentDidMount() {
         let lang = GetLanguage();
         this.setState({language : lang});
-        await initWeb3Modal(this);
+        await initWeb3Modal();
         await checkAuth(this, true);
     }
 
@@ -59,14 +59,15 @@ class App extends Component {
         if(this.state.isLoggedIn) {
             if(this.state.web3 && this.state.web3.currentProvider && this.state.web3.currentProvider.close) {
                 await this.state.web3.currentProvider.close();
-                await this.web3Modal.clearCachedProvider();
+                await window.web3Modal.clearCachedProvider();
             }
             await axios.post('/api/auth/logout');
             this.setState({isLoggedIn : false});
             this.props.history.push('/');
         } else {
-            await initWeb3(this);
-
+            if(!this.state.accounts || !this.state.accounts[0] || !this.state.web3) {
+                await initWeb3(this);
+            }
             try {
                 await LogIn(this.state.accounts[0], this.state.web3, this);
                 if(this.state.isLoggedIn) {

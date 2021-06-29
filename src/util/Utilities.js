@@ -53,9 +53,9 @@ function GetLanguage() {
 }
 
 const initWeb3 = async (that) => {
-    let provider = await that.web3Modal.connect();
+    let provider = await window.web3Modal.connect();
     provider.on("disconnect", (code: number, reason: string) => {
-        console.log(code, reason);
+        that.setState({web3:null, accounts: null});
     });
 
     //Workaround for web3-provider bug. See https://github.com/WalletConnect/walletconnect-monorepo/issues/496
@@ -101,22 +101,24 @@ const checkAuth = async (that, skipError=false) => {
     }
 }
 
-const initWeb3Modal = async(that) => {
+const initWeb3Modal = async() => {
     let rpc = {};
     rpc[config.get("WEB3_RPC_CHAIN_ID")] = config.get("WEB3_RPC_NODE_URL");
-    that.web3Modal = new Web3Modal({
-        cacheProvider: true,
-        providerOptions: {
-            walletconnect: {
-                package: WalletConnectProvider,
-                options: {
-                    rpc: rpc,
-                    chainId: 97,
-                    bridge: config.get("WC_BRIDGE_URL")
+    if(!window.web3Modal) {
+        window.web3Modal = new Web3Modal({
+            cacheProvider: true,
+            providerOptions: {
+                walletconnect: {
+                    package: WalletConnectProvider,
+                    options: {
+                        rpc: rpc,
+                        chainId: config.get("WEB3_RPC_CHAIN_ID"),
+                        bridge: config.get("WC_BRIDGE_URL")
+                    }
                 }
             }
-        }
-    });
+        });
+    }
 }
 export {DescriptionPreview, GetLanguage, LogIn, initWeb3, checkAuth, initWeb3Modal };
 export default Utilities;

@@ -85,9 +85,7 @@ class CampaignPage extends Component {
 
     handleDonateClick = async event => {
         try {
-            if(!this.web3Modal) {
-                await initWeb3Modal(this);
-            }
+            await initWeb3Modal();
             if(!this.state.web3 ||!this.state.accounts) {
                 await initWeb3(this);
             }
@@ -175,10 +173,6 @@ class CampaignPage extends Component {
                     console.log(err);
                 }
             }
-            if(web3.currentProvider && web3.currentProvider.close) {
-                await web3.currentProvider.close();
-            }
-            await this.web3Modal.clearCachedProvider();
         } catch (err) {
             console.log(err);
             this.setState({
