@@ -431,7 +431,7 @@ class CreateCampaign extends React.Component {
     }
 
     async componentDidMount() {
-        await initWeb3Modal(this);
+        await initWeb3Modal();
         let options = (config.get("chainconfigs")[config.get("CHAIN")]["currencyOptions"]);
         let currencyOptions = (config.get("chainconfigs")[config.get("CHAIN")]["currencies"]);
         this.setState({currencies: currencyOptions,
