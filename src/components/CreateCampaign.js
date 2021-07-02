@@ -41,7 +41,7 @@ class CreateCampaign extends React.Component {
             title:"",
             maxAmount:10000,
             title:"",
-            description:"Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor.",
+            description:"",
             raisedAmount:0,
             percentRaised: "0%",
             mainImageURL: "",
@@ -300,7 +300,7 @@ class CreateCampaign extends React.Component {
                         </Form.Row>
                         <Form.Group>
                             <Form.Label><Trans i18nKey='organization'/> <span
-                                className="optional">(optional)</span></Form.Label>
+                                className="optional">(<Trans i18nKey='optional'/>)</span></Form.Label>
                             <Form.Control type="text" className="createFormPlaceHolder" placeholder={i18n.t('on')}
                                 name='org' value={this.state.org} onChange={this.handleChange}/>
                         </Form.Group>
@@ -335,6 +335,7 @@ class CreateCampaign extends React.Component {
                         <hr/>
                         <Form.Group>
                             <Form.Label><Trans i18nKey='selectCoverImage'/></Form.Label>
+                            <Form.Label><span className='optional'>(<Trans i18nKey='coverImageHint'/>)</span></Form.Label>
                             <Form.File
                                 name='imageFile' className="position-relative" required
                                 id="campaignImgInput" accept='.jpg,.png,.jpeg,.gif'
@@ -344,7 +345,7 @@ class CreateCampaign extends React.Component {
                         <Image id='createCampaignImg' src={this.state.mainImageURL}/>
                         <Form.Group>
                             <Form.Label><Trans i18nKey='promoVideo'/> <span
-                                className='optional'>(optional)</span></Form.Label>
+                                className='optional'>(<Trans i18nKey='optional'/>)</span></Form.Label>
                             <Form.Control type="text" className="createFormPlaceHolder"
                                           placeholder={i18n.t('linkToYouTube')}
                                           name='vl' value={this.state.vl} onChange={this.handleChange}/>
@@ -361,7 +362,7 @@ class CreateCampaign extends React.Component {
                             <Form.Control as="textarea" rows={3} className="createFormPlaceHolder"
                                           placeholder={i18n.t('descriptionOfCampaign')}
                                           name='description' value={this.state.description}
-                                          maxLength='200' onChange={this.handleTextArea}/>  
+                                          maxLength='195' onChange={this.handleTextArea}/>
                             <Form.Label><Trans i18nKey='campaignDescription'/></Form.Label> 
                             <TextEditor />                  
                         </Form.Group>
