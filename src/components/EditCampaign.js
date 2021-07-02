@@ -231,7 +231,7 @@ class EditCampaign extends React.Component {
                             </Form.Group>
                         </Form.Row>                       
                         <Form.Group >
-                            <Form.Label><Trans i18nKey='organization'/> <span className="optional">(optional)</span></Form.Label>
+                            <Form.Label><Trans i18nKey='organization'/> <span className="optional">(<Trans i18nKey='optional'/>)</span></Form.Label>
                             <Form.Control type="text" className="createFormPlaceHolder" placeholder={i18n.t('on')}
                                 name='org' value={this.state.org} onChange={this.handleChange} />
                         </Form.Group>     
@@ -257,6 +257,7 @@ class EditCampaign extends React.Component {
                         <hr/>
                         <Form.Group>
                             <Form.Label><Trans i18nKey='selectCoverImage'/></Form.Label>
+                            <Form.Label><span className='optional'>(<Trans i18nKey='coverImageHint'/>)</span></Form.Label>
                             <Form.File
                                 name='imageFile' className="position-relative" 
                                 id="campaignImgInput" accept='.jpg,.png,.jpeg,.gif' 
@@ -265,7 +266,7 @@ class EditCampaign extends React.Component {
                         </Form.Group>
                         <Image id='createCampaignImg' src={this.state.mainImageURL}/>
                         <Form.Group>
-                            <Form.Label><Trans i18nKey='promoVideo'/> <span className='optional'>(optional)</span></Form.Label>
+                            <Form.Label><Trans i18nKey='promoVideo'/> <span className='optional'>(<Trans i18nKey='optional'/>)</span></Form.Label>
                             <Form.Control type="text" className="createFormPlaceHolder" placeholder={i18n.t('linkToYouTube')}
                                 name='vl' value={this.state.vl} onChange={this.handleChange}/>
                         </Form.Group>
@@ -276,11 +277,12 @@ class EditCampaign extends React.Component {
                                 name='title' value={this.state.title} onChange={this.handleChange}/>
                         </Form.Group>
                         <Form.Group>
-                            <Form.Label><Trans i18nKey='campaignDescription'/></Form.Label>
+                            <Form.Label><Trans i18nKey='shortDescription'/></Form.Label>
                             <Form.Control as="textarea" rows={5} className="createFormPlaceHolder" placeholder={i18n.t('descriptionOfCampaign')}
                                 name='description' value={this.state.description} onChange={this.handleTextArea} />
+                            <Form.Label><Trans i18nKey='campaignDescription'/></Form.Label>
+                            {this.state.updatedEditorState && <TextEditor  />}
                         </Form.Group>
-                        {this.state.updatedEditorState && <TextEditor  />}
                         <Button type="submit" id='createCampaignBtn' name='ff3'>
                             {i18n.t('saveCampaignBtn')}
                         </Button>

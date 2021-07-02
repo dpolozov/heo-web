@@ -41,12 +41,13 @@
     "selectCoin": "Выберите крипто-валюту",
     "campaignDetails": "О кампании",
     "howMuchYouNeed": "Сколько {{currencyName}} вам нужно?",
-    "selectCoverImage": "Загрузите обложку",
+    "selectCoverImage": "Загрузите картинку (jpg, png)",
+    "coverImageHint": "Основная иллюстрация вашей кампании, которая будет отображаться на главной странице",
     "promoVideo": "Промо видео",
     "linkToYouTube": "Ссылка на YouTube",
     "title": "Название",
     "campaignTitle": "Название вашей кампании",
-    "descriptionOfCampaign": "Описание кампании",
+    "descriptionOfCampaign": "Краткое описание кампании одной строкой. Это описание будет показано на основной странице сайта.",
     "campaignDescription": "Описание кампании",
     "createCampaignBtn": "СОЗДАТЬ КАМПАНИЮ",
     "noUserCampaigns": "Вы ещё не запустили кампании. Нажмите <1>сюда</1> чтобы создать первую кампанию.",
@@ -65,5 +66,6 @@
     "ok" : "OK",
     "campaignDeleted" : "Your campaign has been closed. (It might take up to 2 minutes for the campaign to be removed from the website.)",
     "failed" : "Failed",
-    "shortDescription" : "short description/tag line for campaign list"
+    "shortDescription" : "Краткое описание кампании одной строкой",
+    "optional": "необязательно"
 }
