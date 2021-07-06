@@ -119,7 +119,7 @@ class CampaignPage extends Component {
                     });
                 } catch (err) {
                     this.setState({
-                        showModal: true, modalTitle: 'Failed', modalMessage: 'blockChainTransactionFailed',
+                        showModal: true, modalTitle: 'failed', modalMessage: 'blockChainTransactionFailed',
                         errorIcon: 'XCircle', modalButtonMessage: 'closeBtn',
                         modalButtonVariant: '#E63C36', waitToClose: false
                     });
@@ -166,9 +166,10 @@ class CampaignPage extends Component {
                     });
                 } catch (err) {
                     this.setState({
-                        showModal: true, modalTitle: 'Failed',
+                        showModal: true, modalTitle: 'failed',
                         errorIcon: 'XCircle', modalButtonMessage: 'closeBtn',
-                        modalButtonVariant: '#E63C36', waitToClose: false
+                        modalButtonVariant: '#E63C36', waitToClose: false,
+                        modalMessage: 'blockChainTransactionFailed'
                     });
                     console.log(err);
                 }
@@ -176,7 +177,7 @@ class CampaignPage extends Component {
         } catch (err) {
             console.log(err);
             this.setState({
-                showModal: true, modalTitle: 'Failed',
+                showModal: true, modalTitle: 'failed',
                 errorIcon: 'XCircle', modalButtonMessage: 'closeBtn',
                 modalButtonVariant: '#E63C36', waitToClose: false,
                 modalMessage: 'blockChainConnectFailed'
