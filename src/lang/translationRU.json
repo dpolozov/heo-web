@@ -88,5 +88,7 @@
     "helpCryptoCurrencies": "Что такое крипто-валюта?",
     "watIsCoin": "что такое {{currencyName}}?",
     "coverImageRequired": "Необходимо загрузить картинку для основной иллюстрации",
-    "coverImageRequiredTitle": "Нужна картинка"
+    "coverImageRequiredTitle": "Нужна картинка",
+    "addLink": "Please select word(s) to add/edit link",
+    "removeLink": "Please select word(s) to remove link"
 }
