@@ -260,6 +260,7 @@ class CreateCampaign extends React.Component {
                                                 console.log(err);
                                                 this.setState({showModal:true,
                                                     goHome: true,
+                                                    waitToClose: false,
                                                     isLoggedIn: false,
                                                     modalTitle: 'authFailedTitle',
                                                     modalMessage: 'authFailedMessage',
