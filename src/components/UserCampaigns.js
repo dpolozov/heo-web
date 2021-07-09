@@ -154,7 +154,7 @@ class UserCampaigns extends Component {
         var splits;
         if(imageURL) {
             splits = imageURL.split('/');
-            this.setState({fileName : splits[splits.length -1]});
+            this.setState({fileName: splits[splits.length -1]});
         }
     }
 
@@ -172,21 +172,21 @@ class UserCampaigns extends Component {
             this.deleteimage();
             this.deleteFromDB();
             this.setState({
-                modalMessage : 'campaignDeleted', modalTitle: 'complete',
+                modalMessage: 'campaignDeleted', modalTitle: 'complete',
                 errorIcon: 'CheckCircle', modalButtonMessage: i18n.t('ok'),
                 modalButtonVariant: '#588157', waitToClose: false, showTwoButtons: false,
             })
         } catch (err){
             console.log(err);
             this.setState({
-                waitToClose : false, modalMessage: 'technicalDifficulties',
-                errorIcon:'XCircle', modalButtonMessage: 'closeBtn', errorMessage : 'failed',
+                waitToClose: false, modalMessage: 'technicalDifficulties',
+                errorIcon:'XCircle', modalButtonMessage: 'closeBtn', modalTitle: 'failed',
                 modalButtonVariant: "#E63C36", waitToClose: false, showTwoButtons: false})
         }
     }
 
     async deleteimage () {
-        let data = {name : this.state.fileName};           
+        let data = {name: this.state.fileName};
         return axios.post('/api/deleteimage', data, {headers: {"Content-Type": "application/json"}})
         .then(res => {
             console.log("Success deleting image");
@@ -260,8 +260,9 @@ class UserCampaigns extends Component {
                                                     this.setState({showModal:true,
                                                         goHome: true,
                                                         isLoggedIn: false,
+                                                        waitToClose: false,
                                                         campaigns: [],
-                                                        errorMessage: 'authFailedTitle',
+                                                        modalTitle: 'authFailedTitle',
                                                         modalMessage: 'authFailedMessage',
                                                         modalButtonMessage: 'closeBtn',
                                                         modalButtonVariant: "#E63C36"}

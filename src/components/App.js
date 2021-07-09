@@ -74,6 +74,7 @@ class App extends Component {
                     this.props.history.push('/');
                 } else {
                     this.setState({showModal:true,
+                        waitToClose: false,
                         modalTitle: 'authFailedTitle',
                         modalMessage: 'authFailedMessage',
                         modalButtonMessage: 'closeBtn',
@@ -83,6 +84,7 @@ class App extends Component {
             } catch (err) {
                 console.log(err);
                 this.setState({showModal:true,
+                    waitToClose: false,
                     modalTitle: 'authFailedTitle',
                     modalMessage: 'authFailedMessage',
                     modalButtonMessage: 'closeBtn',
