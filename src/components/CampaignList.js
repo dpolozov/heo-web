@@ -8,7 +8,10 @@ import { Link } from 'react-router-dom';
 import { DescriptionPreview } from '../util/Utilities';
 import { Trans } from 'react-i18next';
 import i18n from '../util/i18n';
+import bnbIcon from '../images/binance-coin-bnb-logo.png';
+import busdIcon from '../images/binance-usd-busd-logo.png';
 
+const IMG_MAP = {BUSD: busdIcon, BNB: bnbIcon};
 class CampaignList extends Component {
     constructor(props) {
         super(props);
@@ -79,12 +82,14 @@ class CampaignList extends Component {
                                                 <Card.Body>
                                                     <Card.Title>{item.title}</Card.Title> 
                                                     <Card.Text>{`${DescriptionPreview(item.description)}...`}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span id='readMore'><Trans i18nKey='readMore'/></span></Card.Text>
-                                                    <p id='progressBarLabel'><span id='progressBarLabelStart'>{`$${item.raisedAmount}`}</span>{i18n.t('raised')}{item.maxAmount} {i18n.t('goal')}</p>
+                                                    <p id='progressBarLabel'><span id='progressBarLabelStart'>
+                                                        <img src={IMG_MAP[item.currencyName]} width={16} height={16} style={{marginRight:5}} />{item.raisedAmount}</span>{i18n.t('raised')}{item.maxAmount} {i18n.t('goal')}</p>
                                                     <ProgressBar now={item.percentRaised} /> 
                                                 </Card.Body>
                                             </Row>
                                             <Row >
-                                                <Col className='buttonCol'><div id='acceptingBtn' className='cardButtons'><p><Trans i18nKey='accepting'/></p><p id='currencyName'>{item.currencyName}</p></div></Col>
+                                                <Col className='buttonCol'><div id='acceptingBtn' className='cardButtons'><p><Trans i18nKey='accepting'/></p>
+                                                    <p id='currencyName'><img src={IMG_MAP[item.currencyName]} width={16} height={16} style={{marginRight:5}} />{item.currencyName}</p></div></Col>
                                                 <Col className='buttonCol'><Button variant="danger" id='donateBtn' block><Trans i18nKey='donate'/></Button></Col>
                                             </Row> 
                                         </Col>

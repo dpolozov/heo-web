@@ -88,6 +88,23 @@ body {
     color: #3F5663;
 }
 
+.coinHelper{
+    text-transform: none;
+}
+
+.coinHelper a{
+    color: #3F5663;
+    font-weight: 100;
+    font-family: sans-serif;
+}
+
+.coinHelper a:hover{
+    color: #3F5663;
+    font-weight: 100;
+    font-family: sans-serif;
+    text-decoration: underline;
+}
+
 #acceptingDiv{
     margin-right: 30px;
 }

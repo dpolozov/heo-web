@@ -14,7 +14,7 @@
     "accepting": "ACCEPTING",
     "reward" : "REWARDS",
     "donate" : "DONATE",
-    "raised" : " raised of $",
+    "raised" : " raised of ",
     "goal" : "goal",
     "campaignCreateSuccess": "Congratulations! Your fundraiser is live on the blockchain",
     "success": "Success!",
@@ -40,7 +40,7 @@
     "on": "Organization name",
     "organization": "Organization",
     "selectConuntry": "Select your country",
-    "selectCoin": "Select coin",
+    "selectCoin": "Select crypto-currency",
     "campaignDetails": "Campaign Details",
     "howMuchYouNeed": "How much {{currencyName}} do you need to raise?",
     "selectCoverImage": "Select cover image",
@@ -87,5 +87,7 @@
     "notAllowed": "Transaction not allowed",
     "thankYouDonation": "Thank you for your donation!",
     "optional": "optional",
-    "readMore": "Read More"
+    "readMore": "Read More",
+    "helpCryptoCurrencies": "What is a crypto-currency?",
+    "watIsCoin": "what is {{currencyName}}?"
 }
