@@ -317,11 +317,15 @@ class CreateCampaign extends React.Component {
                             <Form.Group as={Col}>
                                 <Form.Label><Trans i18nKey='selectCoin'/></Form.Label>
                                 <Form.Control as="select" name='currencyAddress'
-                                    value={this.state.currencyAddress} onChange={this.handleChange}>
+                                    value={this.state.currencyAddress} onChange={this.handleChange}
+                                    aria-describedby="currencyHelpBlock">
                                     {this.state.coinOptions.map((data) =>
                                         <option value={data.value}>{data.text}</option>
                                     )}
                                 </Form.Control>
+                                <Form.Text id="currencyHelpBlock" muted>
+                                    <a target="_blank" href="https://crypto.com"><Trans i18nKey='helpCryptoCurrencies' /></a>
+                                </Form.Text>
                             </Form.Group>
                         </Form.Row>
                         <hr/>

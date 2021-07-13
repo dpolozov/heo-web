@@ -16,6 +16,10 @@ import Web3Modal from 'web3modal';
 import Web3 from 'web3';
 import WalletConnectProvider from '@walletconnect/web3-provider';
 
+import bnbIcon from '../images/binance-coin-bnb-logo.png';
+import busdIcon from '../images/binance-usd-busd-logo.png';
+const IMG_MAP = {BUSD: busdIcon, BNB: bnbIcon};
+
 var HEOCampaign, ERC20Coin;
 const donationAmount="";
 const currencyName="";
@@ -222,12 +226,14 @@ class CampaignPage extends Component {
                                 <p id='title'>{this.state.campaign.title}</p>
                             </Row>
                             <Row id='progressRow'>
-                                <p id='progressBarLabel'><span id='progressBarLabelStart'>{`$${this.state.campaign.raisedAmount}`}</span>{i18n.t('raised')}{this.state.campaign.maxAmount} {i18n.t('goal')}</p>
+                                <p id='progressBarLabel'><span id='progressBarLabelStart'><img src={IMG_MAP[this.state.campaign.currencyName]} width={16} height={16} style={{marginRight:5}} />{`${this.state.campaign.raisedAmount}`}</span>{i18n.t('raised')}{this.state.campaign.maxAmount} {i18n.t('goal')}</p>
                                 <ProgressBar id='progressBar' now={this.state.campaign.percentRaised}/>
                             </Row>
                             <Row id='acceptingRow'>
                                 <div id='acceptingDiv'>
-                                    <p><Trans i18nKey='accepting'/>: <span className='coinRewardInfo'>{this.state.campaign.currencyName}</span></p>
+                                    <p><Trans i18nKey='accepting'/>: <span className='coinRewardInfo'>
+                                        <img src={IMG_MAP[this.state.campaign.currencyName]} width={16} height={16} style={{marginRight:5}} />
+                                        {this.state.campaign.currencyName} </span><span class="coinHelper">(<a target="_blank" href="https://crypto.com"><Trans i18nKey='watIsCoin' values={{currencyName: this.state.campaign.currencyName }} /></a>)</span></p>
                                 </div>
                             </Row>
                             <Row id='donateRow'>

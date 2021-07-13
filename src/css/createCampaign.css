@@ -4,6 +4,9 @@
     margin-right: 10px;
 }
 
+#currencyHelpBlock a:hover {
+    text-decoration: underline;
+}
 .titles{
     font-family: 'Poppins', sans-serif;
     font-style: normal;
