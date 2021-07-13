@@ -183,6 +183,15 @@ class CreateCampaign extends React.Component {
             modalMessage: 'uploadingImageWait', modalIcon: 'HourglassSplit',
             modalButtonVariant: "gold", waitToClose: true
             });
+        if(!this.state.mainImageFile || !this.state.mainImageFile.type) {
+            this.setState(
+                {showModal:true, modalTitle: 'coverImageRequiredTitle',
+                    modalMessage: 'coverImageRequired', modalIcon: 'ExclamationTriangle',
+                    modalButtonVariant: "gold", waitToClose: false,
+                    modalButtonMessage: 'closeBtn', modalButtonVariant: '#E63C36'
+                });
+            return false;
+        }
         let fileType = this.state.mainImageFile.type.split("/")[1];
         const formData = new FormData();
         formData.append(
@@ -193,7 +202,16 @@ class CreateCampaign extends React.Component {
         try {
             let res = await axios.post('/api/uploadimage', formData);
             this.setState({showModal:false, mainImageURL: res.data});
-            return res.data;
+            if(res.data) {
+                return res.data;
+            } else {
+                console.log('error uploading image: res.data is empty');
+                this.setState({showModal: true, goHome: false,
+                    modalTitle: 'imageUploadFailed',
+                    modalIcon: 'XCircle', modalButtonMessage: 'returnHome',
+                    modalButtonVariant: "#E63C36", waitToClose: false});
+                return false;
+            }
         }  catch(err) {
             if (err.response) {
                 console.log('response error in uploading main image- ' + err.response.status);
