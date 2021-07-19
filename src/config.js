@@ -29,6 +29,16 @@ const config = {
                 "0xb9c967dF3E296fb44e27495C00EF0BaeE6Db1c34":"BUSD",
                 "0x0000000000000000000000000000000000000000":"BNB"
             }
+        },
+        "bsc":{
+            "currencyOptions":[
+                {"text":"BUSD", "value":"0xe9e7cea3dedca5984780bafc599bd69add087d56"},
+                {"text":"BNB", "value":"0x0000000000000000000000000000000000000000"}
+            ],
+            "currencies":{
+                "0xe9e7cea3dedca5984780bafc599bd69add087d56":"BUSD",
+                "0x0000000000000000000000000000000000000000":"BNB"
+            }
         }
     }
 };
