@@ -33,6 +33,8 @@ function DescriptionPreview(description) {
         var firstSpace = preview.indexOf(" ");
         if(firstSpace >= 200){
             return preview.substring(0,200);
+        } else if (preview.length <= 200) {
+            return preview;
         } else {
             while(preview.charAt(i) != ' '  && i > 0){
                 i--;
