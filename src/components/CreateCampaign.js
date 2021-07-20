@@ -75,6 +75,51 @@ class CreateCampaign extends React.Component {
         //this.showHtml();
         let imgID = uuid();
         try {
+            if(!this.state.org) {
+                this.setState(
+                    {showModal:true, modalTitle: 'requiredFieldsTitle',
+                        modalMessage: 'orgRequired', modalIcon: 'ExclamationTriangle',
+                        modalButtonVariant: "gold", waitToClose: false,
+                        modalButtonMessage: 'closeBtn', modalButtonVariant: '#E63C36'
+                    });
+                return false;
+            }
+            if(!this.state.cn) {
+                this.setState(
+                    {showModal:true, modalTitle: 'requiredFieldsTitle',
+                        modalMessage: 'cnRequired', modalIcon: 'ExclamationTriangle',
+                        modalButtonVariant: "gold", waitToClose: false,
+                        modalButtonMessage: 'closeBtn', modalButtonVariant: '#E63C36'
+                    });
+                return false;
+            }
+            if(!this.state.title) {
+                this.setState(
+                    {showModal:true, modalTitle: 'requiredFieldsTitle',
+                        modalMessage: 'titleRequired', modalIcon: 'ExclamationTriangle',
+                        modalButtonVariant: "gold", waitToClose: false,
+                        modalButtonMessage: 'closeBtn', modalButtonVariant: '#E63C36'
+                    });
+                return false;
+            }
+            if(!this.state.description) {
+                this.setState(
+                    {showModal:true, modalTitle: 'requiredFieldsTitle',
+                        modalMessage: 'shortDescRequired', modalIcon: 'ExclamationTriangle',
+                        modalButtonVariant: "gold", waitToClose: false,
+                        modalButtonMessage: 'closeBtn', modalButtonVariant: '#E63C36'
+                    });
+                return false;
+            }
+            if(!getEditorState() || getEditorState().length < 2) {
+                this.setState(
+                    {showModal:true, modalTitle: 'requiredFieldsTitle',
+                        modalMessage: 'longDescRequired', modalIcon: 'ExclamationTriangle',
+                        modalButtonVariant: "gold", waitToClose: false,
+                        modalButtonMessage: 'closeBtn', modalButtonVariant: '#E63C36'
+                    });
+                return false;
+            }
             let imgUrl = await this.uploadImageS3(imgID);
             if(imgUrl) {
                 let campaignData = await this.createCampaign(imgUrl);
@@ -208,6 +253,7 @@ class CreateCampaign extends React.Component {
                 console.log('error uploading image: res.data is empty');
                 this.setState({showModal: true, goHome: false,
                     modalTitle: 'imageUploadFailed',
+                    modalMessage: 'technicalDifficulties',
                     modalIcon: 'XCircle', modalButtonMessage: 'returnHome',
                     modalButtonVariant: "#E63C36", waitToClose: false});
                 return false;
@@ -302,30 +348,14 @@ class CreateCampaign extends React.Component {
                 <Container id='mainContainer'>
                     <Form>
                         <div className='titles'><Trans i18nKey='aboutYou'/></div>
-                        <Form.Row>
-                            <Form.Group as={Col} className='name'>
-                                <Form.Label><Trans i18nKey='fn'/><span className='redAsterisk'>*</span></Form.Label>
-                                <Form.Control required type="text" className="createFormPlaceHolder"
-                                              placeholder={i18n.t('fn')}
-                                              name='fn' value={this.state.fn} onChange={this.handleChange}
-                                />
-                            </Form.Group>
-                            <Form.Group as={Col} className='name'>
-                                <Form.Label><Trans i18nKey='ln'/><span className='redAsterisk'>*</span></Form.Label>
-                                <Form.Control required type="text" className="createFormPlaceHolder"
-                                              placeholder={i18n.t('ln')} name='ln'
-                                              value={this.state.ln} onChange={this.handleChange}/>
-                            </Form.Group>
-                        </Form.Row>
                         <Form.Group>
-                            <Form.Label><Trans i18nKey='organization'/> <span
-                                className="optional">(<Trans i18nKey='optional'/>)</span></Form.Label>
-                            <Form.Control type="text" className="createFormPlaceHolder" placeholder={i18n.t('on')}
+                            <Form.Label><Trans i18nKey='organization'/><span className='redAsterisk'>*</span></Form.Label>
+                            <Form.Control required type="text" className="createFormPlaceHolder" placeholder={i18n.t('on')}
                                 name='org' value={this.state.org} onChange={this.handleChange}/>
                         </Form.Group>
                         <Form.Row>
                             <Form.Group as={Col}>
-                                <Form.Label><Trans i18nKey='selectConuntry'/></Form.Label>
+                                <Form.Label><Trans i18nKey='selectConuntry'/><span className='redAsterisk'>*</span></Form.Label>
                                 <Form.Control as="select" name='cn' value={this.state.cn} onChange={this.handleChange}>
                                     {countries.map((data) =>
                                         <option value={data.value}>{data.text}</option>
@@ -357,7 +387,7 @@ class CreateCampaign extends React.Component {
                         </Form.Group>
                         <hr/>
                         <Form.Group>
-                            <Form.Label><Trans i18nKey='selectCoverImage'/></Form.Label>
+                            <Form.Label><Trans i18nKey='selectCoverImage'/><span className='redAsterisk'>*</span></Form.Label>
                             <Form.Label><span className='optional'>(<Trans i18nKey='coverImageHint'/>)</span></Form.Label>
                             <Form.File
                                 name='imageFile' className="position-relative" required
@@ -381,12 +411,12 @@ class CreateCampaign extends React.Component {
                                           name='title' value={this.state.title} onChange={this.handleChange}/>
                         </Form.Group>
                         <Form.Group>
-                            <Form.Label><Trans i18nKey='shortDescription'/></Form.Label>  
-                            <Form.Control as="textarea" rows={3} className="createFormPlaceHolder"
+                            <Form.Label><Trans i18nKey='shortDescription'/><span className='redAsterisk'>*</span></Form.Label>
+                            <Form.Control required as="textarea" rows={3} className="createFormPlaceHolder"
                                           placeholder={i18n.t('descriptionOfCampaign')}
                                           name='description' value={this.state.description}
                                           maxLength='195' onChange={this.handleTextArea}/>
-                            <Form.Label><Trans i18nKey='campaignDescription'/></Form.Label> 
+                            <Form.Label><Trans i18nKey='campaignDescription'/><span className='redAsterisk'>*</span></Form.Label>
                             <TextEditor />                  
                         </Form.Group>
                         <Button onClick={() => this.handleClick()} id='createCampaignBtn' name='ff3'>

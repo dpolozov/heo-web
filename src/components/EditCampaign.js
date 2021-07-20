@@ -28,7 +28,6 @@ class EditCampaign extends React.Component {
             showError:false,
             showModal: false,
             modalMessage:"",
-            errorMessage:"",
             errorIcon:"",
             modalButtonMessage: "",
             modalButtonVariant: "",
@@ -76,7 +75,53 @@ class EditCampaign extends React.Component {
             this.state.updateMeta = true;
         }
         event.preventDefault();
-        this.setState({showModal:true, errorMessage: i18n.t('processingWait'),
+        if(!this.state.org) {
+            this.setState(
+                {showModal:true, modalTitle: 'requiredFieldsTitle',
+                    modalMessage: 'orgRequired', modalIcon: 'ExclamationTriangle',
+                    modalButtonVariant: "gold", waitToClose: false,
+                    modalButtonMessage: 'closeBtn', modalButtonVariant: '#E63C36'
+                });
+            return false;
+        }
+        if(!this.state.cn) {
+            this.setState(
+                {showModal:true, modalTitle: 'requiredFieldsTitle',
+                    modalMessage: 'cnRequired', modalIcon: 'ExclamationTriangle',
+                    modalButtonVariant: "gold", waitToClose: false,
+                    modalButtonMessage: 'closeBtn', modalButtonVariant: '#E63C36'
+                });
+            return false;
+        }
+        if(!this.state.title) {
+            this.setState(
+                {showModal:true, modalTitle: 'requiredFieldsTitle',
+                    modalMessage: 'titleRequired', modalIcon: 'ExclamationTriangle',
+                    modalButtonVariant: "gold", waitToClose: false,
+                    modalButtonMessage: 'closeBtn', modalButtonVariant: '#E63C36'
+                });
+            return false;
+        }
+        if(!this.state.description) {
+            this.setState(
+                {showModal:true, modalTitle: 'requiredFieldsTitle',
+                    modalMessage: 'shortDescRequired', modalIcon: 'ExclamationTriangle',
+                    modalButtonVariant: "gold", waitToClose: false,
+                    modalButtonMessage: 'closeBtn', modalButtonVariant: '#E63C36'
+                });
+            return false;
+        }
+        if(!getEditorState() || getEditorState().length < 2) {
+            this.setState(
+                {showModal:true, modalTitle: 'requiredFieldsTitle',
+                    modalMessage: 'longDescRequired', modalIcon: 'ExclamationTriangle',
+                    modalButtonVariant: "gold", waitToClose: false,
+                    modalButtonMessage: 'closeBtn', modalButtonVariant: '#E63C36'
+                });
+            return false;
+        }
+        this.setState({showModal:true, modalTitle: 'processingWait',
+                modalMessage: 'waitingForNetowork',
                 errorIcon:'HourglassSplit',
                 modalButtonVariant: "gold", waitToClose: true});
         var newImgUrl = this.state.mainImageURL;
@@ -84,8 +129,9 @@ class EditCampaign extends React.Component {
             newImgUrl = await this.uploadImageS3();
             if(!newImgUrl) {
                 this.setState({showModal:true,
-                    errorMessage: i18n.t('imageUploadFailed'),
-                    errorIcon:'XCircle', modalButtonMessage: i18n.t('returnHome'),
+                    modalTitle: 'imageUploadFailed',
+                    modalMessage: 'technicalDifficulties',
+                    errorIcon:'XCircle', modalButtonMessage: 'returnHome',
                     modalButtonVariant: "#E63C36", waitToClose: false});
                 return;
             }
@@ -93,24 +139,24 @@ class EditCampaign extends React.Component {
         if(this.state.updateMeta) {
             if(!(await this.updateCampaign())) {
                 this.setState({showModal : true,
-                    errorMessage: i18n.t('updatingAmountFailed'),
-                    modalMessage: i18n.t(`${this.state.currentError}`),
-                    errorIcon:'XCircle', modalButtonMessage: i18n.t('closeBtn'),
+                    modalTitle: 'updatingAmountFailed',
+                    modalMessage: this.state.currentError,
+                    errorIcon:'XCircle', modalButtonMessage: 'closeBtn',
                     modalButtonVariant: "#E63C36", waitToClose: false});
                 return;
             }    
         }
         this.setState({
-            showModal: true, errorMessage: i18n.t('complete'),
-            modalMessage: i18n.t('updateSuccessfull'),
-            errorIcon: 'CheckCircle', modalButtonMessage: i18n.t('closeBtn'),
+            showModal: true, modalTitle: 'complete',
+            modalMessage: 'updateSuccessfull',
+            errorIcon: 'CheckCircle', modalButtonMessage: 'closeBtn',
             modalButtonVariant: '#588157', waitToClose: false
         });
     }
 
     async updateCampaign(){
         this.setState({showModal:true,
-            modalMessage: i18n.t('confirmMetamask'), errorIcon:'HourglassSplit',
+            modalMessage: 'confirmMetamask', errorIcon:'HourglassSplit',
             modalButtonVariant: "gold", waitToClose: true})
         try {
             let data = {
@@ -128,8 +174,8 @@ class EditCampaign extends React.Component {
             let compressed_meta = await compress(JSON.stringify(data));
             let result = await CAMPAIGNINSTANCE.methods.update(
                 this.state.web3.utils.toWei(this.state.maxAmount), compressed_meta).send({from:this.state.accounts[0]}, () => {
-                    this.setState({showModal:true, errorMessage: i18n.t('processingWait'),
-                    modalMessage: i18n.t('updatingCampaignOnBlockchain'), errorIcon:'HourglassSplit',
+                    this.setState({showModal:true, modalTitle: 'processingWait',
+                    modalMessage: 'updatingCampaignOnBlockchain', errorIcon:'HourglassSplit',
                     modalButtonVariant: "gold", waitToClose: true});
                 });
             data.maxAmount = this.state.maxAmount;
@@ -158,8 +204,8 @@ class EditCampaign extends React.Component {
     }
 
     async uploadImageS3() {
-        this.setState({showModal:true, errorMessage: i18n.t('processingWait'),
-        modalMessage: i18n.t('uploadingImageWait'), errorIcon:'HourglassSplit',
+        this.setState({showModal:true, modalTitle: 'processingWait',
+        modalMessage: 'uploadingImageWait', errorIcon:'HourglassSplit',
         modalButtonVariant: "gold", waitToClose: true});
         let imgID = this.state.imgID;
         this.setState({
@@ -197,13 +243,13 @@ class EditCampaign extends React.Component {
                         {this.state.errorIcon == 'HourglassSplit' && <HourglassSplit style={{color: 'gold'}}/>}
                         {this.state.errorIcon == 'XCircle' && <XCircle style={{color: '#E63C36'}}/>}
                         </p>
-                        <p className='errorMessage'>{this.state.errorMessage}</p>
-                        <p className='modalMessage'>{this.state.modalMessage}</p>
+                        <p className='modalTitle'><Trans i18nKey={this.state.modalTitle}/></p>
+                        <p className='modalMessage'><Trans i18nKey={this.state.modalMessage}/></p>
                         {!this.state.waitToClose &&
                         <Button className='myModalButton' 
                             style={{backgroundColor : this.state.modalButtonVariant, borderColor : this.state.modalButtonVariant}} 
                             onClick={ () => {this.setState({showModal:false})}}>
-                            {this.state.modalButtonMessage}
+                            <Trans i18nKey={this.state.modalButtonMessage} />
                         </Button>
                         }
                     </Modal.Body>                
@@ -216,29 +262,16 @@ class EditCampaign extends React.Component {
                 <Container id='mainContainer'>
                     <Form onSubmit={this.handleClick}>
                         <div className='titles'> <Trans i18nKey='aboutYou'/> </div>
-                        <Form.Row>
-                            <Form.Group as={Col} className='name'>                           
-                                <Form.Label><Trans i18nKey='fn'/><span className='redAsterisk'>*</span></Form.Label>
-                                <Form.Control required type="text" className="createFormPlaceHolder" placeholder={i18n.t('fn')}
-                                    name='fn' value={this.state.fn} onChange={this.handleChange} 
-                                />
-                            </Form.Group>
-                            <Form.Group as={Col} className='name'>                           
-                                <Form.Label><Trans i18nKey='ln'/><span className='redAsterisk'>*</span></Form.Label>
-                                <Form.Control required type="text" className="createFormPlaceHolder" placeholder={i18n.t('ln')}name='ln'
-                                            value={this.state.ln} onChange={this.handleChange} />
-                            </Form.Group>
-                        </Form.Row>                       
                         <Form.Group >
-                            <Form.Label><Trans i18nKey='organization'/> <span className="optional">(<Trans i18nKey='optional'/>)</span></Form.Label>
-                            <Form.Control type="text" className="createFormPlaceHolder" placeholder={i18n.t('on')}
+                            <Form.Label><Trans i18nKey='organization'/><span className='redAsterisk'>*</span></Form.Label>
+                            <Form.Control required type="text" className="createFormPlaceHolder" placeholder={i18n.t('on')}
                                 name='org' value={this.state.org} onChange={this.handleChange} />
                         </Form.Group>     
                         <hr/>
                         <Form.Row>
                             <Form.Group as={Col}>
-                                <Form.Label><Trans i18nKey='selectConuntry'/></Form.Label>
-                                <Form.Control as="select" name='cn' value={this.state.cn} onChange={this.handleChange} >
+                                <Form.Label><Trans i18nKey='selectConuntry'/><span className='redAsterisk'>*</span></Form.Label>
+                                <Form.Control required as="select" name='cn' value={this.state.cn} onChange={this.handleChange} >
                                 {countries.map( (data)=> 
                                     <option value={data.value}>{data.text}</option>
                                 )}
@@ -255,7 +288,7 @@ class EditCampaign extends React.Component {
                         </Form.Group>
                         <hr/>
                         <Form.Group>
-                            <Form.Label><Trans i18nKey='selectCoverImage'/></Form.Label>
+                            <Form.Label><Trans i18nKey='selectCoverImage'/><span className='redAsterisk'>*</span></Form.Label>
                             <Form.Label><span className='optional'>(<Trans i18nKey='coverImageHint'/>)</span></Form.Label>
                             <Form.File
                                 name='imageFile' className="position-relative" 
@@ -276,10 +309,10 @@ class EditCampaign extends React.Component {
                                 name='title' value={this.state.title} onChange={this.handleChange}/>
                         </Form.Group>
                         <Form.Group>
-                            <Form.Label><Trans i18nKey='shortDescription'/></Form.Label>
-                            <Form.Control as="textarea" rows={5} className="createFormPlaceHolder" placeholder={i18n.t('descriptionOfCampaign')}
+                            <Form.Label><Trans i18nKey='shortDescription'/><span className='redAsterisk'>*</span></Form.Label>
+                            <Form.Control required as="textarea" rows={5} className="createFormPlaceHolder" placeholder={i18n.t('descriptionOfCampaign')}
                                 name='description' value={this.state.description} onChange={this.handleTextArea} />
-                            <Form.Label><Trans i18nKey='campaignDescription'/></Form.Label>
+                            <Form.Label><Trans i18nKey='campaignDescription'/><span className='redAsterisk'>*</span></Form.Label>
                             {this.state.updatedEditorState && <TextEditor  />}
                         </Form.Group>
                         <Button type="submit" id='createCampaignBtn' name='ff3'>

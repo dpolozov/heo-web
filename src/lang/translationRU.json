@@ -90,5 +90,11 @@
     "coverImageRequired": "Необходимо загрузить картинку для основной иллюстрации",
     "coverImageRequiredTitle": "Нужна картинка",
     "addLink": "Please select word(s) to add/edit link",
-    "removeLink": "Please select word(s) to remove link"
+    "removeLink": "Please select word(s) to remove link",
+    "requiredFieldsTitle": "Обязательное поле",
+    "orgRequired": "Пожалуйста, введите название вашей организации",
+    "cnRequired": "Пожалуйста, выберите страну, в которой находится ваша организация",
+    "titleRequired": "Пожалуйста, введите название кампании",
+    "shortDescRequired": "Пожалуйста, введите краткое описание кампании одной строкой",
+    "longDescRequired": "Пожалуйста, введите описание кампании"
 }
