@@ -48,7 +48,6 @@ class CreateCampaign extends React.Component {
             mainImageFile:"",
             currencyAddress:"",
             currencyName:"",
-            coinOptions: [],
             waitToClose: false,
             goHome:false,
             getContent: false,
@@ -362,28 +361,19 @@ class CreateCampaign extends React.Component {
                                     )}
                                 </Form.Control>
                             </Form.Group>
-                            <Form.Group as={Col}>
-                                <Form.Label><Trans i18nKey='selectCoin'/></Form.Label>
-                                <Form.Control as="select" name='currencyAddress'
-                                    value={this.state.currencyAddress} onChange={this.handleChange}
-                                    aria-describedby="currencyHelpBlock">
-                                    {this.state.coinOptions.map((data) =>
-                                        <option value={data.value}>{data.text}</option>
-                                    )}
-                                </Form.Control>
-                                <Form.Text id="currencyHelpBlock" muted>
-                                    <a target="_blank" href="https://crypto.com"><Trans i18nKey='helpCryptoCurrencies' /></a>
-                                </Form.Text>
-                            </Form.Group>
                         </Form.Row>
                         <hr/>
                         <div className='titles'><Trans i18nKey='campaignDetails'/></div>
                         <Form.Group>
                             <Form.Label>{i18n.t('howMuchYouNeed', {currencyName: this.state.currencyName})}<span
                                 className='redAsterisk'>*</span></Form.Label>
-                            <Form.Control required type="number" className="createFormPlaceHolder"
+                            <Form.Control ria-describedby="currencyHelpBlock" required type="number"
+                                          className="createFormPlaceHolder"
                                           value={this.state.maxAmount} placeholder={this.state.maxAmount}
-                                          name='maxAmount' onChange={this.handleChange}/>
+                                          name='maxAmount' onChange={this.handleChange} onwheel="this.blur()" />
+                            <Form.Text id="currencyHelpBlock" muted>
+                                <a target="_blank" href="https://crypto.com"><Trans i18nKey='helpCryptoCurrencies' /></a>
+                            </Form.Text>
                         </Form.Group>
                         <hr/>
                         <Form.Group>
@@ -490,7 +480,6 @@ class CreateCampaign extends React.Component {
         let options = (config.get("chainconfigs")[config.get("CHAIN")]["currencyOptions"]);
         let currencyOptions = (config.get("chainconfigs")[config.get("CHAIN")]["currencies"]);
         this.setState({currencies: currencyOptions,
-            coinOptions: options,
             currencyAddress: options[0].value,
             currencyName:options[0].text}
         );

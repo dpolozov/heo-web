@@ -85,7 +85,7 @@
     "authFailedTitle": "Вход не удался",
     "authFailedMessage": "Ошибка аутентификации. Пожалуйста, посмотрите детали ошибки в своем кошельке",
     "readMore": "Подробнее",
-    "helpCryptoCurrencies": "Что такое крипто-валюта?",
+    "helpCryptoCurrencies": "Что такое BUSD?",
     "watIsCoin": "что такое {{currencyName}}?",
     "coverImageRequired": "Необходимо загрузить картинку для основной иллюстрации",
     "coverImageRequiredTitle": "Нужна картинка",
