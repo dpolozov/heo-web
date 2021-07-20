@@ -8,6 +8,7 @@ import { Link } from "react-router-dom";
 import { Trans } from 'react-i18next';
 import { initWeb3, initWeb3Modal } from '../util/Utilities';
 import i18n from '../util/i18n';
+import countryMap from '../countryMap';
 import { Editor, EditorState, convertFromRaw, CompositeDecorator } from "draft-js";
 import '../css/campaignPage.css';
 import '../css/modal.css';
@@ -223,6 +224,7 @@ class CampaignPage extends Component {
                             <Row id='titleRow'>
                                 <p id='title'>{this.state.campaign.title}</p>
                             </Row>
+                            <Row id='countryRow'><h2>{this.state.campaign.org} ({countryMap[this.state.campaign.cn]})</h2></Row>
                             <Row id='progressRow'>
                                 <p id='progressBarLabel'><span id='progressBarLabelStart'><img src={IMG_MAP[this.state.campaign.currencyName]} width={16} height={16} style={{marginRight:5}} />{`${this.state.campaign.raisedAmount}`}</span>{i18n.t('raised')}{this.state.campaign.maxAmount} {i18n.t('goal')}</p>
                                 <ProgressBar id='progressBar' now={this.state.campaign.percentRaised}/>
