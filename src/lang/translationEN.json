@@ -93,5 +93,11 @@
     "coverImageRequired": "Please select a file for the cover image",
     "coverImageRequiredTitle": "Missing cover image",
     "addLink": "Please select word(s) to add/edit link",
-    "removeLink": "Please select word(s) to remove link"
+    "removeLink": "Please select word(s) to remove link",
+    "requiredFieldsTitle": "Required field",
+    "orgRequired": "Please enter the name of your organization into Organization field",
+    "cnRequired": "Please select your organization's country",
+    "titleRequired": "Please enter a title for your campaign",
+    "shortDescRequired": "Please provide a short description/tag line for your campaign",
+    "longDescRequired": "Please provide a description of your campaign"
 }
