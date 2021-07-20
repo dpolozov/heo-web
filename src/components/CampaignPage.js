@@ -8,10 +8,9 @@ import { Link } from "react-router-dom";
 import { Trans } from 'react-i18next';
 import { initWeb3, initWeb3Modal } from '../util/Utilities';
 import i18n from '../util/i18n';
-import { Editor, EditorState, convertFromRaw } from "draft-js";
+import { Editor, EditorState, convertFromRaw, CompositeDecorator } from "draft-js";
 import '../css/campaignPage.css';
 import '../css/modal.css';
-
 import Web3Modal from 'web3modal';
 import Web3 from 'web3';
 import WalletConnectProvider from '@walletconnect/web3-provider';
@@ -28,6 +27,7 @@ class CampaignPage extends Component {
     constructor(props) {
         super(props);
         this.state = {
+            editorState: EditorState.createEmpty(),
             donationAmount:"10",
             campaign:{},
             address:"",
@@ -39,7 +39,6 @@ class CampaignPage extends Component {
             errorIcon:"",
             modalButtonMessage: "",
             modalButtonVariant: "",
-            editorState: EditorState.createEmpty()
         };
         
     }
@@ -55,8 +54,7 @@ class CampaignPage extends Component {
             //console.log(res.data);
             campaign = res.data;
             const contentState = convertFromRaw(campaign.descriptionEditor);
-            this.state.editorState = EditorState.createWithContent(contentState);
-
+            this.state.editorState = EditorState.createWithContent(contentState, createDecorator());
         }).catch(err => {
             if (err.response) {
                 modalMessage = 'technicalDifficulties'}
@@ -258,7 +256,7 @@ class CampaignPage extends Component {
                     </Row>
                     <Row id='descriptionRow'>
                         <Container>
-                            <Editor editorState={this.state.editorState} readOnly={true}/>  
+                            <Editor editorState={this.state.editorState} readOnly={true} decorators={true}/>  
                         </Container>
                     </Row>
                 </Container>
@@ -277,6 +275,40 @@ class CampaignPage extends Component {
         HEOCampaign = (await import("../remote/"+ config.get("CHAIN") + "/HEOCampaign")).default;
         ERC20Coin = (await import("../remote/"+ config.get("CHAIN") + "/ERC20")).default;
     }
+    
 }
+
+function createDecorator(){
+    const decorator = new CompositeDecorator([
+        {
+          strategy: findLinkEntities,
+          component: editorLink,
+        },
+    ]);
+
+    return decorator;
+}
+
+function findLinkEntities(contentBlock, callback, contentState) {
+    contentBlock.findEntityRanges(
+      (character) => {
+        const entityKey = character.getEntity();
+        return (
+          entityKey !== null &&
+          contentState.getEntity(entityKey).getType() === 'LINK'
+        );
+      },
+      callback
+    );
+  }
+
+  const editorLink = (props) => {
+    const {url} = props.contentState.getEntity(props.entityKey).getData();
+    return (
+      <a href={url} >
+        {props.children}
+      </a>
+    );
+  };
 
 export default CampaignPage;

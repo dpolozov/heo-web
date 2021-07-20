@@ -13,7 +13,6 @@ import TextEditor, { setEditorState, getEditorState, editorStateHasChanged } fro
 import { LogIn, initWeb3, checkAuth, initWeb3Modal } from '../util/Utilities';
 import '../css/createCampaign.css';
 import '../css/modal.css';
-
 import Web3Modal from 'web3modal';
 import Web3 from 'web3';
 import WalletConnectProvider from '@walletconnect/web3-provider';

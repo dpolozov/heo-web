@@ -82,4 +82,39 @@
     text-decoration: underline;
   }
 
+  .linkControlDiv{
+    display:inline-block;
+  }
+
+  .linkControlDiv button{
+    border: none;
+    background: #fff;
+  }
+
+  #breakLink{
+    color:#E63C36;
+  }
+
+  .urlInputDiv input {
+    background: #fff;
+    border: 1px solid #ddd;
+    font-family: 'Georgia', serif;
+    font-size: 14px;
+    border-radius: 4px 0 0 4px;
+  }
+
+  .urlInputDiv button {
+    background: #588157;
+    border: 1px solid #588157;
+    font-weight: 400;
+    font-family: 'Poppins', sans-serif;
+    border-radius: 0 4px 4px 0;
+    font-size: 14px;
+  }
+
+  .urlInputDiv input:focus{
+    
+    outline: 1px solid #cce2ff;
+  }
+
   
