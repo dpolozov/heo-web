@@ -307,7 +307,7 @@ function findLinkEntities(contentBlock, callback, contentState) {
   const editorLink = (props) => {
     const {url} = props.contentState.getEntity(props.entityKey).getData();
     return (
-      <a href={url} >
+      <a href={url} target='_blank'>
         {props.children}
       </a>
     );
