@@ -13,7 +13,7 @@ import { BrowserRouter as Router, Switch, Route, Link, withRouter } from "react-
 import { Nav, Navbar, Container, Button, Modal } from 'react-bootstrap';
 import { ChevronLeft, CheckCircle, ExclamationTriangle, HourglassSplit, XCircle } from 'react-bootstrap-icons';
 import { Trans } from 'react-i18next';
-import { GetLanguage, LogIn, checkAuth, initWeb3, initWeb3Modal } from '../util/Utilities';
+import { GetLanguage, LogIn, checkAuth, initWeb3, initWeb3Modal, clearWeb3Provider } from '../util/Utilities';
 import axios from 'axios';
 import config from 'react-global-configuration';
 import i18n from '../util/i18n';
@@ -57,10 +57,7 @@ class App extends Component {
 
     async setLoggedIn() {
         if(this.state.isLoggedIn) {
-            if(this.state.web3 && this.state.web3.currentProvider && this.state.web3.currentProvider.close) {
-                await this.state.web3.currentProvider.close();
-                await window.web3Modal.clearCachedProvider();
-            }
+            await clearWeb3Provider(this);
             await axios.post('/api/auth/logout');
             this.setState({isLoggedIn : false});
             this.props.history.push('/');
@@ -80,6 +77,7 @@ class App extends Component {
                         modalButtonMessage: 'closeBtn',
                         modalButtonVariant: "#E63C36"}
                     );
+                    await clearWeb3Provider(this);
                 }
             } catch (err) {
                 console.log(err);
@@ -90,6 +88,7 @@ class App extends Component {
                     modalButtonMessage: 'closeBtn',
                     modalButtonVariant: "#E63C36"}
                 );
+                await clearWeb3Provider(this);
             }
 
         }
@@ -171,7 +170,10 @@ class App extends Component {
                                             borderColor: this.state.modalButtonVariant
                                         }}
                                         onClick={() => {
-                                            this.setState({showModal: false})
+                                            if(this.state.onModalClose) {
+                                                this.state.onModalClose();
+                                            }
+                                            this.setState({showModal: false, onModalClose: false});
                                         }}>
                                     <Trans i18nKey={this.state.modalButtonMessage} />
                                 </Button>
