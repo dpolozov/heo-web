@@ -6,7 +6,7 @@ import { ChevronLeft, Gift, CheckCircle, ExclamationTriangle, HourglassSplit, XC
 import ReactPlayer from 'react-player';
 import { Link } from "react-router-dom";
 import { Trans } from 'react-i18next';
-import { initWeb3, initWeb3Modal } from '../util/Utilities';
+import { initWeb3, initWeb3Modal, clearWeb3Provider } from '../util/Utilities';
 import i18n from '../util/i18n';
 import countryMap from '../countryMap';
 import { Editor, EditorState, convertFromRaw, CompositeDecorator } from "draft-js";
@@ -142,7 +142,13 @@ class CampaignPage extends Component {
                 this.setState({
                     showModal: true, modalTitle: 'processingWait',
                     modalMessage: "approveSpend",
-                    errorIcon: 'HourglassSplit', modalButtonVariant: "gold", waitToClose: true
+                    errorIcon: 'HourglassSplit', modalButtonVariant: "#E63C36", waitToClose: false,
+                    modalButtonMessage: 'abortBtn',
+                    onModalClose: function() {
+                        if(clearWeb3Provider(that)) {
+                            clearWeb3Provider(that);
+                        }
+                    }
                 });
                 try {
                     let result = await coinInstance.methods.approve(this.state.campaign._id, toDonate).send(
@@ -174,6 +180,7 @@ class CampaignPage extends Component {
                         modalButtonVariant: '#E63C36', waitToClose: false,
                         modalMessage: 'blockChainTransactionFailed'
                     });
+                    clearWeb3Provider(this)
                     console.log(err);
                 }
             }
@@ -206,7 +213,13 @@ class CampaignPage extends Component {
                         {!this.state.waitToClose &&
                         <Button className='myModalButton' 
                             style={{backgroundColor : this.state.modalButtonVariant, borderColor : this.state.modalButtonVariant}} 
-                            onClick={ () => {this.setState({showModal:false})}}>
+                            onClick={ () => {
+                                    if(this.state.onModalClose) {
+                                        this.state.onModalClose();
+                                    }
+                                    this.setState({showModal: false, onModalClose: false});
+                                }
+                            }>
                             <Trans i18nKey={this.state.modalButtonMessage} />
                         </Button>
                         }

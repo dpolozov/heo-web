@@ -53,6 +53,7 @@
     "complete" : "Успешно!",
     "updateSuccessfull" : "Updated Campaign information successfully",
     "closeBtn" : "ЗАКРЫТЬ",
+    "abortBtn" : "ОТМЕНИТЬ",
     "nonWLTitle": "Не разрешено",
     "nonWLMessage": "Вам не разрешено заводить кампании. Пожалуйста заполните эту <1>форму</1> чтобы быть получить разрешение на сбор пожертвований через HEO Platform",
     "updatingCampaignOnBlockchain": "Сохраняем новые данные кампании в блокчейн...",

@@ -57,6 +57,7 @@
     "complete" : "Complete!",
     "updateSuccessfull" : "Updated Campaign information successfully",
     "closeBtn" : "CLOSE",
+    "abortBtn" : "ABORT",
     "web3WalletRequired": "Web3 Wallet is Required",
     "authFailedTitle": "Login failed",
     "authFailedMessage": "Authentication failed. Please check your wallet app for details",

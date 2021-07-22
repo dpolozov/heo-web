@@ -10,10 +10,23 @@ class Utilities {
 
 }
 
+const clearWeb3Provider= async (that) => {
+    if(that.state.web3 && that.state.web3.currentProvider && that.state.web3.currentProvider.close) {
+        await that.state.web3.currentProvider.close();
+    }
+    if(window.web3Modal) {
+        await window.web3Modal.clearCachedProvider();
+    }
+}
+
 const LogIn = async (accountAdd, web3, that) => {
     that.setState({showModal:true, modalTitle: '',
         modalMessage: 'signThePhrase', modalIcon: 'HourglassSplit',
-        modalButtonVariant: "gold", waitToClose: true});
+        modalButtonVariant: "#E63C36", waitToClose: false, modalButtonMessage: 'abortBtn',
+            onModalClose: function() {
+                clearWeb3Provider(that);
+            }
+        });
     let res = await axios.get('/api/auth/msg');
     let dataToSign = res.data.dataToSign;
     let signature = await web3.eth.personal.sign(dataToSign, accountAdd);
@@ -123,5 +136,5 @@ const initWeb3Modal = async() => {
         });
     }
 }
-export {DescriptionPreview, GetLanguage, LogIn, initWeb3, checkAuth, initWeb3Modal };
+export {DescriptionPreview, GetLanguage, LogIn, initWeb3, checkAuth, initWeb3Modal, clearWeb3Provider };
 export default Utilities;
