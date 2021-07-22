@@ -115,7 +115,8 @@ const initWeb3Modal = async() => {
                     options: {
                         rpc: rpc,
                         chainId: config.get("WEB3_RPC_CHAIN_ID"),
-                        bridge: config.get("WC_BRIDGE_URL")
+                        bridge: config.get("WC_BRIDGE_URL"),
+                        network: config.get("WC_CHAIN_NAME")
                     }
                 }
             }
