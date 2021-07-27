@@ -108,7 +108,7 @@ async function doWork() {
         let amountRaised = await campaignInstance.methods.raisedAmount().call();
         if(web3.utils.fromWei(amountRaised) != campaign.raisedAmount) {
             console.log("Updating raised amount");
-            await DB.collection("campaigns").findOneAndUpdate({ "_id" : campaign._id}, { "$set" : {"raisedAmount" : web3.utils.fromWei(amountRaised)}})
+            await DB.collection("campaigns").updateOne({ "_id" : campaign._id}, { $set : {"raisedAmount" : web3.utils.fromWei(amountRaised), "lastDonationTime" : Date.now()}});
         }
     }
     await CLIENT.close();
