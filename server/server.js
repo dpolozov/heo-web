@@ -142,6 +142,7 @@ APP.post('/api/campaign/add', (req, res) => {
             descriptionEditor: req.body.mydata.descriptionEditor,
             raisedAmount: 0,
             creationDate: Date.now(),
+            lastDonationTime: 0
         }
         const DB = CLIENT.db(DBNAME);
         DB.collection('campaigns')
@@ -161,7 +162,7 @@ APP.post('/api/campaign/add', (req, res) => {
 
 APP.post('/api/campaign/loadAll', (req, res) => {
     const DB = CLIENT.db(DBNAME);
-    DB.collection("campaigns").find().toArray(function(err, result) {
+    DB.collection("campaigns").find().sort({"lastDonationTime" : -1}).toArray(function(err, result) {
         if (err) throw err;
         res.send(result);
       });
