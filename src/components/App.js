@@ -153,7 +153,7 @@ class App extends Component {
                         </Navbar>
                     </div>
                     <div>
-                        <Modal show={this.state.showModal} className='myModal' centered>
+                        <Modal onHide={()=>{}} show={this.state.showModal} className='myModal' centered>
                             <Modal.Body>
                                 <p className='modalIcon'>
                                     {this.state.modalIcon == 'CheckCircle' && <CheckCircle style={{color:'#588157'}} />}

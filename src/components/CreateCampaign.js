@@ -286,7 +286,7 @@ class CreateCampaign extends React.Component {
     render() {
         return (
             <div>
-                <Modal show={this.state.showModal} onHide={this.state.showModal} className='myModal' centered>
+                <Modal show={this.state.showModal} onHide={()=>{}} className='myModal' centered>
                     <Modal.Body><p className='modalIcon'>
                         {this.state.modalIcon == 'CheckCircle' && <CheckCircle style={{color:'#588157'}} />}
                         {this.state.modalIcon == 'ExclamationTriangle' && <ExclamationTriangle/>}
