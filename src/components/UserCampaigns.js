@@ -215,7 +215,7 @@ class UserCampaigns extends Component {
                         </h1>                       
                     }
                 </Container>
-                <Modal show={this.state.showModal} onHide={this.state.showModal} className='myModal' centered>
+                <Modal show={this.state.showModal} onHide={()=>{}} className='myModal' centered>
                     <Modal.Body><p className='errorIcon'>
                         {this.state.errorIcon == 'CheckCircle' && <CheckCircle style={{color:'#588157'}} />}
                         {this.state.errorIcon == 'ExclamationTriangle' && <ExclamationTriangle style={{color: '#E63C36'}}/>}

@@ -79,7 +79,7 @@ class PublicSale extends React.Component {
                 <Dimmer active={this.state.showLoader}>
                     <Loader>{this.state.loaderMessage}</Loader>
                 </Dimmer>
-                <Modal open={this.state.showError}>
+                <Modal open={this.state.showError} onHide={()=>{}}>
                     <Header icon='warning sign' content='Failed to connect to network!' />
                     <Modal.Content>{this.state.errorMessage}</Modal.Content>
                     <Modal.Actions>
@@ -88,7 +88,7 @@ class PublicSale extends React.Component {
                         </Button>
                     </Modal.Actions>
                 </Modal>
-                <Modal open={this.state.showModal}>
+                <Modal open={this.state.showModal} onHide={()=>{}}>
                     <Modal.Content>{this.state.modalMessage}</Modal.Content>
                     <Modal.Actions>
                         <Button positive onClick={ () => {this.setState({showModal:false})}}>

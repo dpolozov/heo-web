@@ -58,7 +58,7 @@ class CampaignList extends Component {
     render() {
         return (
             <div> 
-                <Modal show={this.state.showError} >
+                <Modal show={this.state.showError} onHide={()=>{}} >
                     <Modal.Header closeButton>
                     <Modal.Title>Failed to connect to network.</Modal.Title>
                     </Modal.Header>
