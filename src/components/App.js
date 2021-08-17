@@ -22,6 +22,10 @@ import Web3Modal from 'web3modal';
 import Web3 from 'web3';
 import WalletConnectProvider from '@walletconnect/web3-provider';
 
+const HELP_URLS = {
+    "ru":"https://helpeachother.gitbook.io/faq/",
+    "en":"https://helpeachother.gitbook.io/faq/v/english/",
+}
 class App extends Component {
     constructor(props) {
         super(props);
@@ -109,7 +113,7 @@ class App extends Component {
                                     <option value='en'>{i18n.t('english')}</option>
                                     <option value='ru'>{i18n.t('russian')}</option>
                                 </select>
-                                    <Nav.Link className='upperNavText' id='helpBtn'><Trans i18nKey='help'/></Nav.Link>
+                                    <Nav.Link target="_blank" href={HELP_URLS[this.state.language]} className='upperNavText' id='helpBtn'><Trans i18nKey='help'/></Nav.Link>
                                     <Nav.Link className='upperNavText' id='loginBtn' onClick={ () => this.setLoggedIn()}>
                                         {!this.state.isLoggedIn && <Trans i18nKey='login'/>}
                                         {this.state.isLoggedIn && <Trans i18nKey='logout'/>}
