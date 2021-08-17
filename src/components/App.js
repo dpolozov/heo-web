@@ -106,7 +106,7 @@ class App extends Component {
                     <div>
                         <Navbar id="upperNav" fixed="top">
                             <Container>
-                                <Navbar.Brand href="#home" id='upperNavSlogan'><Trans i18nKey='slogan'/></Navbar.Brand>
+                                <Navbar.Brand href="/" id='upperNavSlogan'><Trans i18nKey='slogan'/></Navbar.Brand>
                                 <Navbar.Toggle />
                                 <Navbar.Collapse className="justify-content-end">
                                 <select value={this.state.language} id="languages" onChange={(e)=>this.setLanguage(e.target.value)}>
