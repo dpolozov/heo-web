@@ -371,11 +371,7 @@ class CreateCampaign extends React.Component {
                                           className="createFormPlaceHolder"
                                           value={this.state.maxAmount} placeholder={this.state.maxAmount}
                                           name='maxAmount' onChange={this.handleChange} onwheel="this.blur()" />
-                            <Form.Text id="currencyHelpBlock" muted>
-                                <a target="_blank" href="https://crypto.com"><Trans i18nKey='helpCryptoCurrencies' /></a>
-                            </Form.Text>
                         </Form.Group>
-                        <hr/>
                         <Form.Group>
                             <Form.Label><Trans i18nKey='selectCoverImage'/><span className='redAsterisk'>*</span></Form.Label>
                             <Form.Label><span className='optional'>(<Trans i18nKey='coverImageHint'/>)</span></Form.Label>
