@@ -227,6 +227,7 @@ body {
 
 @media (max-width: 391px){ 
     #donateRow{
+        min-width:200px;
         width:100%;
     } 
     .mb-3.input-group{
