@@ -67,7 +67,7 @@
     "failedToLoadCampaigns": "Failed to load campaigns",
     "failedToLoadCampaign": "Failed to load campaign",
     "nonWLTitle": "Account not whitelisted",
-    "nonWLMessage": "Your account has not been cleared to create campaigns. Please fill out this <1>form</1> to ne granted permission to fundraise on HEO Platform",
+    "nonWLMessage": "Your account has not been cleared to create campaigns. Please fill out this <1>form</1> to be granted permission to fundraise on HEO Platform",
     "addToDbFailedMessage": "Your campaign has been deployed on the blockchain and will appear on the website in several minutes",
     "addToDbFailedTitle": "Campaign pending",
     "updatingCampaignOnBlockchain": "Updating the campaign on blockchain...",

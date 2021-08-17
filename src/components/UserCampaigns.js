@@ -228,7 +228,7 @@ class UserCampaigns extends Component {
                             Your account has not been cleared to create campaigns.
                             Please fill out this
                                 <a target='_blank' href='https://docs.google.com/forms/d/e/1FAIpQLSdTo_igaNjF-1E51JmsjJgILv68RN2v5pisTcqTLvZvuUvLDQ/viewform'>form</a>
-                                to ne granted permission to fundraise on HEO Platform
+                                to be granted permission to fundraise on HEO Platform
                             </Trans>
                         </p>
                         {this.state.showTwoButtons &&
