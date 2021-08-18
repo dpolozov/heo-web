@@ -124,36 +124,38 @@ class App extends Component {
                     </div>
                     <div id="mainNavContainer">
                         <Navbar collapseOnSelect expand="lg" id="mainNav" fixed="top">
-                            <Navbar.Brand href="/">
-                                        <img
-                                            src={logo}
-                                            width="50"
-                                            height="50"
-                                            className="d-inline-block align-top"
-                                            alt="HEO logo"
-                                        />
-                            </Navbar.Brand>
-                            <Navbar.Toggle aria-controls="basic-navbar-nav" />
-                            <Navbar.Collapse id="basic-navbar-nav">
-                                <Nav className="mr-auto" bg="light">
-                                    <Nav.Link as={Link} eventKey="1" className='mainNavText' to="/"><Trans i18nKey='browse'/></Nav.Link>
-                                    <Nav.Link as={Link} eventKey="2" className='mainNavText' to={{pathname:"/new",
-                                        state:{
-                                            isLoggedIn: this.state.isLoggedIn,
-                                            accounts: this.state.accounts
-                                        }}} >
-                                        <Trans i18nKey='startFundraiser'/>
-                                    </Nav.Link>
-                                    <Nav.Link as={Link} eventKey="3" className='mainNavText' to={{pathname:"/myCampaigns",
-                                        state:{
-                                            isLoggedIn: this.state.isLoggedIn,
-                                            accounts: this.state.accounts
-                                        }}} >
-                                        <Trans i18nKey='myFundraisers'/>
-                                    </Nav.Link>
-                                    <Nav.Link as={Link} eventKey="4" className='mainNavText' as='a' target='_blank' href='https://heo.finance'><Trans i18nKey='about'/></Nav.Link>
-                                </Nav>
-                            </Navbar.Collapse>
+                            <Container>
+                                <Navbar.Brand href="/">
+                                            <img
+                                                src={logo}
+                                                width="50"
+                                                height="50"
+                                                className="d-inline-block align-top"
+                                                alt="HEO logo"
+                                            />
+                                </Navbar.Brand>
+                                <Navbar.Toggle aria-controls="basic-navbar-nav" />
+                                <Navbar.Collapse id="basic-navbar-nav">
+                                    <Nav className="mr-auto" bg="light">
+                                        <Nav.Link as={Link} eventKey="1" className='mainNavText' to="/"><Trans i18nKey='browse'/></Nav.Link>
+                                        <Nav.Link as={Link} eventKey="2" className='mainNavText' to={{pathname:"/new",
+                                            state:{
+                                                isLoggedIn: this.state.isLoggedIn,
+                                                accounts: this.state.accounts
+                                            }}} >
+                                            <Trans i18nKey='startFundraiser'/>
+                                        </Nav.Link>
+                                        <Nav.Link as={Link} eventKey="3" className='mainNavText' to={{pathname:"/myCampaigns",
+                                            state:{
+                                                isLoggedIn: this.state.isLoggedIn,
+                                                accounts: this.state.accounts
+                                            }}} >
+                                            <Trans i18nKey='myFundraisers'/>
+                                        </Nav.Link>
+                                        <Nav.Link as={Link} eventKey="4" className='mainNavText' as='a' target='_blank' href='https://heo.finance'><Trans i18nKey='about'/></Nav.Link>
+                                    </Nav>
+                                </Navbar.Collapse>
+                            </Container>
                         </Navbar>
                     </div>
                     <div>
