@@ -22,10 +22,6 @@ import Web3Modal from 'web3modal';
 import Web3 from 'web3';
 import WalletConnectProvider from '@walletconnect/web3-provider';
 
-const HELP_URLS = {
-    "ru":"https://helpeachother.gitbook.io/faq/",
-    "en":"https://helpeachother.gitbook.io/faq/v/english/",
-}
 class App extends Component {
     constructor(props) {
         super(props);
@@ -99,6 +95,7 @@ class App extends Component {
     }
 
     render() {
+        let lang = GetLanguage();
         return (
             <UserContext.Provider value={this.state}>
             <Suspense fallback="...is loading">
@@ -113,7 +110,7 @@ class App extends Component {
                                     <option value='en'>{i18n.t('english')}</option>
                                     <option value='ru'>{i18n.t('russian')}</option>
                                 </select>
-                                    <Nav.Link target="_blank" href={this.state.language ? HELP_URLS[this.state.language] : "https://helpeachother.gitbook.io/faq/v/english/"} className='upperNavText' id='helpBtn'><Trans i18nKey='help'/></Nav.Link>
+                                    <Nav.Link target="_blank" as='a' href={lang == "ru" ? "https://helpeachother.gitbook.io/faq/" : "https://helpeachother.gitbook.io/faq/v/english/"} className='upperNavText' id='helpBtn'><Trans i18nKey='help'/></Nav.Link>
                                     <Nav.Link className='upperNavText' id='loginBtn' onClick={ () => this.setLoggedIn()}>
                                         {!this.state.isLoggedIn && <Trans i18nKey='login'/>}
                                         {this.state.isLoggedIn && <Trans i18nKey='logout'/>}
@@ -152,7 +149,7 @@ class App extends Component {
                                             }}} >
                                             <Trans i18nKey='myFundraisers'/>
                                         </Nav.Link>
-                                        <Nav.Link as={Link} eventKey="4" className='mainNavText' as='a' target='_blank' href='https://heo.finance'><Trans i18nKey='about'/></Nav.Link>
+                                        <Nav.Link eventKey="4" className='mainNavText' as='a' target='_blank' href='https://heo.finance'><Trans i18nKey='about'/></Nav.Link>
                                     </Nav>
                                 </Navbar.Collapse>
                             </Container>
