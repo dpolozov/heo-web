@@ -110,7 +110,7 @@ class App extends Component {
                                     <option value='en'>{i18n.t('english')}</option>
                                     <option value='ru'>{i18n.t('russian')}</option>
                                 </select>
-                                    <Nav.Link target="_blank" as='a' href={lang == "ru" ? "https://helpeachother.gitbook.io/faq/" : "https://helpeachother.gitbook.io/faq/v/english/"} className='upperNavText' id='helpBtn'><Trans i18nKey='help'/></Nav.Link>
+                                    <Nav.Link target="_blank" as='a' href={lang == "ru" ? "https://docs.heo.finance/v/russian/" : "https://docs.heo.finance/"} className='upperNavText' id='helpBtn'><Trans i18nKey='help'/></Nav.Link>
                                     <Nav.Link className='upperNavText' id='loginBtn' onClick={ () => this.setLoggedIn()}>
                                         {!this.state.isLoggedIn && <Trans i18nKey='login'/>}
                                         {this.state.isLoggedIn && <Trans i18nKey='logout'/>}
