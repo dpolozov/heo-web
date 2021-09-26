@@ -121,9 +121,13 @@ class CreateCampaign extends React.Component {
             }
             let imgUrl = await this.uploadImageS3(imgID);
             if(imgUrl) {
-                let campaignData = await this.createCampaign(imgUrl);
-                if(campaignData) {
-                    await this.addCampaignToDb(campaignData);
+                if(window.web3Modal.cachedProvider != "binancechainwallet") {
+                    let campaignData = await this.createCampaign(imgUrl);
+                    if (campaignData) {
+                        await this.addCampaignToDb(campaignData);
+                    }
+                } else {
+                    this.createCampaign(imgUrl);
                 }
             }
         } catch(error)  {
@@ -184,30 +188,49 @@ class CreateCampaign extends React.Component {
                 modalMessage: 'confirmMetamask', modalIcon:'HourglassSplit',
                 modalButtonMessage: 'closeBtn',
                 modalButtonVariant: "#E63C36", waitToClose: false});
-            var that = this;
             if(!this.state.web3 ||!this.state.accounts) {
                 await initWeb3(this);
             }
+            var that = this;
+            var web3 = this.state.web3;
             let abi = (await import("../remote/" + config.get("CHAIN") + "/HEOCampaignFactory")).abi;
             let address = (await import("../remote/" + config.get("CHAIN") + "/HEOCampaignFactory")).address;
             var HEOCampaignFactory = new this.state.web3.eth.Contract(abi, address);
-            let result = await HEOCampaignFactory.methods.createCampaign(
-                this.state.web3.utils.toWei(`${this.state.maxAmount}`), this.state.currencyAddress, this.state.accounts[0], compressed_meta)
+            if(window.web3Modal.cachedProvider == "binancechainwallet") {
+                HEOCampaignFactory.methods.createCampaign(
+                    this.state.web3.utils.toWei(`${this.state.maxAmount}`), this.state.currencyAddress, this.state.accounts[0], compressed_meta)
+                    .send({from:this.state.accounts[0]})
+                    .once('transactionHash', function(transactionHash) {
+                        that.setState({showModal:true, modalTitle: 'processingWait',
+                            modalMessage: 'waitingForNetowork', modalIcon: 'HourglassSplit',
+                            modalButtonVariant: "gold", waitToClose: true}
+                        );
+                        web3.eth.getTransaction(transactionHash).then(
+                            function(txnObject) {
+                                checkTransaction(txnObject, that);
+                            }
+                        );
+                    });
+            } else {
+                let result = await HEOCampaignFactory.methods.createCampaign(
+                    this.state.web3.utils.toWei(`${this.state.maxAmount}`), this.state.currencyAddress, this.state.accounts[0], compressed_meta)
                     .send({from:this.state.accounts[0]})
                     .on('transactionHash',
                         function(transactionHash) {
                             that.setState({showModal:true, modalTitle: 'processingWait',
-                            modalMessage: 'waitingForNetowork', modalIcon: 'HourglassSplit',
-                            modalButtonVariant: "gold", waitToClose: true});
+                                modalMessage: 'waitingForNetowork', modalIcon: 'HourglassSplit',
+                                modalButtonVariant: "gold", waitToClose: true});
                         });
-            if(result && result.events && result.events.CampaignDeployed && result.events.CampaignDeployed.address) {
-                return {
-                    address: result.events.CampaignDeployed.returnValues.campaignAddress,
-                    beneficiaryId: result.events.CampaignDeployed.returnValues.beneficiary
-                };
-            } else {
-                return false;
+                if(result && result.events && result.events.CampaignDeployed && result.events.CampaignDeployed.address) {
+                    return {
+                        address: result.events.CampaignDeployed.returnValues.campaignAddress,
+                        beneficiaryId: result.events.CampaignDeployed.returnValues.beneficiary
+                    };
+                } else {
+                    return false;
+                }
             }
+
         } catch (error) {
             this.setState({showModal: true,
                 modalTitle: 'blockChainTransactionFailed',
@@ -497,6 +520,31 @@ class CreateCampaign extends React.Component {
                 modalIcon: 'XCircle', modalButtonMessage: 'login',
                 modalButtonVariant: "#E63C36", waitToClose: false});
         }
+    }
+}
+
+function checkTransaction(txnObject, that) {
+    if(txnObject.blockNumber) {
+        that.state.web3.eth.getTransactionReceipt(txnObject.hash).then(function(txnObject) {
+            if(txnObject.logs && txnObject.logs.length >2 && txnObject.logs[2] && txnObject.logs[2].topics && txnObject.logs[2].topics.length > 3) {
+                that.addCampaignToDb({
+                    address: txnObject.logs[2].topics[1],
+                    beneficiaryId: txnObject.logs[2].topics[3]
+                });
+            } else {
+                this.setState({showModal: true, goHome: true,
+                    modalTitle: 'addToDbFailedTitle',
+                    modalMessage: 'addToDbFailedMessage',
+                    modalIcon: 'CheckCircle',
+                    modalButtonMessage: 'returnHome',
+                    modalButtonVariant: "#588157", waitToClose: false
+                });
+            }
+        });
+    } else {
+        that.state.web3.eth.getTransaction(txnObject.hash).then(function(txnObject) {
+            checkTransaction(txnObject, that);
+        });
     }
 }
 

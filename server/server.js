@@ -211,13 +211,18 @@ APP.post('/api/auth/jwt', async(req, res) => {
     //extract Address from signature
     try {
         let dataToSign = `Today is ${(new Date()).toDateString()}`;
-        const {v, r, s} = ethereumutil.fromRpcSig(req.body.signature);
+        var signature;
+        if(req.body.signature && req.body.signature.signature) {
+            signature = req.body.signature.signature;
+        } else if(req.body.signature) {
+            signature = req.body.signature;
+        }
+        const {v, r, s} = ethereumutil.fromRpcSig(signature);
         let signedData = ethereumutil.keccak("\x19Ethereum Signed Message:\n" + dataToSign.length + dataToSign);
         const pubKey = ethereumutil.ecrecover(signedData, v, r, s);
         const addrBuf = ethereumutil.pubToAddress(pubKey);
         const addr = ethereumutil.bufferToHex(addrBuf).toLowerCase();
         if(addr != req.body.addr.toLowerCase()) {
-            console.log(`Error: decoded address ${addr} is different from user address ${req.body.addr}`);
             res.sendStatus(401);
         } else {
             let token = jsonwebtoken.sign({ address:addr }, process.env.JWT_SECRET, { expiresIn: '7d' });

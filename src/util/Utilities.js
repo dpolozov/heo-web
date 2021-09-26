@@ -29,14 +29,29 @@ const LogIn = async (accountAdd, web3, that) => {
         });
     let res = await axios.get('/api/auth/msg');
     let dataToSign = res.data.dataToSign;
-    let signature = await web3.eth.personal.sign(dataToSign, accountAdd);
-    let authRes = await axios.post('/api/auth/jwt',
-        {signature:signature, addr: accountAdd},
-        {headers: {"Content-Type": "application/json"}});
-    that.setState({isLoggedIn : true, showModal:true, modalMessage: 'logInSuccess', modalTitle: 'success',
-        modalIcon: 'CheckCircle', modalButtonVariant: "#588157", waitToClose: false,
-        modalButtonMessage: 'closeBtn'});
-    return authRes.data.success;
+    if(window.web3Modal.cachedProvider == "binancechainwallet") {
+        let signature = await window.BinanceChain.bnbSign(accountAdd,dataToSign);
+        let authRes = await axios.post('/api/auth/jwt',
+            {signature: signature, addr: accountAdd},
+            {headers: {"Content-Type": "application/json"}});
+        that.setState({
+            isLoggedIn: true, showModal: true, modalMessage: 'logInSuccess', modalTitle: 'success',
+            modalIcon: 'CheckCircle', modalButtonVariant: "#588157", waitToClose: false,
+            modalButtonMessage: 'closeBtn'
+        });
+        return authRes.data.success;
+    } else {
+        let signature = await web3.eth.personal.sign(dataToSign, accountAdd);
+        let authRes = await axios.post('/api/auth/jwt',
+            {signature: signature, addr: accountAdd},
+            {headers: {"Content-Type": "application/json"}});
+        that.setState({
+            isLoggedIn: true, showModal: true, modalMessage: 'logInSuccess', modalTitle: 'success',
+            modalIcon: 'CheckCircle', modalButtonVariant: "#588157", waitToClose: false,
+            modalButtonMessage: 'closeBtn'
+        });
+        return authRes.data.success;
+    }
 }
 
 function DescriptionPreview(description) {
@@ -72,10 +87,11 @@ const initWeb3 = async (that) => {
     provider.on("disconnect", (code: number, reason: string) => {
         that.setState({web3:null, accounts: null});
     });
-
     //Workaround for web3-provider bug. See https://github.com/WalletConnect/walletconnect-monorepo/issues/496
-    delete provider.__proto__.request;
-    provider.hasOwnProperty("request") && delete provider.request;
+    if(window.web3Modal.cachedProvider == "injected") {
+        delete provider.__proto__.request;
+        provider.hasOwnProperty("request") && delete provider.request;
+    }
     //end workaround
 
     let web3 = new Web3(provider);
@@ -131,6 +147,9 @@ const initWeb3Modal = async() => {
                         bridge: config.get("WC_BRIDGE_URL"),
                         network: config.get("WC_CHAIN_NAME")
                     }
+                },
+                binancechainwallet: {
+                    package:true
                 }
             }
         });
