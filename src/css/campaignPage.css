@@ -159,6 +159,7 @@ body {
     text-transform: uppercase;
     color: #FFFFFF;
     white-space: nowrap;
+    z-index: auto;
 }
 
 #giftIcon{
