@@ -56,10 +56,15 @@ class App extends Component {
     }
 
     async setSwitchBlockchain(chain) {
-        if(chain == "eth") {
+        if(chain == "bsc") {
+            window.location="https://app.heo.finance"
+        } else if(chain == "eth") {
             window.location="https://eth.heo.finance"
+        } else if(chain == "aurora") {
+            window.location="https://aurora.heo.finance"
         }
     }
+
     async setLoggedIn() {
         if(this.state.isLoggedIn) {
             await clearWeb3Provider(this);
@@ -114,6 +119,7 @@ class App extends Component {
                                     <select value={this.state.language} id="languages" onChange={(e)=>this.setSwitchBlockchain(e.target.value)}>
                                         <option value='bsc'>Binance Smart Chain</option>
                                         <option value='eth'>Ethereum</option>
+                                        <option value='aurora'>Aurora</option>
                                     </select>
                                     <select value={this.state.language} id="languages" onChange={(e)=>this.setLanguage(e.target.value)}>
                                         <option value='en'>{i18n.t('english')}</option>
