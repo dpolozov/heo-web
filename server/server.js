@@ -68,18 +68,24 @@ APP.post('/api/uploadimage', (req,res) => {
     }
 });
 
-APP.post('/api/campaign/update', (req, res) => {
+APP.post('/api/campaign/update', async (req, res) => {
     if (req.user && req.user.address) {
         const DB = CLIENT.db(DBNAME);
-        DB.collection('campaigns')
-            .updateOne({'_id': req.body.mydata.address}, {$set: req.body.mydata.dataToUpdate}, (err, result) => {
-                if (err) {
-                    res.sendStatus(500);
-                    console.log(err);
-                } else {
-                    res.send('success');
-                }
-            });
+        let result = await DB.collection("campaigns").findOne({"_id" : req.body.mydata.address});
+        if(!result || result.ownerId != req.user.address.toLowerCase()) {
+            res.sendStatus(500);
+            console.log(`Campaign's ownerId (${result.ownerId}) does not match the user (${req.user.address})`);
+        } else {
+            DB.collection('campaigns')
+                .updateOne({'_id': req.body.mydata.address}, {$set: req.body.mydata.dataToUpdate}, (err, result) => {
+                    if (err) {
+                        res.sendStatus(500);
+                        console.log(err);
+                    } else {
+                        res.send('success');
+                    }
+                });
+        }
     } else {
         res.sendStatus(401);
     }
@@ -105,20 +111,26 @@ APP.post('/api/deleteimage', (req, res) => {
     }
 });
 
-APP.post('/api/campaign/delete', (req, res) => {
+APP.post('/api/campaign/deactivate', async (req, res) => {
     if(req.user && req.user.address) {
         const DB = CLIENT.db(DBNAME);
-        DB.collection('campaigns')
-        .deleteOne({'_id': req.body.address}, (err, result) => {
-            if(err){
-                res.sendStatus(500);
-                console.log(err);
-            } else {
-                res.send('success');
-            }
-        });  
+        let result = await DB.collection("campaigns").findOne({"_id" : req.body.id});
+        if(!result || result.ownerId != req.user.address.toLowerCase()) {
+            res.sendStatus(500);
+            console.log(`Campaign's ownerId (${result.ownerId}) does not match the user (${req.user.address})`);
+        } else {
+            DB.collection('campaigns')
+            .updateOne({'_id': req.body.id}, {$set: {active:false}}, (err, result) => {
+                if (err) {
+                    res.sendStatus(500);
+                    console.log(err);
+                } else {
+                    res.send('success');
+                }
+            });
+        }
     }  else {
-        console.log('failed to delete');
+        console.log('failed to deactivate');
         res.sendStatus(401);
     }   
 });
@@ -142,7 +154,10 @@ APP.post('/api/campaign/add', (req, res) => {
             descriptionEditor: req.body.mydata.descriptionEditor,
             raisedAmount: 0,
             creationDate: Date.now(),
-            lastDonationTime: 0
+            lastDonationTime: 0,
+            coins: req.body.mydata.coins,
+            addresses: req.body.mydata.addresses,
+            active: true
         }
         const DB = CLIENT.db(DBNAME);
         DB.collection('campaigns')
@@ -162,7 +177,7 @@ APP.post('/api/campaign/add', (req, res) => {
 
 APP.post('/api/campaign/loadAll', (req, res) => {
     const DB = CLIENT.db(DBNAME);
-    DB.collection("campaigns").find().sort({"lastDonationTime" : -1}).toArray(function(err, result) {
+    DB.collection("campaigns").find({active: true}).sort({"lastDonationTime" : -1}).toArray(function(err, result) {
         if (err) throw err;
         res.send(result);
       });
@@ -178,7 +193,7 @@ APP.post('/api/campaign/loadUserCampaigns',
     (req, res) => {
     if(req.user && req.user.address) {
         const DB = CLIENT.db(DBNAME);
-        DB.collection("campaigns").find({"beneficiaryId" : {$eq: req.user.address}}).toArray(function(err, result) {
+        DB.collection("campaigns").find({"ownerId" : {$eq: req.user.address}}).toArray(function(err, result) {
             if (err) {
                 console.log(err);
                 res.sendStatus(500);
@@ -191,17 +206,18 @@ APP.post('/api/campaign/loadUserCampaigns',
     }
 })
 
-APP.get('/api/env', (req,res) => {
+APP.get('/api/env', async (req,res) => {
+    const DB = CLIENT.db(DBNAME);
+    let configs = await DB.collection('configs').find().toArray();
+    var chains = {};
+    for (let i=0; i<configs.length; i++) {
+        chains[configs[i]._id] = configs[i];
+    }
+
     res.json(
         {
-            CHAIN: process.env.CHAIN    ,
-            CHAIN_NAME: process.env.CHAIN_NAME,
-            WEB3_RPC_NODE_URL: process.env.WEB3_RPC_NODE_URL,
-            WEB3_RPC_CHAIN_ID: process.env.WEB3_RPC_CHAIN_ID,
-            WC_BRIDGE_URL: process.env.WC_BRIDGE_URL,
-            WC_CHAIN_NAME: process.env.WC_CHAIN_NAME,
-            WEB3_HEX_CHAIN_ID: process.env.WEB3_HEX_CHAIN_ID,
-            WEB3_BLOCK_EXPLORER_URL: process.env.WEB3_BLOCK_EXPLORER_URL
+            CHAINS: chains,
+            CHAIN: process.env.CHAIN
         });
 });
 

@@ -99,20 +99,27 @@ function GetLanguage() {
     return language;
 }
 
-const initWeb3 = async (that) => {
+const initWeb3 = async (chainId, that) => {
+    if(!window.web3Modal) {
+        await initWeb3Modal(chainId);
+    }
     let provider = await window.web3Modal.connect();
     provider.on("disconnect", (code: number, reason: string) => {
         that.setState({web3:null, accounts: null});
     });
-    //Workaround for web3-provider bug. See https://github.com/WalletConnect/walletconnect-monorepo/issues/496
-    if(window.web3Modal.cachedProvider == "injected") {
-        var chainId = config.get("WEB3_HEX_CHAIN_ID");
+
+    if(provider && provider.isMetaMask) {
+        let chainConfig = config.get("CHAINS")[chainId];
+        if(!chainConfig) {
+            throw(`Unsupported blockchain: ${chainId}`);
+        }
+        var hexChainID = chainConfig["WEB3_HEX_CHAIN_ID"];
         var currentChainId = await window.ethereum.request({ method: 'eth_chainId' });
-        if(currentChainId != chainId) {
+        if(currentChainId != hexChainID) {
             try {
                 await window.ethereum.request({
                     method: 'wallet_switchEthereumChain',
-                    params: [{ chainId: chainId }],
+                    params: [{ chainId: hexChainID }],
                 });
             } catch (switchError) {
                 // This error code indicates that the chain has not been added to MetaMask.
@@ -121,39 +128,39 @@ const initWeb3 = async (that) => {
                         await window.ethereum.request({
                             method: 'wallet_addEthereumChain',
                             params: [{
-                                chainId: chainId,
-                                rpcUrls: [config.get("WEB3_RPC_NODE_URL")],
-                                chainName: config.get("CHAIN_NAME"),
-                                blockExplorerUrls:[config.get("WEB3_BLOCK_EXPLORER_URL")]
+                                chainId: hexChainID,
+                                rpcUrls: [chainConfig["WEB3_RPC_NODE_URL"]],
+                                chainName: chainConfig["CHAIN_NAME"],
+                                blockExplorerUrls:[chainConfig["WEB3_BLOCK_EXPLORER_URL"]]
                             }],
                         });
                     } catch (addError) {
-                        console.log(`Failed to add provider for ${chainId} and ${config.get("WEB3_RPC_NODE_URL")}`)
+                        console.log(`Failed to add provider for ${chainId} and ${chainConfig["WEB3_RPC_NODE_URL"]}`)
                         console.log(addError);
                     }
                 } else {
-                    console.log(`Failed to switch provider to ${chainId} and ${config.get("WEB3_RPC_NODE_URL")}`)
+                    console.log(`Failed to switch provider to ${chainId} and ${chainConfig["WEB3_RPC_NODE_URL"]}`)
                     console.log(switchError);
                 }
             }
         }
-
+        //Workaround for web3-provider bug. See https://github.com/WalletConnect/walletconnect-monorepo/issues/496
         delete provider.__proto__.request;
         provider.hasOwnProperty("request") && delete provider.request;
+        //end workaround
     }
-    //end workaround
 
     let web3 = new Web3(provider);
     let accounts = await web3.eth.getAccounts();
     that.setState({web3:web3, accounts: accounts});
 }
 
-const checkAuth = async (that, skipError=false) => {
+const checkAuth = async (chainId, that, skipError=false) => {
     try {
         let res = await axios.get('/api/auth/status');
         if(res.data.addr) {
             if(!that.state.accounts) {
-                await initWeb3(that);
+                await initWeb3(chainId, that);
             }
             if(that.state.accounts && that.state.accounts[0]) {
                 if (that.state.accounts[0].toLowerCase() == res.data.addr.toLowerCase()) {
@@ -181,28 +188,36 @@ const checkAuth = async (that, skipError=false) => {
     }
 }
 
-const initWeb3Modal = async() => {
-    let rpc = {};
-    rpc[config.get("WEB3_RPC_CHAIN_ID")] = config.get("WEB3_RPC_NODE_URL");
-    if(!window.web3Modal) {
-        window.web3Modal = new Web3Modal({
-            cacheProvider: true,
-            providerOptions: {
-                walletconnect: {
-                    package: WalletConnectProvider,
-                    options: {
-                        rpc: rpc,
-                        chainId: config.get("WEB3_RPC_CHAIN_ID"),
-                        bridge: config.get("WC_BRIDGE_URL"),
-                        network: config.get("WC_CHAIN_NAME")
-                    }
-                },
-                binancechainwallet: {
-                    package:true
-                }
-            }
-        });
+const initWeb3Modal = async(chainId) => {
+    let rpc = [];
+    let chains = config.get("CHAINS");
+    let chainConfig = chains[chainId];
+    if(!chainConfig) {
+        throw(`Unsupported blockchain: ${chainId}`);
     }
+    for(let chainId in chains) {
+        rpc[chains[chainId]["WEB3_RPC_CHAIN_ID"]] = chains[chainId]["WEB3_RPC_NODE_URL"];
+    }
+    rpc[chainConfig["WEB3_RPC_CHAIN_ID"]] = chainConfig["WEB3_RPC_NODE_URL"];
+
+    window.web3Modal = new Web3Modal({
+        cacheProvider: false,
+        providerOptions: {
+            walletconnect: {
+                package: WalletConnectProvider,
+                options: {
+                    rpc: rpc,
+                    chainId: chainConfig["WEB3_RPC_CHAIN_ID"],
+                    bridge: chainConfig["WC_BRIDGE_URL"],
+                    network: chainConfig["WC_CHAIN_NAME"]
+                }
+            },
+            binancechainwallet: {
+                package: (chainId == "bsctest" || chainId == "bsc")
+            }
+        }
+    });
+
 }
 export {DescriptionPreview, i18nString, GetLanguage, LogIn, initWeb3, checkAuth, initWeb3Modal, clearWeb3Provider };
 export default Utilities;

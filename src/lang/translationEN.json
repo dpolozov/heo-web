@@ -42,7 +42,7 @@
     "selectConuntry": "Select your country",
     "selectCoin": "Select crypto-currency",
     "campaignDetails": "Campaign Details",
-    "howMuchYouNeed": "How much {{currencyName}} do you need to raise?",
+    "howMuchYouNeed": "How much do you need to raise (in USD)?",
     "selectCoverImage": "Select cover image",
     "coverImageHint": "This cover image will be displayed on the main page",
     "promoVideo": "Promotional Video",
@@ -71,7 +71,7 @@
     "addToDbFailedMessage": "Your campaign has been deployed on the blockchain and will appear on the website in several minutes",
     "addToDbFailedTitle": "Campaign pending",
     "updatingCampaignOnBlockchain": "Updating the campaign on blockchain...",
-    "updatingAmountFailed" : "Failed to updated your campaign on blockchain. Please try again",
+    "updatingAmountFailed" : "Failed to update your campaign on blockchain. Please try again",
     "closeCmpnBtn" : "CLOSE",
     "editCmpnBtn": "EDIT",
     "closeCampaign" : "Closing Campaign",
@@ -100,7 +100,9 @@
     "cnRequired": "Please select your organization's country",
     "titleRequired": "Please enter a title for your campaign",
     "shortDescRequired": "Please provide a short description/tag line for your campaign",
-    "longDescRequired": "Please provide a description of your campaign",
+    "longDescRequired": "Please provide a description of your campaign (at least 3 words)",
     "thankYouInvestor": "Congratulations you are an investor in HEO!",
-    "approveInvest": "Please follow the prompts in your wallet to approve purchase transaction"
+    "approveInvest": "Please follow the prompts in your wallet to approve purchase transaction",
+    "youAreNotTheOwner": "You are not the owner of this campaign!",
+    "deployToChain": "Save to {{chainName}}/{{currencyName}}"
 }

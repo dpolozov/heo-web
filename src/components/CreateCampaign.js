@@ -48,24 +48,27 @@ class CreateCampaign extends React.Component {
             percentRaised: "0%",
             mainImageURL: "",
             mainImageFile:"",
-            currencyAddress:"",
-            currencyName:"",
             waitToClose: false,
             goHome:false,
             getContent: false,
-            editorContent: {}
+            editorContent: {},
+            chains:{},
+            chainConfig:{},
+            chainId:""
         };
 
     }
-    
+
+    onSubmit = (e) => {
+        e.preventDefault();
+        console.log("refresh prevented");
+    };
+
     handleTextArea = (e) => {
         this.setState({description:e.target.value});
     }
     handleChange = e => {
         this.setState({ [e.target.name]: e.target.value });
-        if(e.target.name == "currencyAddress") {
-            this.setState({["currencyName"]: this.state.currencies[e.target.value]});
-        }
     };
 
     fileSelected = e => {
@@ -141,7 +144,13 @@ class CreateCampaign extends React.Component {
         try {
             campaignData.title = {"default": this.state.title};
             campaignData.title[i18n.language] = this.state.title;
-            campaignData.currencyName = this.state.currencyName;
+            campaignData.addresses = {};
+            campaignData.addresses[this.state.chainId] = campaignData.address;
+            campaignData.coins = {};
+            campaignData.coins[this.state.chainId] = {
+                address: this.state.chainConfig.currencyOptions.value,
+                name:this.state.chainConfig.currencyOptions.text
+            };
             campaignData.description = {"default": this.state.description};
             campaignData.description[i18n.language] = this.state.description;
             campaignData.mainImageURL = this.state.mainImageURL;
@@ -195,7 +204,6 @@ class CreateCampaign extends React.Component {
                 org: orgObj,
                 cn: this.state.cn,
                 vl: this.state.vl,
-                currencyName: this.state.currencyName,
                 descriptionEditor : editorObj,
             })
         );
@@ -204,17 +212,18 @@ class CreateCampaign extends React.Component {
                 modalMessage: 'confirmMetamask', modalIcon:'HourglassSplit',
                 modalButtonMessage: 'closeBtn',
                 modalButtonVariant: "#E63C36", waitToClose: false});
-            if(!this.state.web3 ||!this.state.accounts) {
-                await initWeb3(this);
+            if(!this.state.web3 || !this.state.accounts) {
+                await initWeb3(this.state.chainId, this);
             }
             var that = this;
             var web3 = this.state.web3;
-            let abi = (await import("../remote/" + config.get("CHAIN") + "/HEOCampaignFactory")).abi;
-            let address = (await import("../remote/" + config.get("CHAIN") + "/HEOCampaignFactory")).address;
+            let abi = (await import("../remote/" + this.state.chainId + "/HEOCampaignFactory")).abi;
+            let address = (await import("../remote/" + this.state.chainId + "/HEOCampaignFactory")).address;
             var HEOCampaignFactory = new this.state.web3.eth.Contract(abi, address);
+
             if(window.web3Modal.cachedProvider == "binancechainwallet") {
                 HEOCampaignFactory.methods.createCampaign(
-                    this.state.web3.utils.toWei(`${this.state.maxAmount}`), this.state.currencyAddress, this.state.accounts[0], compressed_meta)
+                    this.state.web3.utils.toWei(`${this.state.maxAmount}`), this.state.chainConfig.currencyOptions.value, this.state.accounts[0], compressed_meta)
                     .send({from:this.state.accounts[0]})
                     .once('transactionHash', function(transactionHash) {
                         that.setState({showModal:true, modalTitle: 'processingWait',
@@ -229,7 +238,7 @@ class CreateCampaign extends React.Component {
                     });
             } else {
                 let result = await HEOCampaignFactory.methods.createCampaign(
-                    this.state.web3.utils.toWei(`${this.state.maxAmount}`), this.state.currencyAddress, this.state.accounts[0], compressed_meta)
+                    this.state.web3.utils.toWei(`${this.state.maxAmount}`), this.state.chainConfig.currencyOptions.value, this.state.accounts[0], compressed_meta)
                     .send({from:this.state.accounts[0]})
                     .on('transactionHash',
                         function(transactionHash) {
@@ -341,7 +350,7 @@ class CreateCampaign extends React.Component {
                         </Trans></p>
                         {!this.state.waitToClose &&
                         <UserContext.Consumer>
-                            {({isLoggedIn, toggleLoggedIn}) => (
+                            {({isLoggedIn}) => (
                                 <Button className='myModalButton'
                                     style={{backgroundColor : this.state.modalButtonVariant, borderColor : this.state.modalButtonVariant}}
                                     onClick={ async () => {
@@ -351,12 +360,11 @@ class CreateCampaign extends React.Component {
                                         } else if(!this.state.isLoggedIn) {
                                             try {
                                                 if(!this.state.accounts || !this.state.web3) {
-                                                    await initWeb3(this);
+                                                    await initWeb3(this.state.chainId, this);
                                                 }
                                                 await LogIn(this.state.accounts[0], this.state.web3, this);
                                                 if(this.state.isLoggedIn) {
-                                                    toggleLoggedIn(true);
-                                                    await this.checkWL();
+                                                    await this.checkWL(this.state.chainId);
                                                 }
                                             } catch (err) {
                                                 console.log(err);
@@ -384,7 +392,7 @@ class CreateCampaign extends React.Component {
                 </Container>
                 {(this.state.isLoggedIn && this.state.whiteListed) &&
                 <Container id='mainContainer'>
-                    <Form>
+                    <Form onSubmit={this.onSubmit}>
                         <div className='titles'><Trans i18nKey='aboutYou'/></div>
                         <Form.Group>
                             <Form.Label><Trans i18nKey='organization'/><span className='redAsterisk'>*</span></Form.Label>
@@ -404,10 +412,8 @@ class CreateCampaign extends React.Component {
                         <hr/>
                         <div className='titles'><Trans i18nKey='campaignDetails'/></div>
                         <Form.Group>
-                            <Form.Label>{i18n.t('howMuchYouNeed', {currencyName: this.state.currencyName})}<span
-                                className='redAsterisk'>*</span></Form.Label>
-                            <Form.Control ria-describedby="currencyHelpBlock" required type="number"
-                                          className="createFormPlaceHolder"
+                            <Form.Label>{i18n.t('howMuchYouNeed')}<span className='redAsterisk'>*</span></Form.Label>
+                            <Form.Control required type="number" className="createFormPlaceHolder"
                                           value={this.state.maxAmount} placeholder={this.state.maxAmount}
                                           name='maxAmount' onChange={this.handleChange} onwheel="this.blur()" />
                         </Form.Group>
@@ -454,17 +460,21 @@ class CreateCampaign extends React.Component {
         );
     }
 
-    async checkWL() {
+    async checkWL(chainId) {
         //is white list enabled?
         try {
             if(!this.state.web3 || !this.state.accounts) {
-                await initWeb3(this);
+                console.log(`Web3 not initialized`);
+                await initWeb3(chainId, this);
             }
-            let abi = (await import("../remote/" + config.get("CHAIN") + "/HEOParameters")).abi;
-            let address = (await import("../remote/" + config.get("CHAIN") + "/HEOParameters")).address;
+            console.log(`Web 3 initialized. Account1: ${this.state.accounts[0]}`);
+            console.log(`Loading HEOParameters on ${chainId}`);
+            let abi = (await import("../remote/" + chainId + "/HEOParameters")).abi;
+            let address = (await import("../remote/" + chainId + "/HEOParameters")).address;
             var HEOParameters = new this.state.web3.eth.Contract(abi, address);
             let wlEnabled = await HEOParameters.methods.intParameterValue(11).call();
             if(wlEnabled > 0) {
+                console.log('WL enabled')
                 //is user white listed?
                 let accounts = await this.state.web3.eth.getAccounts();
                 this.setState({accounts: accounts});
@@ -476,7 +486,9 @@ class CreateCampaign extends React.Component {
                         showModal: false,
                         goHome: false
                     });
+                    console.log(`User logged in and in WL`)
                 } else {
+                    console.log(`User not in WL`)
                     //user is not in the white list
                     this.setState({
                         goHome: true,
@@ -490,6 +502,7 @@ class CreateCampaign extends React.Component {
                     });
                 }
             } else {
+                console.log('WL disabled')
                 //white list is disabled
                 this.setState({
                     isLoggedIn : true,
@@ -512,22 +525,30 @@ class CreateCampaign extends React.Component {
     async componentDidMount() {
         setEditorState({}, false);
         ReactGA.send({ hitType: "pageview", page: this.props.location.pathname });
-        await initWeb3Modal();
-        let options = (config.get("chainconfigs")[config.get("CHAIN")]["currencyOptions"]);
-        let currencyOptions = (config.get("chainconfigs")[config.get("CHAIN")]["currencies"]);
-        this.setState({currencies: currencyOptions,
-            currencyAddress: options[0].value,
-            currencyName: options[0].text
-        });
+        let chains = config.get("CHAINS");
+        let chainId = config.get("CHAIN");
+        let chainConfig = chains[chainId];
+        await initWeb3Modal(chainId, this);
+
         // is the user logged in?
         if(!this.state.isLoggedIn) {
-            await checkAuth(this);
+            console.log(`User not logged in. Checking authentication on ${chainId}.`)
+            await checkAuth(chainId, this);
         }
+        this.setState({
+            chains: chains,
+            chainId: chainId,
+            chainConfig: chainConfig
+        });
         if(this.state.isLoggedIn) {
-            await this.checkWL();
+            console.log(`User logged in. Checking WL.`)
+            await this.checkWL(chainId);
         } else {
             //need to log in first
             this.setState({
+                chains: chains,
+                chainId: chainId,
+                chainConfig: chainConfig,
                 showModal: true,
                 isLoggedIn : false,
                 whiteListed: false,

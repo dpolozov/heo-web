@@ -9,11 +9,15 @@ import { GetLanguage, i18nString, DescriptionPreview } from '../util/Utilities';
 import { Trans } from 'react-i18next';
 import i18n from '../util/i18n';
 import countryMap from '../countryMap';
-import bnbIcon from '../images/binance-coin-bnb-logo.png';
-import busdIcon from '../images/binance-usd-busd-logo.png';
 import ReactGA from "react-ga4";
 
-const IMG_MAP = {BUSD: busdIcon, BNB: bnbIcon};
+import bnbIcon from '../images/binance-coin-bnb-logo.png';
+import busdIcon from '../images/binance-usd-busd-logo.png';
+import usdcIcon from '../images/usd-coin-usdc-logo.png';
+import ethIcon from '../images/eth-diamond-purple.png';
+import cusdIcon from '../images/cusd-celo-logo.png';
+const IMG_MAP = {BUSD: busdIcon, BNB: bnbIcon, USDC: usdcIcon, ETH: ethIcon, cUSD: cusdIcon};
+
 ReactGA.initialize("G-C657WZY5VT");
 
 class CampaignList extends Component {
@@ -40,7 +44,6 @@ class CampaignList extends Component {
         var errorMessage = 'Failed to load campaigns';
         await axios.post('/api/campaign/loadAll')
         .then(res => {
-            //console.log(res.data);
             campaigns = res.data;
         }).catch(err => {
             if (err.response) { 
@@ -90,13 +93,20 @@ class CampaignList extends Component {
                                                         {`${DescriptionPreview(item.description, i18n.language)}...`}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span id='readMore'><Trans i18nKey='readMore'/></span>
                                                     </Card.Text>
                                                     <p id='progressBarLabel'><span id='progressBarLabelStart'>
-                                                        <img src={IMG_MAP[item.currencyName]} width={16} height={16} style={{marginRight:5}} />{item.raisedAmount}</span>{i18n.t('raised')}{item.maxAmount} {i18n.t('goal')}</p>
+                                                        {item.raisedAmount}</span>{i18n.t('raised')}{item.maxAmount} {i18n.t('goal')}</p>
                                                     <ProgressBar now={100 * item.raisedAmount/item.maxAmount} />
                                                 </Card.Body>
                                             </Row>
                                             <Row >
-                                                <Col className='buttonCol'><div id='acceptingBtn' className='cardButtons'><p><Trans i18nKey='accepting'/></p>
-                                                    <p id='currencyName'><img src={IMG_MAP[item.currencyName]} width={16} height={16} style={{marginRight:5}} />{item.currencyName}</p></div></Col>
+                                                <Col className='buttonCol'>
+                                                    <div id='acceptingBtn' className='cardButtons'><p><Trans i18nKey='accepting'/></p>
+                                                        <p id='currencyName'>
+                                                            {Object.keys(item.coins).map((chain, i) =>
+                                                                <span><img src={IMG_MAP[item.coins[chain].name]} width={16} height={16} style={{marginLeft:5, marginRight:5}} />{item.coins[chain].name}</span>
+                                                            )}
+
+                                                        </p>
+                                                    </div></Col>
                                                 <Col className='buttonCol'><Button variant="danger" id='donateBtn' block><Trans i18nKey='donate'/></Button></Col>
                                             </Row> 
                                         </Col>

@@ -1,6 +1,6 @@
 import React from 'react';
 import countries from '../countries';
-import {Container, Form, Col, Button, Image, Modal} from 'react-bootstrap';
+import {Container, Form, Col, Button, DropdownButton, Dropdown, Image, Modal} from 'react-bootstrap';
 import ReactPlayer from 'react-player';
 import config from "react-global-configuration";
 import axios from 'axios';
@@ -17,6 +17,12 @@ import Web3Modal from 'web3modal';
 import Web3 from 'web3';
 import WalletConnectProvider from '@walletconnect/web3-provider';
 import ReactGA from "react-ga4";
+import bnbIcon from '../images/binance-coin-bnb-logo.png';
+import busdIcon from '../images/binance-usd-busd-logo.png';
+import usdcIcon from '../images/usd-coin-usdc-logo.png';
+import ethIcon from '../images/eth-diamond-purple.png';
+import cusdIcon from '../images/cusd-celo-logo.png';
+const IMG_MAP = {BUSD: busdIcon, BNB: bnbIcon, USDC: usdcIcon, ETH: ethIcon, cUSD: cusdIcon};
 
 var CAMPAIGNINSTANCE;
 ReactGA.initialize("G-C657WZY5VT");
@@ -47,15 +53,23 @@ class EditCampaign extends React.Component {
             imgID:"",
             mainImageFile:"",
             waitToClose: false,
-            currencyName:"",
             maxAmount:0,
             updateImage: false,
             updateMeta: false,
-            campaignAddress: "",
+            campaignId: "",
             currentError:"",
             updatedEditorState: false,
+            chains:{},
+            chainId:"",
+            addresses: {},
+            coins: {}
         };
     }
+
+    onSubmit = (e) => {
+        e.preventDefault();
+        console.log("refresh prevented");
+    };
 
     handleTextArea = (e) => {
         this.setState({description:e.target.value, updateMeta : true});
@@ -75,11 +89,19 @@ class EditCampaign extends React.Component {
         });
     }
 
-    handleClick = async (event) => {
-        if(editorStateHasChanged()){
+    handleClick = async (chainId) => {
+        await initWeb3Modal(chainId, this);
+        await initWeb3(chainId, this);
+        // is the user logged in?
+        if(!this.state.isLoggedIn) {
+            await checkAuth(chainId, this);
+        }
+
+        //check if this campaign belongs to this user
+        if(editorStateHasChanged()) {
             this.state.updateMeta = true;
         }
-        event.preventDefault();
+
         if(!this.state.org) {
             this.setState(
                 {showModal:true, modalTitle: 'requiredFieldsTitle',
@@ -116,7 +138,10 @@ class EditCampaign extends React.Component {
                 });
             return false;
         }
-        if(!getEditorState() || getEditorState().length < 2) {
+        let editorState = getEditorState();
+        if(!editorState || editorState.length < 2) {
+            console.log(`Editor state is empty ${editorState}`);
+            console.log(editorState);
             this.setState(
                 {showModal:true, modalTitle: 'requiredFieldsTitle',
                     modalMessage: 'longDescRequired', modalIcon: 'ExclamationTriangle',
@@ -141,16 +166,20 @@ class EditCampaign extends React.Component {
                 return;
             }
         }
+
+        //updating existing HEOCampaign
         if(this.state.updateMeta) {
-            if(!(await this.updateCampaign())) {
+            if(!(await this.updateCampaign(chainId))) {
                 this.setState({showModal : true,
                     modalTitle: 'updatingAmountFailed',
                     modalMessage: this.state.currentError,
                     errorIcon:'XCircle', modalButtonMessage: 'closeBtn',
                     modalButtonVariant: "#E63C36", waitToClose: false});
                 return;
-            }    
+            }
         }
+
+
         this.setState({
             showModal: true, modalTitle: 'complete',
             modalMessage: 'updateSuccessfull',
@@ -159,7 +188,8 @@ class EditCampaign extends React.Component {
         });
     }
 
-    async updateCampaign(){
+
+    async updateCampaign(chainId) {
         this.setState({showModal:true,
             modalMessage: 'confirmMetamask', errorIcon:'HourglassSplit',
             modalButtonVariant: "gold", waitToClose: true})
@@ -169,8 +199,7 @@ class EditCampaign extends React.Component {
                 fn: this.state.fn,
                 ln: this.state.ln,
                 cn: this.state.cn,
-                vl: this.state.vl,
-                currencyName: this.state.currencyName
+                vl: this.state.vl
             };
             data.description = this.state.ogDescription;
             data.description[i18n.language] = data.description["default"] = this.state.description;
@@ -186,14 +215,47 @@ class EditCampaign extends React.Component {
             console.log(data.org);
 
             let compressed_meta = await compress(JSON.stringify(data));
-            let result = await CAMPAIGNINSTANCE.methods.update(
-                this.state.web3.utils.toWei(this.state.maxAmount), compressed_meta).send({from:this.state.accounts[0]}, () => {
+
+            if(this.state.addresses[chainId]) {
+                console.log(`Campaign already deployed on ${chainId} - updating`);
+                let HEOCampaign = (await import("../remote/"+ chainId + "/HEOCampaign")).default;
+                CAMPAIGNINSTANCE = new this.state.web3.eth.Contract(HEOCampaign, this.state.addresses[chainId]);
+                let result = await CAMPAIGNINSTANCE.methods.update(
+                    this.state.web3.utils.toWei(this.state.maxAmount), compressed_meta).send({from:this.state.accounts[0]}, () => {
                     this.setState({showModal:true, modalTitle: 'processingWait',
-                    modalMessage: 'updatingCampaignOnBlockchain', errorIcon:'HourglassSplit',
-                    modalButtonVariant: "gold", waitToClose: true});
+                        modalMessage: 'updatingCampaignOnBlockchain', errorIcon:'HourglassSplit',
+                        modalButtonVariant: "gold", waitToClose: true});
                 });
+            } else {
+                console.log(`Campaign not yet deployed on ${chainId} - deploying`);
+                var that = this;
+                var web3 = this.state.web3;
+                let abi = (await import("../remote/" + chainId + "/HEOCampaignFactory")).abi;
+                let address = (await import("../remote/" + chainId + "/HEOCampaignFactory")).address;
+                var HEOCampaignFactory = new this.state.web3.eth.Contract(abi, address);
+
+                let result = await HEOCampaignFactory.methods.createCampaign(
+                    this.state.web3.utils.toWei(`${this.state.maxAmount}`), this.state.chains[chainId].currencyOptions.value, this.state.accounts[0], compressed_meta)
+                    .send({from:this.state.accounts[0]})
+                    .on('transactionHash',
+                        function(transactionHash) {
+                            that.setState({showModal:true, modalTitle: 'processingWait',
+                                modalMessage: 'waitingForNetowork', modalIcon: 'HourglassSplit',
+                                modalButtonVariant: "gold", waitToClose: true});
+                        });
+                if(result && result.events && result.events.CampaignDeployed && result.events.CampaignDeployed.address) {
+                    console.log(`Deployed campaign to ${chainId} at ${result.events.CampaignDeployed.returnValues.campaignAddress}`)
+                    data.addresses = this.state.addresses;
+                    data.coins = this.state.coins;
+                    data.addresses[chainId] = result.events.CampaignDeployed.returnValues.campaignAddress;
+                    data.coins[chainId] = {address: this.state.chains[chainId].currencyOptions.value, name: this.state.chains[chainId].currencyOptions.text};
+                } else {
+                    return false;
+                }
+            }
+
             data.maxAmount = this.state.maxAmount;
-            let dataForDB = {address: this.state.campaignAddress, dataToUpdate: data};
+            let dataForDB = {address: this.state.campaignId, dataToUpdate: data};
 
             try {
                 await axios.post('/api/campaign/update', {mydata : dataForDB},
@@ -275,7 +337,7 @@ class EditCampaign extends React.Component {
                     </Link>
                 </Container>
                 <Container id='mainContainer'>
-                    <Form onSubmit={this.handleClick}>
+                    <Form onSubmit={this.onSubmit}>
                         <div className='titles'> <Trans i18nKey='aboutYou'/> </div>
                         <Form.Group >
                             <Form.Label><Trans i18nKey='organization'/><span className='redAsterisk'>*</span></Form.Label>
@@ -296,7 +358,7 @@ class EditCampaign extends React.Component {
                         <hr/>
                         <div className='titles'> <Trans i18nKey='campaignDetails'/></div>
                         <Form.Group>
-                            <Form.Label>{i18n.t('howMuchYouNeed', { currencyName: this.state.currencyName })}<span className='redAsterisk'>*</span></Form.Label>
+                            <Form.Label>{i18n.t('howMuchYouNeed')}<span className='redAsterisk'>*</span></Form.Label>
                             <Form.Control required type="number" className="createFormPlaceHolder"
                                           value={this.state.maxAmount} placeholder={this.state.maxAmount}
                                           name='maxAmount' onChange={this.handleChange}/>
@@ -330,49 +392,71 @@ class EditCampaign extends React.Component {
                             <Form.Label><Trans i18nKey='campaignDescription'/><span className='redAsterisk'>*</span></Form.Label>
                             {this.state.updatedEditorState && <TextEditor  />}
                         </Form.Group>
-                        <Button type="submit" id='createCampaignBtn' name='ff3'>
-                            {i18n.t('saveCampaignBtn')}
-                        </Button>
+
+                        <DropdownButton title={i18n.t('saveCampaignBtn')} id='createCampaignBtn' name='ff3'>
+                        {Object.keys(this.state.chains).map((chain, i) =>
+                                <Dropdown.Item key={chain} as="button" onClick={() => this.handleClick(chain)}><img
+                                    src={IMG_MAP[this.state.chains[chain].currencyOptions.text]} width={16} height={16}
+                                    style={{marginLeft: 5, marginRight: 5}}/>
+                                    {i18n.t('deployToChain', {
+                                        currencyName: this.state.chains[chain].currencyOptions.text,
+                                        chainName: this.state.chains[chain].CHAIN_NAME
+                                    })} </Dropdown.Item>
+                        )}
+                        </DropdownButton>
                     </Form>
                 </Container>
             </div>
         );
     }
 
+
+
+    async getCampaignFromDB(id) {
+        var campaign = {};
+        var modalMessage = 'failedToLoadCampaign';
+        let data = {ID : id};
+        await axios.post('/api/campaign/loadOne', data, {headers: {"Content-Type": "application/json"}})
+            .then(res => {
+                campaign = res.data;
+            }).catch(err => {
+                if (err.response) {
+                    modalMessage = 'technicalDifficulties'}
+                else if(err.request) {
+                    modalMessage = 'checkYourConnection'
+                }
+                console.log(err);
+                this.setState({
+                    showError: true,
+                    modalMessage,
+                })
+            })
+        return campaign;
+    }
+
     async componentDidMount() {
         let toks = this.props.location.pathname.split("/");
         ReactGA.send({ hitType: "pageview", page: this.props.location.pathname });
-        let address = toks[toks.length -1];
-        await initWeb3Modal();
-        let options = (config.get("chainconfigs")[config.get("CHAIN")]["currencyOptions"]);
-        let currencyOptions = (config.get("chainconfigs")[config.get("CHAIN")]["currencies"]);
-        this.setState({currencies: currencyOptions,
-            coinOptions: options,
-            currencyAddress: options[0].value,
-            currencyName:options[0].text}
-        );
-        // is the user logged in?
-        if(!this.state.isLoggedIn) {
-            await checkAuth(this);
+        let id = toks[toks.length -1];
+        let dbCampaignObj = await this.getCampaignFromDB(id);
+        let chains = config.get("CHAINS");
+        let chainId = config.get("CHAIN");
+        let chainConfig = chains[chainId];
+        let address = id;
+        if(dbCampaignObj && dbCampaignObj.addresses && dbCampaignObj.addresses[chainId]) {
+            address = dbCampaignObj.addresses[chainId];
         }
-        if(!this.state.isLoggedIn) {
-            //need to log in first
-            this.setState({
-                showModal: true,
-                isLoggedIn : false,
-                whiteListed: false,
-                goHome: false,
-                modalTitle: 'pleaseLogInTitle',
-                modalMessage: 'pleaseLogInToCreateMessage',
-                modalIcon: 'XCircle', modalButtonMessage: 'login',
-                modalButtonVariant: "#E63C36", waitToClose: false});
-        }
-        let HEOCampaign = (await import("../remote/"+ config.get("CHAIN") + "/HEOCampaign")).default;
-        CAMPAIGNINSTANCE = new this.state.web3.eth.Contract(HEOCampaign, address);
+        let web3 = new Web3(chainConfig["WEB3_RPC_NODE_URL"]);
+        let HEOCampaign = (await import("../remote/"+ chainId + "/HEOCampaign")).default;
+        CAMPAIGNINSTANCE = new web3.eth.Contract(HEOCampaign, address);
+        console.log(`Campaign instance`);
+        console.log(CAMPAIGNINSTANCE);
         let compressedMetaData = await CAMPAIGNINSTANCE.methods.metaData().call();
+        console.log(`Compressed metadata`);
+        console.log(compressedMetaData);
         let rawMetaData = await decompress(compressedMetaData);
         let metaData = JSON.parse(rawMetaData);
-        let maxAmount = this.state.web3.utils.fromWei(await CAMPAIGNINSTANCE.methods.maxAmount().call());
+        let maxAmount = web3.utils.fromWei(await CAMPAIGNINSTANCE.methods.maxAmount().call());
         if(metaData.mainImageURL) {
             let splits = metaData.mainImageURL.split("/");
             if(splits && splits.length) {
@@ -403,14 +487,18 @@ class EditCampaign extends React.Component {
             descriptionObj = metaData.description;
         }
         var descriptionEditorObj = {};
-        if(metaData.descriptionEditor && metaData.descriptionEditor[i18n.language] || metaData.descriptionEditor["default"]) {
+        if(metaData.descriptionEditor && (metaData.descriptionEditor[i18n.language] || metaData.descriptionEditor["default"])) {
+            console.log("This campaign is multi-lingual on blockchain")
             descriptionEditorObj = metaData.descriptionEditor;
         } else if(metaData.descriptionEditor) {
+            console.log("This campaign has not been updated to multi-lingual on blockchain")
             descriptionEditorObj = {"default": metaData.descriptionEditor};
             descriptionEditorObj[i18n.language] = metaData.descriptionEditor;
+        } else {
+            console.log('No description editor state in metadata object');
         }
         this.setState({
-            campaignAddress : address,
+            campaignId : id,
             fn : metaData.fn,
             ln : metaData.ln,
             cn : metaData.cn,
@@ -425,7 +513,10 @@ class EditCampaign extends React.Component {
             ogDescriptionEditor: descriptionEditorObj,
             mainImageURL: metaData.mainImageURL,
             maxAmount : maxAmount,
-            currencyName: metaData.currencyName
+            chains: chains,
+            chainId: chainId,
+            addresses: dbCampaignObj.addresses,
+            coins: dbCampaignObj.coins
         });
         console.log(`Set title to`);
         console.log(this.state.ogTitle);

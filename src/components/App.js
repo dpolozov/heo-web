@@ -14,7 +14,7 @@ import { BrowserRouter as Router, Switch, Route, Link, withRouter } from "react-
 import { Nav, Navbar, Container, Button, Modal } from 'react-bootstrap';
 import { ChevronLeft, CheckCircle, ExclamationTriangle, HourglassSplit, XCircle } from 'react-bootstrap-icons';
 import { Trans } from 'react-i18next';
-import { GetLanguage, LogIn, checkAuth, initWeb3, initWeb3Modal, clearWeb3Provider } from '../util/Utilities';
+import { GetLanguage, LogIn, initWeb3, initWeb3Modal, clearWeb3Provider } from '../util/Utilities';
 import axios from 'axios';
 import config from 'react-global-configuration';
 import i18n from '../util/i18n';
@@ -28,14 +28,9 @@ ReactGA.initialize("G-C657WZY5VT");
 class App extends Component {
     constructor(props) {
         super(props);
-        this.toggleLoggedIn = (val) => {
-            this.setState({isLoggedIn: val});
-        };
 
         this.state = {
-            toggleLoggedIn: this.toggleLoggedIn,
             language: 'en',
-            isLoggedIn: false,
             showError: false,
             showModal: false,
             waitToClose: false,
@@ -49,8 +44,6 @@ class App extends Component {
     async componentDidMount() {
         let lang = GetLanguage();
         this.setState({language : lang});
-        await initWeb3Modal();
-        await checkAuth(this, true);
     }
 
     async setLanguage(lang) {
@@ -62,92 +55,6 @@ class App extends Component {
             value: lang,
             nonInteraction: false
         });
-    }
-
-    async setSwitchBlockchain(chain) {
-        ReactGA.event({
-            category: "blockchain_switch",
-            action: "language_switched",
-            value: chain,
-            nonInteraction: false
-        });
-        if(chain == "bsc") {
-            window.location="https://app.heo.finance"
-        } else if(chain == "eth") {
-            window.location="https://eth.heo.finance"
-        } else if(chain == "aurora") {
-            window.location="https://aurora.heo.finance"
-        } else if(chain == "celo") {
-            window.location="https://celo.heo.finance"
-        }
-    }
-
-    async setLoggedIn() {
-        if(this.state.isLoggedIn) {
-            await clearWeb3Provider(this);
-            await axios.post('/api/auth/logout');
-            this.setState({isLoggedIn : false});
-            this.props.history.push('/');
-            ReactGA.event({
-                category: "login",
-                action: "logout",
-                nonInteraction: false
-            });
-        } else {
-            if(!this.state.accounts || !this.state.accounts[0] || !this.state.web3) {
-                await initWeb3(this);
-            }
-            try {
-                ReactGA.event({
-                    category: "login",
-                    action: "login",
-                    value: this.state.accounts[0],
-                    nonInteraction: false
-                });
-                await LogIn(this.state.accounts[0], this.state.web3, this);
-                if(this.state.isLoggedIn) {
-                    ReactGA.event({
-                        category: "login",
-                        action: "login_success",
-                        value: this.state.accounts[0],
-                        nonInteraction: false
-                    });
-                    this.props.history.push('/');
-                } else {
-                    this.setState({showModal:true,
-                        waitToClose: false,
-                        modalTitle: 'authFailedTitle',
-                        modalMessage: 'authFailedMessage',
-                        modalButtonMessage: 'closeBtn',
-                        modalButtonVariant: "#E63C36"}
-                    );
-                    ReactGA.event({
-                        category: "login",
-                        action: "login_failed",
-                        value: this.state.accounts[0],
-                        nonInteraction: false
-                    });
-                    await clearWeb3Provider(this);
-                }
-            } catch (err) {
-                console.log(err);
-                this.setState({showModal:true,
-                    waitToClose: false,
-                    modalTitle: 'authFailedTitle',
-                    modalMessage: 'authFailedMessage',
-                    modalButtonMessage: 'closeBtn',
-                    modalButtonVariant: "#E63C36"}
-                );
-                ReactGA.event({
-                    category: "login",
-                    action: "login_error",
-                    value: err,
-                    nonInteraction: false
-                });
-                await clearWeb3Provider(this);
-            }
-
-        }
     }
 
     render() {
@@ -162,21 +69,11 @@ class App extends Component {
                                 <Navbar.Brand href="/" id='upperNavSlogan'><Trans i18nKey='slogan'/></Navbar.Brand>
                                 <Navbar.Toggle />
                                 <Navbar.Collapse className="justify-content-end">
-                                    <select value={this.state.language} id="networks" onChange={(e)=>this.setSwitchBlockchain(e.target.value)}>
-                                        <option value='bsc'>Binance Smart Chain</option>
-                                        <option value='celo'>Celo</option>
-                                        <option value='aurora'>Aurora</option>
-                                        <option value='eth'>Ethereum</option>
-                                    </select>
                                     <select value={this.state.language} id="languages" onChange={(e)=>this.setLanguage(e.target.value)}>
                                         <option value='en'>{i18n.t('english')}</option>
                                         <option value='ru'>{i18n.t('russian')}</option>
                                     </select>
                                     <Nav.Link target="_blank" as='a' href={lang == "ru" ? "https://docs.heo.finance/v/russian/" : "https://docs.heo.finance/"} className='upperNavText' id='helpBtn'><Trans i18nKey='help'/></Nav.Link>
-                                    <Nav.Link className='upperNavText' id='loginBtn' onClick={ () => this.setLoggedIn()}>
-                                        {!this.state.isLoggedIn && <Trans i18nKey='login'/>}
-                                        {this.state.isLoggedIn && <Trans i18nKey='logout'/>}
-                                    </Nav.Link>
                                 </Navbar.Collapse>
                             </Container>
                         </Navbar>
@@ -199,14 +96,12 @@ class App extends Component {
                                         <Nav.Link as={Link} eventKey="1" className='mainNavText' to="/"><Trans i18nKey='browse'/></Nav.Link>
                                         <Nav.Link as={Link} eventKey="2" className='mainNavText' to={{pathname:"/new",
                                             state:{
-                                                isLoggedIn: this.state.isLoggedIn,
                                                 accounts: this.state.accounts
                                             }}} >
                                             <Trans i18nKey='startFundraiser'/>
                                         </Nav.Link>
                                         <Nav.Link as={Link} eventKey="3" className='mainNavText' to={{pathname:"/myCampaigns",
                                             state:{
-                                                isLoggedIn: this.state.isLoggedIn,
                                                 accounts: this.state.accounts
                                             }}} >
                                             <Trans i18nKey='myFundraisers'/>

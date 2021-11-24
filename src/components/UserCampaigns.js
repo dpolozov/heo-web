@@ -17,7 +17,6 @@ import Web3 from 'web3';
 import WalletConnectProvider from '@walletconnect/web3-provider';
 import ReactGA from "react-ga4";
 
-var CAMPAIGNINSTANCE;
 ReactGA.initialize("G-C657WZY5VT");
 
 class UserCampaigns extends Component {
@@ -32,19 +31,18 @@ class UserCampaigns extends Component {
             isLoggedIn:false,
             whiteListed:false,
             showTwoButtons: false,
-            campaignAddress: '',
+            campaignId: '',
             fileName: ''
         };
     }
-
-    async checkWL() {
+    //is white list enabled?
+    async checkWL(chainId) {
         try {
-            //is white list enabled?
             if(!this.state.web3 || !this.state.accounts) {
-                await initWeb3(this);
+                await initWeb3(chainId, this);
             }
-            let abi = (await import("../remote/" + config.get("CHAIN") + "/HEOParameters")).abi;
-            let address = (await import("../remote/" + config.get("CHAIN") + "/HEOParameters")).address;
+            let abi = (await import("../remote/" + chainId + "/HEOParameters")).abi;
+            let address = (await import("../remote/" + chainId + "/HEOParameters")).address;
             var HEOParameters = new this.state.web3.eth.Contract(abi, address);
             let wlEnabled = await HEOParameters.methods.intParameterValue(11).call();
             if(wlEnabled > 0) {
@@ -95,13 +93,14 @@ class UserCampaigns extends Component {
 
     async componentDidMount() {
         ReactGA.send({ hitType: "pageview", page: this.props.location.pathname });
-        await initWeb3Modal(this);
+        let chainId = config.get("CHAIN");
+        await initWeb3Modal(chainId, this);
         // is the user logged in?
         if(!this.state.isLoggedIn) {
-            await checkAuth(this);
+            await checkAuth(chainId, this);
         }
         if(this.state.isLoggedIn) {
-            await this.checkWL();
+            await this.checkWL(chainId);
         } else {
             //need to log in first
             this.setState({
@@ -140,9 +139,10 @@ class UserCampaigns extends Component {
         })
     }
 
-    async closeCampaignPrep(address, imageURL){
+    async closeCampaignPrep(id, imageURL){
+        let chainId = config.get("CHAIN");
         if(!this.state.web3 || !this.state.accounts) {
-            await initWeb3(this);
+            await initWeb3(chainId, this);
         }
         console.log('close campaign');
         this.setState({
@@ -150,10 +150,8 @@ class UserCampaigns extends Component {
             showModal: true, errorIcon:'ExclamationTriangle',
             modalTitle: 'closeCampaign',
             modalMessage: 'final',
-            campaignAddress: address
+            campaignId: id
         })
-        let abi = (await import("../remote/"+ config.get("CHAIN") + "/HEOCampaign")).default;
-        CAMPAIGNINSTANCE = new this.state.web3.eth.Contract(abi, address);
         var splits;
         if(imageURL) {
             splits = imageURL.split('/');
@@ -166,14 +164,7 @@ class UserCampaigns extends Component {
             showTwoButtons: false, modalButtonVariant: "gold", waitToClose: true});
         try {
             var that = this;
-            let result = await CAMPAIGNINSTANCE.methods.close().send({from:this.state.accounts[0]}).on('transactionHash',
-                    function(transactionHash) {
-                        that.setState({showModal:true, modalTitle: 'processingWait',
-                            modalMessage: 'waitingForNetowork', modalIcon: 'HourglassSplit',
-                            modalButtonVariant: "gold", waitToClose: true});
-                    });
-            this.deleteimage();
-            this.deleteFromDB();
+            this.deActivateInDB();
             this.setState({
                 modalMessage: 'campaignDeleted', modalTitle: 'complete',
                 errorIcon: 'CheckCircle', modalButtonMessage: i18n.t('ok'),
@@ -198,9 +189,9 @@ class UserCampaigns extends Component {
         });
     }
 
-    async deleteFromDB (){
-        let data = {address : this.state.campaignAddress};
-        return axios.post('/api/campaign/delete', data, {headers: {"Content-Type": "application/json"}})
+    async deActivateInDB(){
+        let data = {id : this.state.campaignId};
+        return axios.post('/api/campaign/deactivate', data, {headers: {"Content-Type": "application/json"}})
         .then(res => {
             console.log("Success deleting db entry");
         }).catch(err => {              
@@ -246,18 +237,19 @@ class UserCampaigns extends Component {
                                 <Button className='myModalButton'
                                         style={{backgroundColor : this.state.modalButtonVariant, borderColor : this.state.modalButtonVariant}}
                                         onClick={ async () => {
+                                            let chainId = config.get("CHAIN");
                                             this.setState({showModal:false})
                                             if(this.state.goHome) {
                                                 this.props.history.push('/');
                                             } else if(!this.state.isLoggedIn) {
                                                 try {
                                                     if(!this.state.accounts || !this.state.web3) {
-                                                        await initWeb3(this);
+                                                        await initWeb3(chainId, this);
                                                     }
                                                     await LogIn(this.state.accounts[0], this.state.web3, this);
                                                     if(this.state.isLoggedIn) {
                                                         toggleLoggedIn(true);
-                                                        await this.checkWL();
+                                                        await this.checkWL(chainId);
                                                     }
                                                 } catch (err) {
                                                     this.setState({showModal:true,
