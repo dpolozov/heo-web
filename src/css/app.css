@@ -10,6 +10,21 @@
     
 }
 
+#networks {
+    background-color:#f7f9fa;
+    border: none;
+    margin-right: 10px;
+    color: #3F5663;
+    font-family: Open Sans;
+    font-style: normal;
+    font-weight: normal;
+    font-size: 13px;
+    line-height: 16px;
+    /* identical to box height, or 123% */
+    letter-spacing: 0.05em;
+    outline: none;
+}
+
 #languages {
     background-color:#f7f9fa;
     border: none;

@@ -116,7 +116,7 @@ class App extends Component {
                                 <Navbar.Brand href="/" id='upperNavSlogan'><Trans i18nKey='slogan'/></Navbar.Brand>
                                 <Navbar.Toggle />
                                 <Navbar.Collapse className="justify-content-end">
-                                    <select value={this.state.language} id="languages" onChange={(e)=>this.setSwitchBlockchain(e.target.value)}>
+                                    <select value={this.state.language} id="networks" onChange={(e)=>this.setSwitchBlockchain(e.target.value)}>
                                         <option value='bsc'>Binance Smart Chain</option>
                                         <option value='eth'>Ethereum</option>
                                         <option value='aurora'>Aurora</option>
