@@ -89,6 +89,38 @@ const initWeb3 = async (that) => {
     });
     //Workaround for web3-provider bug. See https://github.com/WalletConnect/walletconnect-monorepo/issues/496
     if(window.web3Modal.cachedProvider == "injected") {
+        var chainId = config.get("WEB3_HEX_CHAIN_ID");
+        var currentChainId = await window.ethereum.request({ method: 'eth_chainId' });
+        if(currentChainId != chainId) {
+            try {
+                await window.ethereum.request({
+                    method: 'wallet_switchEthereumChain',
+                    params: [{ chainId: chainId }],
+                });
+            } catch (switchError) {
+                // This error code indicates that the chain has not been added to MetaMask.
+                if (switchError.code === 4902) {
+                    try {
+                        await window.ethereum.request({
+                            method: 'wallet_addEthereumChain',
+                            params: [{
+                                chainId: chainId,
+                                rpcUrls: [config.get("WEB3_RPC_NODE_URL")],
+                                chainName: config.get("CHAIN_NAME"),
+                                blockExplorerUrls:[config.get("WEB3_BLOCK_EXPLORER_URL")]
+                            }],
+                        });
+                    } catch (addError) {
+                        console.log(`Failed to add provider for ${chainId} and ${config.get("WEB3_RPC_NODE_URL")}`)
+                        console.log(addError);
+                    }
+                } else {
+                    console.log(`Failed to switch provider to ${chainId} and ${config.get("WEB3_RPC_NODE_URL")}`)
+                    console.log(switchError);
+                }
+            }
+        }
+
         delete provider.__proto__.request;
         provider.hasOwnProperty("request") && delete provider.request;
     }

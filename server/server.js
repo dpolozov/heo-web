@@ -199,7 +199,9 @@ APP.get('/api/env', (req,res) => {
             WEB3_RPC_NODE_URL: process.env.WEB3_RPC_NODE_URL,
             WEB3_RPC_CHAIN_ID: process.env.WEB3_RPC_CHAIN_ID,
             WC_BRIDGE_URL: process.env.WC_BRIDGE_URL,
-            WC_CHAIN_NAME: process.env.WC_CHAIN_NAME
+            WC_CHAIN_NAME: process.env.WC_CHAIN_NAME,
+            WEB3_HEX_CHAIN_ID: process.env.WEB3_HEX_CHAIN_ID,
+            WEB3_BLOCK_EXPLORER_URL: process.env.WEB3_BLOCK_EXPLORER_URL
         });
 });
 
