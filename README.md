@@ -1,11 +1,11 @@
 # HEO - Stablecoin-based crowdfunding that rewards donors
 
-This is a basic implementation of React-based Web UI for HEO (https://app.heo.finance).
+This is an basic implementation of React-based Web UI for HEO DApp on Binance Smart Chain (https://app.heo.finance).
 Solidity contracts that this UI interacts with are in a separate Truffle project on my Github: https://github.com/HEO-Platform/heo-eth
 
-#Demo on Heroku
-You can see the latest deployed version of this app on Binance Smart Chain mainnet: https://app.herokuapp.com/.
-If you want to just play around, you can use the app on Binance Smart Chain testnet: https://bsc-test.heo.finance/.
+#Demo on AWS Elastic Beanstalk
+You can see the latest deployed version of this app on BSC mainnet: https://app.heo.finance/.
+If you want to just play around, you can run the code locally with contracts deployed on BSC testnet.
 
 # Configuration parameters
 ## AWS configs
@@ -18,6 +18,22 @@ These parameters are passed to the application via environment variables:
 * SERVER_APP_ACCESS_ID
 * SERVER_APP_ACCESS_KEY  
 * SERVER_APP_BUCKET_NAME
+* SERVER_APP_IMG_DIR_NAME
+* CHAIN
+* CHAIN_NAME
+* MONGO_LOGIN
+* MONGO_DB_NAME
+* MONGO_URL
+* MONGODB_PWD
+* WEB3_RPC_CHAIN_ID
+* WEB3_HEX_CHAIN_ID
+* WEB3_RPC_NODE_URL
+* WC_BRIDGE_URL
+* WC_CHAIN_NAME
+* CAMPAIGN_FACTORY_ADDRESS
+* NATIVE_TOKEN_SYMBOL
+* JWT_SECRET
+* WEB3_BLOCK_EXPLORER_URL
 
 ## Blockchain configs
 The application uses Web3 JavaScript library to interact with Ethereum-compatible blockchain.
@@ -34,8 +50,8 @@ The following environment variables are used to connect to Web3 RPC node and Wal
 
 In order to interract with Smart Contracts, the application needs the address of an instance of
 HEOCampaignFactory contract. This address is passed through environment variable `CAMPAIGN_FACTORY_ADDRESS`.
-HEOCampaignFactory is deployed on BSC testnet at `0x8C9Aaf1B981c241F792D8517F12892D78B9DE6A9`
-and on BSC mainnet on `0x69274423157Fa9C625ac99b9d60DE08a0B062A23`
+HEOCampaignFactory is deployed on BSC mainnet at `0x69274423157Fa9C625ac99b9d60DE08a0B062A23`
+and on BSC testnet on `0x4e34e37530dA870A303F583f36F9eeA0434b4828`
 
 ## MongoDB configs
 The application uses MongoDB to cache some of the blockchain data for faster access. The following environment
@@ -60,11 +76,14 @@ MONGO_DB_NAME
 MONGO_URL
 MONGODB_PWD
 WEB3_RPC_CHAIN_ID
+WEB3_HEX_CHAIN_ID
 WEB3_RPC_NODE_URL
 WC_BRIDGE_URL
+WC_CHAIN_NAME
 CAMPAIGN_FACTORY_ADDRESS
 NATIVE_TOKEN_SYMBOL
 JWT_SECRET
+WEB3_BLOCK_EXPLORER_URL
 ```
 ## AWS configuration
 Set `SERVER_APP_BUCKET_NAME` to point to the S3 bucket that
@@ -88,12 +107,15 @@ See https://github.com/grishick/heo-eth for more information about smart contrac
 You can also run the application locally with a remote EVM node. Use the following parameters to run with 
 contracts currently deployed on BSC Testnet:
 ```
-REACT_APP_CHAIN_ID=bsctest
-REACT_APP_CHAIN_NAME=BSC-Test
+CHAIN=bsctest
+CHAIN_NAME=BSC-Test
+WEB3_RPC_CHAIN_ID=97
 WEB3_RPC_NODE_URL=https://data-seed-prebsc-1-s1.binance.org:8545
-CAMPAIGN_FACTORY_ADDRESS=0x8C9Aaf1B981c241F792D8517F12892D78B9DE6A9
+WC_BRIDGE_URL=https://bridge.walletconnect.org/
+WC_CHAIN_NAME=bsctest
+CAMPAIGN_FACTORY_ADDRESS=0x4e34e37530dA870A303F583f36F9eeA0434b4828
 NATIVE_TOKEN_SYMBOL=BNB
-WC_BRIDGE_URL=https://bridge.walletconnect.org
+WEB3_BLOCK_EXPLORER_URL=https://testnet.bscscan.com/
 ```
 
 ## Build
