@@ -62,6 +62,8 @@ class App extends Component {
             window.location="https://eth.heo.finance"
         } else if(chain == "aurora") {
             window.location="https://aurora.heo.finance"
+        } else if(chain == "celo") {
+            window.location="https://celo.heo.finance"
         }
     }
 
@@ -118,8 +120,9 @@ class App extends Component {
                                 <Navbar.Collapse className="justify-content-end">
                                     <select value={this.state.language} id="networks" onChange={(e)=>this.setSwitchBlockchain(e.target.value)}>
                                         <option value='bsc'>Binance Smart Chain</option>
-                                        <option value='eth'>Ethereum</option>
+                                        <option value='celo'>Celo</option>
                                         <option value='aurora'>Aurora</option>
+                                        <option value='eth'>Ethereum</option>
                                     </select>
                                     <select value={this.state.language} id="languages" onChange={(e)=>this.setLanguage(e.target.value)}>
                                         <option value='en'>{i18n.t('english')}</option>
