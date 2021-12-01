@@ -113,7 +113,7 @@ class UserCampaigns extends Component {
         }
     }
 
-    loadCampaigns() {
+    async loadCampaigns() {
         this.setState({showModal:true, modalTitle: 'processingWait',
             modalMessage: 'waitingForNetowork', errorIcon:'HourglassSplit',
             modalButtonVariant: "gold", waitToClose: true});
