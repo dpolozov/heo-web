@@ -42,7 +42,7 @@
     "shrink-string": "^3.0.9",
     "walletconnect": "1.6.6",
     "web-vitals": "^0.2.4",
-    "web3": "1.6.0",
+    "web3": "1.6.1",
     "web3modal": "https://publicnpm.s3.eu-west-2.amazonaws.com/web3modal-1.9.5.tgz"
   },
   "devDependencies": {
