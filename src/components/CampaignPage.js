@@ -180,6 +180,7 @@ class CampaignPage extends Component {
                         // Binance Chain Extension Wallet does not support network events
                         // so we have to poll for transaction status instead of using
                         // event listeners and promises.
+                        console.log(`Using provider ${window.web3Modal.cachedProvider}`);
                         coinInstance.methods.approve(this.state.campaign._id, toDonate).send(
                             {from:accounts[0]}
                         ).once('transactionHash', function(transactionHash){
@@ -403,10 +404,10 @@ function checkDonationTransaction(txnObject, that) {
     } else {
         that.state.web3.eth.getTransaction(txnObject.hash).then(function(txnObject2) {
             if(txnObject2) {
-                checkDonationTransaction(txnObject2, that);
+                setTimeout(checkDonationTransaction, 3000, txnObject2, that);
             } else {
                 console.log(`Empty txnObject2. Using transaction hash to check status.`);
-                checkDonationTransaction({hash:txnObject.hash}, that);
+                setTimeout(checkDonationTransaction, 3000, {hash:txnObject.hash}, that);
             }
         });
     }
@@ -454,10 +455,10 @@ function checkApprovalTransaction(txnObject, that) {
             that.state.web3.eth.getTransaction(txnObject.hash).then(function(txnObject2) {
                 if(txnObject2) {
                     console.log(`Got updated txnObject for approval transaction`);
-                    checkApprovalTransaction(txnObject2, that);
+                    setTimeout(checkApprovalTransaction, 3000, txnObject2, that);
                 } else {
                     console.log(`txnObject2 is null. Using txnObject with transaction hash`);
-                    checkApprovalTransaction(txnObject, that);
+                    setTimeout(checkApprovalTransaction, 3000, txnObject, that);
                 }
             });
         } else {
