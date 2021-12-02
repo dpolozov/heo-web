@@ -295,7 +295,7 @@ class UserCampaigns extends Component {
                                                     <Card.Title>{item.title}</Card.Title> 
                                                     <Card.Text>{`${DescriptionPreview(item.description)}...`}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span id='readMore'><Trans i18nKey='readMore'/></span></Card.Text>
                                                     <p id='progressBarLabel'><span id='progressBarLabelStart'>{`$${item.raisedAmount}`}</span>{i18n.t('raised')}{item.maxAmount} {i18n.t('goal')}</p>
-                                                    <ProgressBar now={item.percentRaised} /> 
+                                                    <ProgressBar now={100 * item.raisedAmount/item.maxAmount} />
                                                 </Card.Body>
                                             </Row>
                                             </Link>

@@ -88,7 +88,7 @@ class CampaignList extends Component {
                                                     </Card.Text>
                                                     <p id='progressBarLabel'><span id='progressBarLabelStart'>
                                                         <img src={IMG_MAP[item.currencyName]} width={16} height={16} style={{marginRight:5}} />{item.raisedAmount}</span>{i18n.t('raised')}{item.maxAmount} {i18n.t('goal')}</p>
-                                                    <ProgressBar now={item.percentRaised} /> 
+                                                    <ProgressBar now={100 * item.raisedAmount/item.maxAmount} />
                                                 </Card.Body>
                                             </Row>
                                             <Row >

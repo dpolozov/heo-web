@@ -54,6 +54,7 @@ class CampaignPage extends Component {
         .then(res => {
             //console.log(res.data);
             campaign = res.data;
+            campaign.percentRaised = 100 * campaign.raisedAmount/campaign.maxAmount;
             const contentState = convertFromRaw(campaign.descriptionEditor);
             this.state.editorState = EditorState.createWithContent(contentState, createDecorator());
         }).catch(err => {
