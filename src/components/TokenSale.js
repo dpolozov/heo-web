@@ -9,6 +9,7 @@ import i18next from 'i18next';
 import { LogIn, initWeb3, initWeb3Modal, clearWeb3Provider } from '../util/Utilities';
 import bnbIcon from '../images/binance-coin-bnb-logo.png';
 import busdIcon from '../images/binance-usd-busd-logo.png';
+import heoIcon from '../images/heo-logo.png';
 import Web3Modal from 'web3modal';
 import Web3 from 'web3';
 import WalletConnectProvider from '@walletconnect/web3-provider';
@@ -16,7 +17,7 @@ import '../css/tokensale.css';
 import '../css/modal.css';
 
 var ERC20Coin, HEOGlobalParameters, HEOPriceOracle, HEOSale, currencyInstance;
-const IMG_MAP = {BUSD: busdIcon, BNB: bnbIcon};
+const IMG_MAP = {BUSD: busdIcon, BNB: bnbIcon, HEO: heoIcon};
 
 class TokenSale extends React.Component {
     constructor(props) {
@@ -33,7 +34,8 @@ class TokenSale extends React.Component {
             currencyAddress:"",
             currencyName:"",
             amount:0,
-            unsold:0,
+            unsoldHeo:"",
+            minInvestment: "",
             cost:0,
             myInvestments:[]
         };
@@ -48,7 +50,7 @@ class TokenSale extends React.Component {
                 await initWeb3(this);
             }
             var web3 = this.state.web3;
-            var toPay = web3.utils.toWei(this.state.amount);
+            var toPay = web3.utils.toWei(this.state.amount+"");
             var accounts = this.state.accounts;
             var that = this;
             this.setState({
@@ -69,10 +71,10 @@ class TokenSale extends React.Component {
                         web3.eth.getTransaction(transactionHash).then(
                             function(txnObject) {
                                 if(txnObject) {
-                                    checkApprovalTransaction(txnObject, that);
+                                    setTimeout(checkApprovalTransaction, 1000, txnObject, that);
                                 } else {
                                     console.log(`getTransaction returned null. Using transaction hash`);
-                                    checkApprovalTransaction({hash:transactionHash}, that);
+                                    setTimeout(checkApprovalTransaction, 1000, {hash:transactionHash}, that);
                                 }
                             }
                         );
@@ -97,7 +99,7 @@ class TokenSale extends React.Component {
                     console.log('Approved spending');
                     this.setState({
                         showModal: true, modalTitle: 'processingWait',
-                        modalMessage: "approveDonate",
+                        modalMessage: "approveInvest",
                         errorIcon: 'HourglassSplit', modalButtonVariant: "gold", waitToClose: true
                     });
                     result = await HEOSale.methods.sell(toPay).send(
@@ -110,7 +112,7 @@ class TokenSale extends React.Component {
 
                     this.setState({
                         showModal: true, modalTitle: 'complete',
-                        modalMessage: 'thankYouDonation',
+                        modalMessage: 'thankYouInvestor',
                         errorIcon: 'CheckCircle', modalButtonMessage: 'closeBtn',
                         modalButtonVariant: '#588157', waitToClose: false
                     });
@@ -149,7 +151,7 @@ class TokenSale extends React.Component {
                         <p className='modalTitle'><Trans i18nKey={this.state.modalTitle} /></p>
                         <p className='modalMessage'>
                             <Trans i18nKey={this.state.modalMessage}
-                                   values={{donationAmount: this.state.donationAmount, currencyName: this.state.currencyName }} />
+                                   values={{amount: this.state.amount, currencyName: this.state.currencyName }} />
                         </p>
                         {!this.state.waitToClose &&
                         <Button className='myModalButton'
@@ -166,26 +168,34 @@ class TokenSale extends React.Component {
                         }
                     </Modal.Body>
                 </Modal>
-                <Container>
-                        <h1>Current price of HEO token {this.state.heoPrice} {this.state.currencyName} <img src={IMG_MAP[this.state.currencyName]} width={16} height={16} style={{marginRight:5}} /> </h1>
-                        <h2>HEO tokens available for sale at this price: {this.state.unsold}</h2>
+                <Container id='mainContainer'>
+                    <Row id={"topRow"}>
+                        <h1>Current price of <img src={IMG_MAP["HEO"]} width={20} height={20} style={{marginRight:5}} />HEO token {this.state.heoPrice} <img src={IMG_MAP[this.state.currencyName]} width={20} height={20} style={{marginRight:5}} /> {this.state.currencyName}</h1>
+                        <h2><img src={IMG_MAP["HEO"]} width={20} height={20} style={{marginRight:5}} />HEO tokens available for sale at this price: {this.state.unsoldHeo}</h2>
+                        <h2>Minimum investment amount: {this.state.minInvestment} <img src={IMG_MAP[this.state.currencyName]} width={18} height={18} style={{marginRight:5}} /> {this.state.currencyName}</h2>
+                    </Row>
+                    <Row id={"buyRow"}>
                         <Form>
                             <Form.Group as={Row} className="mb-3" >
-                                <Form.Label  column>Enter amount to invest in {this.state.currencyName}</Form.Label>
+                                <Form.Label  column>Amount in {this.state.currencyName}:</Form.Label>
                                 <Col>
-                                    <Form.Control name='amount' value={this.state.amount} onChange={this.handleAmountChange} />
+                                    <Form.Control id='amount' value={this.state.amount} onChange={this.handleAmountChange} />
                                 </Col>
                                 <Col>
-                                    <Button name='buyButton' onClick={this.handleBuy}>Invest <img src={IMG_MAP[this.state.currencyName]} width={16} height={16} style={{marginRight:5}} /></Button>
+                                    <Button id='buyButton' onClick={this.handleBuy}>Invest <img src={IMG_MAP[this.state.currencyName]} width={16} height={16} style={{marginRight:5}} /></Button>
                                 </Col>
                             </Form.Group>
                         </Form>
-                 <h2>Your investments (account: {(this.state.accountAddress + "").substring(0, 5)}...{(this.state.accountAddress + "").substring(38, 43)})</h2>
-                 <Row><Col>Amount paid</Col><Col>HEO purchased</Col><Col>HEO Vested</Col><Col>HEO Claimed</Col></Row>
+                    </Row>
+                    <Row id={"investmentsHeaderRow"}>
+                     <h2>Your investments (account: {(this.state.accountAddress + "").substring(0, 5)}...{(this.state.accountAddress + "").substring(38, 43)})</h2>
+                    </Row>
+                    <Row id={"tableHeaderRow"}><Col>Date</Col><Col>Amount paid</Col><Col>HEO purchased</Col><Col>HEO Vested</Col><Col>HEO Claimed</Col></Row>
                     {this.state.myInvestments.map((item, i) =>
                         <Row style={{marginBottom: '20px'}} key={i}>
-                            <Col>{item.amnt}</Col>
-                            <Col>{item.heo}</Col>
+                            <Col>{new Date(item.ts * 1000).toLocaleString()}</Col>
+                            <Col>{item.amnt} <img src={IMG_MAP[this.state.currencyName]} width={16} height={16} style={{marginRight:5}} /></Col>
+                            <Col>{item.heo} <img src={IMG_MAP["HEO"]} width={18} height={18} style={{marginRight:5}} /></Col>
                             <Col>{item.vested}</Col>
                             <Col>{item.claimed}</Col>
                         </Row>
@@ -201,14 +211,16 @@ class TokenSale extends React.Component {
         var web3 = this.state.web3;
         for(var i in myInvestments) {
             console.log(`Loading myInvestments[i]`);
-            let amountPaid = await web3.utils.fromWei(await HEOSale.methods.getSaleAmount(myInvestments[i]).call());
+            let saleTs = await await HEOSale.methods.saleTS(myInvestments[i]).call();
+            let amountPaid = await web3.utils.fromWei(await HEOSale.methods.saleAmount(myInvestments[i]).call());
             let saleEquity = await web3.utils.fromWei(await HEOSale.methods.saleEquity(myInvestments[i]).call());
             let vestedEquity = await web3.utils.fromWei(await HEOSale.methods.vestedEquity(myInvestments[i]).call());
             let claimedEquity = await web3.utils.fromWei(await HEOSale.methods.claimedEquity(myInvestments[i]).call());
-            investments.push({amnt: amountPaid, heo: saleEquity, vested: vestedEquity, claimed: claimedEquity});
+            investments.push({ts: saleTs, amnt: amountPaid, heo: saleEquity, vested: vestedEquity, claimed: claimedEquity});
         }
         this.setState({myInvestments:investments})
     }
+
     async componentDidMount() {
         await initWeb3Modal(this);
         if(!this.state.web3 || !this.state.accounts) {
@@ -216,7 +228,7 @@ class TokenSale extends React.Component {
         }
         var web3 = this.state.web3;
         var accounts = this.state.accounts;
-
+        console.log(`Configured for ${config.get("CHAIN")}`);
         var abi = (await import("../remote/" + config.get("CHAIN") + "/HEOPriceOracle")).abi;
         var address = (await import("../remote/" + config.get("CHAIN") + "/HEOPriceOracle")).address;
         HEOPriceOracle = new this.state.web3.eth.Contract(abi, address);
@@ -226,20 +238,22 @@ class TokenSale extends React.Component {
         HEOSale = new this.state.web3.eth.Contract(HEOSaleAbi, HEOSaleAddress);
         ERC20Coin = (await import("../remote/"+ config.get("CHAIN") + "/ERC20")).default;
 
-        let cAddress = (await HEOSale.methods.acceptedToken().call()).toLowerCase();
-        let priceObject = await HEOPriceOracle.methods.getPrice(cAddress).call();
+        let _currencyAddress = (await HEOSale.methods.acceptedToken().call()).toLowerCase();
+        let priceObject = await HEOPriceOracle.methods.getPrice(_currencyAddress).call();
         console.log(`Token price ${priceObject.price} / ${priceObject.decimals}`);
         console.log(priceObject);
-        let hPrice = priceObject.price/priceObject.decimals;
-        currencyInstance = new web3.eth.Contract(ERC20Coin, cAddress);
+        let _heoPrice = priceObject.price/priceObject.decimals;
+        currencyInstance = new web3.eth.Contract(ERC20Coin, _currencyAddress);
         
-        let cName = await currencyInstance.methods.symbol().call();
-        let unsoldHeo = await web3.utils.fromWei(await HEOSale.methods.unsoldBalance().call());
+        let _currencyName = await currencyInstance.methods.symbol().call();
+        let _unsoldHeo = await web3.utils.fromWei(await HEOSale.methods.unsoldBalance().call());
+        let _minInvestment = await web3.utils.fromWei(await HEOSale.methods.minInvestment().call());
         this.setState({
-            currencyAddress: cAddress,
-            heoPrice: hPrice,
-            currencyName:cName,
-            unsold:unsoldHeo,
+            currencyAddress: _currencyAddress,
+            heoPrice: _heoPrice,
+            currencyName: _currencyName,
+            unsoldHeo: _unsoldHeo,
+            minInvestment: _minInvestment,
             accountAddress:accounts[0],
             saleContractAddress:HEOSaleAddress});
         this.loadInvestments();
@@ -248,22 +262,23 @@ class TokenSale extends React.Component {
 
 function checkSellTransaction(txnObject, that) {
     if(txnObject.blockNumber) {
-        console.log(`Donation transaction successful in block ${txnObject.blockNumber}`);
+        console.log(`Sale transaction successful in block ${txnObject.blockNumber}`);
         let accounts = that.state.accounts;
         let web3 = that.state.web3;
         that.setState({
             showModal: true, modalTitle: 'complete',
-            modalMessage: 'thankYouDonation',
+            modalMessage: 'thankYouInvestor',
             errorIcon: 'CheckCircle', modalButtonMessage: 'closeBtn',
             modalButtonVariant: '#588157', waitToClose: false
         });
+        that.loadInvestments();
     } else {
         that.state.web3.eth.getTransaction(txnObject.hash).then(function(txnObject2) {
             if(txnObject2) {
-                checkSellTransaction(txnObject2, that);
+                setTimeout(checkSellTransaction, 3000, txnObject2, that);
             } else {
                 console.log(`Empty txnObject2. Using transaction hash to check status.`);
-                checkSellTransaction({hash:txnObject.hash}, that);
+                setTimeout(checkSellTransaction, 3000, {hash:txnObject.hash}, that);
             }
         });
     }
@@ -271,14 +286,13 @@ function checkSellTransaction(txnObject, that) {
 
 function checkApprovalTransaction(txnObject, that) {
     if(txnObject && txnObject.blockNumber) {
-        //successful, can make a donation now
+        //successful, can make the sale now
         let web3 = that.state.web3;
         let accounts = that.state.accounts;
-
-        let toPay = web3.utils.toWei(that.state.toPay);
+        let toPay = web3.utils.toWei(that.state.amount+"");
         that.setState({
             showModal: true, modalTitle: 'processingWait',
-            modalMessage: "approveDonate",
+            modalMessage: "approveInvest",
             errorIcon: 'HourglassSplit', modalButtonVariant: "gold", waitToClose: true
         });
         HEOSale.methods.sell(toPay).send(
@@ -290,7 +304,7 @@ function checkApprovalTransaction(txnObject, that) {
                     if(txnObject2) {
                         checkSellTransaction(txnObject2, that);
                     } else {
-                        console.log(`Empty txnObject2. Using transaction hash to check donation status.`);
+                        console.log(`Empty txnObject2. Using transaction hash to check sale transaction status.`);
                         checkSellTransaction({hash:transactionHash}, that);
                     }
                 }
@@ -311,10 +325,10 @@ function checkApprovalTransaction(txnObject, that) {
             that.state.web3.eth.getTransaction(txnObject.hash).then(function(txnObject2) {
                 if(txnObject2) {
                     console.log(`Got updated txnObject for approval transaction`);
-                    checkApprovalTransaction(txnObject2, that);
+                    setTimeout(checkApprovalTransaction, 3000, txnObject2, that);
                 } else {
                     console.log(`txnObject2 is null. Using txnObject with transaction hash`);
-                    checkApprovalTransaction(txnObject, that);
+                    setTimeout(checkApprovalTransaction, 3000, txnObject, that);
                 }
             });
         } else {
