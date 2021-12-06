@@ -6,7 +6,7 @@ import { ChevronLeft, Gift, CheckCircle, ExclamationTriangle, HourglassSplit, XC
 import ReactPlayer from 'react-player';
 import { Link } from "react-router-dom";
 import { Trans } from 'react-i18next';
-import { initWeb3, initWeb3Modal, clearWeb3Provider } from '../util/Utilities';
+import { i18nString, initWeb3, initWeb3Modal, clearWeb3Provider } from '../util/Utilities';
 import i18n from '../util/i18n';
 import countryMap from '../countryMap';
 import { Editor, EditorState, convertFromRaw, CompositeDecorator } from "draft-js";
@@ -52,11 +52,35 @@ class CampaignPage extends Component {
         let data = {ID : address};
         await axios.post('/api/campaign/loadOne', data, {headers: {"Content-Type": "application/json"}})
         .then(res => {
-            //console.log(res.data);
+            console.log(res.data);
             campaign = res.data;
             campaign.percentRaised = 100 * campaign.raisedAmount/campaign.maxAmount;
-            const contentState = convertFromRaw(campaign.descriptionEditor);
-            this.state.editorState = EditorState.createWithContent(contentState, createDecorator());
+            var contentState = {};
+            if(campaign.descriptionEditor[i18n.language]) {
+                for(var lng in campaign.descriptionEditor) {
+                    contentState[lng] = convertFromRaw(campaign.descriptionEditor[lng]);
+                }
+            } else if(campaign.descriptionEditor["default"]) {
+                for(var lng in campaign.descriptionEditor) {
+                    contentState[lng] = convertFromRaw(campaign.descriptionEditor[lng]);
+                }
+                contentState[i18n.language] = convertFromRaw(campaign.descriptionEditor["default"]);
+            } else {
+                contentState[i18n.language] = convertFromRaw(campaign.descriptionEditor);
+            }
+
+            this.setState({
+                editorState: EditorState.createWithContent(contentState[i18n.language], createDecorator())
+            })
+            var that = this;
+            i18n.on('languageChanged', function(lng) {
+                if(contentState[lng]) {
+                    that.setState({
+                        editorState: EditorState.createWithContent(contentState[lng], createDecorator())
+                    })
+                }
+            })
+
         }).catch(err => {
             if (err.response) {
                 modalMessage = 'technicalDifficulties'}
@@ -298,9 +322,9 @@ class CampaignPage extends Component {
                         </Col>
                         <Col id='infoCol'>
                             <Row id='titleRow'>
-                                <p id='title'>{this.state.campaign.title}</p>
+                                <p id='title'>{i18nString(this.state.campaign.title, i18n.language)}</p>
                             </Row>
-                            <Row id='countryRow'><h2>{this.state.campaign.org} ({countryMap[this.state.campaign.cn]})</h2></Row>
+                            <Row id='countryRow'><h2>{i18nString(this.state.campaign.org, i18n.language)} ({countryMap[this.state.campaign.cn]})</h2></Row>
                             <Row id='progressRow'>
                                 <p id='progressBarLabel'><span id='progressBarLabelStart'><img src={IMG_MAP[this.state.campaign.currencyName]} width={16} height={16} style={{marginRight:5}} />{`${this.state.campaign.raisedAmount}`}</span>{i18n.t('raised')}{this.state.campaign.maxAmount} {i18n.t('goal')}</p>
                                 <ProgressBar id='progressBar' now={this.state.campaign.percentRaised}/>
@@ -334,7 +358,7 @@ class CampaignPage extends Component {
                     </Row>
                     <Row id='descriptionRow'>
                         <Container>
-                            <Editor editorState={this.state.editorState} readOnly={true} decorators={true}/>  
+                            <Editor editorState={this.state.editorState} readOnly={true} decorators={true}/>
                         </Container>
                     </Row>
                 </Container>

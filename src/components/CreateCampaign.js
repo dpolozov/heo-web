@@ -137,17 +137,22 @@ class CreateCampaign extends React.Component {
 
     async addCampaignToDb(campaignData) {
         try {
-            campaignData.title = this.state.title;
+            campaignData.title = {"default": this.state.title};
+            campaignData.title[i18n.language] = this.state.title;
             campaignData.currencyName = this.state.currencyName;
-            campaignData.description = this.state.description;
+            campaignData.description = {"default": this.state.description};
+            campaignData.description[i18n.language] = this.state.description;
             campaignData.mainImageURL = this.state.mainImageURL;
             campaignData.maxAmount = this.state.maxAmount;
             campaignData.vl = this.state.vl;
             campaignData.fn = this.state.fn;
             campaignData.ln = this.state.ln;
-            campaignData.org = this.state.org;
+            campaignData.org = {"default": this.state.org};
+            campaignData.org[i18n.language] = this.state.org;
             campaignData.cn = this.state.cn;
-            campaignData.descriptionEditor = getEditorState();
+            let editorState = getEditorState();
+            campaignData.descriptionEditor = {"default": editorState};
+            campaignData.descriptionEditor[i18n.language] = editorState;
             let res = await axios.post('/api/campaign/add', {mydata : campaignData},
                 {headers: {"Content-Type": "application/json"}});
             this.setState({showModal:true, goHome: true,
@@ -170,17 +175,26 @@ class CreateCampaign extends React.Component {
     }
 
     async createCampaign(imgUrl) {
+        var titleObj = {"default": this.state.title};
+        titleObj[i18n.language] = this.state.title;
+        var orgObj = {"default": this.state.org};
+        orgObj[i18n.language] = this.state.org;
+        var descriptionObj = {"default": this.state.description};
+        descriptionObj[i18n.language] = this.state.description;
+        let editorState = getEditorState();
+        var editorObj = {"default": editorState};
+        editorObj[i18n.language] = editorState;
         let compressed_meta = await compress(JSON.stringify(
-            {   title: this.state.title,
-                description: this.state.description,
+            {   title: titleObj,
+                description: descriptionObj,
                 mainImageURL: imgUrl,
                 fn: this.state.fn,
                 ln: this.state.ln,
-                org: this.state.org,
+                org: orgObj,
                 cn: this.state.cn,
                 vl: this.state.vl,
                 currencyName: this.state.currencyName,
-                descriptionEditor : getEditorState(),
+                descriptionEditor : editorObj,
             })
         );
         try {
@@ -500,8 +514,8 @@ class CreateCampaign extends React.Component {
         let currencyOptions = (config.get("chainconfigs")[config.get("CHAIN")]["currencies"]);
         this.setState({currencies: currencyOptions,
             currencyAddress: options[0].value,
-            currencyName:options[0].text}
-        );
+            currencyName: options[0].text
+        });
         // is the user logged in?
         if(!this.state.isLoggedIn) {
             await checkAuth(this);

@@ -34,10 +34,13 @@ class EditCampaign extends React.Component {
             fn:"",
             ln:"",
             org:"",
+            ogOrg:{},
             cn:"",
             vl:"",
             title:"",
+            ogTitle:{},
             description:"",
+            ogDescription:{},
             mainImageURL: "",
             imgID:"",
             mainImageFile:"",
@@ -160,17 +163,26 @@ class EditCampaign extends React.Component {
             modalButtonVariant: "gold", waitToClose: true})
         try {
             let data = {
-                title: this.state.title,
-                description: this.state.description,
                 mainImageURL: this.state.mainImageURL,
                 fn: this.state.fn,
                 ln: this.state.ln,
-                org: this.state.org,
                 cn: this.state.cn,
                 vl: this.state.vl,
-                currencyName: this.state.currencyName,
-                descriptionEditor : getEditorState()
+                currencyName: this.state.currencyName
             };
+            data.description = this.state.ogDescription;
+            data.description[i18n.language] = data.description["default"] = this.state.description;
+            data.title = this.state.ogTitle;
+            data.title[i18n.language] = data.title["default"] = this.state.title;
+            data.descriptionEditor = this.state.ogDescriptionEditor;
+            data.descriptionEditor[i18n.language] = data.descriptionEditor["default"] = getEditorState();
+            data.org = this.state.ogOrg;
+            data.org[i18n.language] = data.org["default"] = this.state.org;
+            console.log(`Updating title to`);
+            console.log(data.title);
+            console.log(`Updating org to`);
+            console.log(data.org);
+
             let compressed_meta = await compress(JSON.stringify(data));
             let result = await CAMPAIGNINSTANCE.methods.update(
                 this.state.web3.utils.toWei(this.state.maxAmount), compressed_meta).send({from:this.state.accounts[0]}, () => {
@@ -180,6 +192,7 @@ class EditCampaign extends React.Component {
                 });
             data.maxAmount = this.state.maxAmount;
             let dataForDB = {address: this.state.campaignAddress, dataToUpdate: data};
+
             try {
                 await axios.post('/api/campaign/update', {mydata : dataForDB},
                     {headers: {"Content-Type": "application/json"}});
@@ -327,7 +340,6 @@ class EditCampaign extends React.Component {
     async componentDidMount() {
         let toks = this.props.location.pathname.split("/");
         let address = toks[toks.length -1];
-
         await initWeb3Modal();
         let options = (config.get("chainconfigs")[config.get("CHAIN")]["currencyOptions"]);
         let currencyOptions = (config.get("chainconfigs")[config.get("CHAIN")]["currencies"]);
@@ -364,22 +376,60 @@ class EditCampaign extends React.Component {
                 metaData.imgID = splits[splits.length-1];
             }
         }
+
+        var orgObj = {};
+        if(typeof metaData.org == "string") {
+            orgObj.default = metaData.org;
+            orgObj[i18n.language] = metaData.org;
+        } else {
+            orgObj = metaData.org;
+        }
+        var titleObj = {};
+        if(typeof metaData.title == "string") {
+            console.log(`metaData.title is a string (${metaData.title})`);
+            titleObj.default = metaData.title;
+            titleObj[i18n.language] = metaData.title;
+        } else {
+            titleObj = metaData.title;
+        }
+        var descriptionObj = {};
+        if(typeof metaData.description == "string") {
+            descriptionObj.default = metaData.description;
+            descriptionObj[i18n.language] = metaData.description;
+        } else {
+            descriptionObj = metaData.description;
+        }
+        var descriptionEditorObj = {};
+        if(metaData.descriptionEditor && metaData.descriptionEditor[i18n.language] || metaData.descriptionEditor["default"]) {
+            descriptionEditorObj = metaData.descriptionEditor;
+        } else if(metaData.descriptionEditor) {
+            descriptionEditorObj = {"default": metaData.descriptionEditor};
+            descriptionEditorObj[i18n.language] = metaData.descriptionEditor;
+        }
         this.setState({
             campaignAddress : address,
             fn : metaData.fn,
             ln : metaData.ln,
-            org: metaData.org,
             cn : metaData.cn,
             vl : metaData.vl,
             imgID: metaData.imgID,
-            title: metaData.title,
-            description: metaData.description,
+            org: orgObj[i18n.language],
+            ogOrg: orgObj,
+            title: titleObj[i18n.language],
+            ogTitle: titleObj,
+            description: descriptionObj[i18n.language],
+            ogDescription: descriptionObj,
+            ogDescriptionEditor: descriptionEditorObj,
             mainImageURL: metaData.mainImageURL,
             maxAmount : maxAmount,
             currencyName: metaData.currencyName
         });
-        if(metaData.descriptionEditor){
-            setEditorState(metaData.descriptionEditor, true);
+        console.log(`Set title to`);
+        console.log(this.state.ogTitle);
+        console.log(`Set org to`);
+        console.log(this.state.ogOrg);
+        if(descriptionEditorObj[i18n.language]) {
+            setEditorState(descriptionEditorObj[i18n.language], true);
             this.setState({updatedEditorState : true});
         } else {
             setEditorState({}, false);
