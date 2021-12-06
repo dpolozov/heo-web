@@ -5,7 +5,7 @@ import '../css/campaignList.css';
 import '../css/modal.css';
 import { Container, Row, Col, Card, ProgressBar, Button, Modal } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
-import { DescriptionPreview } from '../util/Utilities';
+import { GetLanguage, i18nString, DescriptionPreview } from '../util/Utilities';
 import { Trans } from 'react-i18next';
 import i18n from '../util/i18n';
 import countryMap from '../countryMap';
@@ -27,7 +27,7 @@ class CampaignList extends Component {
 
     async componentDidMount() {
         this.setState({
-            campaigns : (await this.getCampaigns()),
+            campaigns : (await this.getCampaigns())
         });
         console.log(this.state.campaigns);
     }
@@ -82,9 +82,9 @@ class CampaignList extends Component {
                                         <Col >
                                             <Row>                                  
                                                 <Card.Body>
-                                                    <Card.Title>{item.title}</Card.Title>
-                                                    <Card.Text><h2>{item.org} ({countryMap[item.cn]})</h2>
-                                                        {`${DescriptionPreview(item.description)}...`}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span id='readMore'><Trans i18nKey='readMore'/></span>
+                                                    <Card.Title>{i18nString(item.title, i18n.language)}</Card.Title>
+                                                    <Card.Text><h2>{i18nString(item.org, i18n.language)} ({countryMap[item.cn]})</h2>
+                                                        {`${DescriptionPreview(item.description, i18n.language)}...`}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span id='readMore'><Trans i18nKey='readMore'/></span>
                                                     </Card.Text>
                                                     <p id='progressBarLabel'><span id='progressBarLabelStart'>
                                                         <img src={IMG_MAP[item.currencyName]} width={16} height={16} style={{marginRight:5}} />{item.raisedAmount}</span>{i18n.t('raised')}{item.maxAmount} {i18n.t('goal')}</p>

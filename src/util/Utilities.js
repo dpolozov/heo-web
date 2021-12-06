@@ -54,10 +54,28 @@ const LogIn = async (accountAdd, web3, that) => {
     }
 }
 
-function DescriptionPreview(description) {
+function i18nString(value, lang) {
+    if(!value || !lang) {
+        return "";
+    }
+    if(typeof value == "string") {
+        return value;
+    }
+    return value[lang] ? value[lang] : value["default"];
+}
+function DescriptionPreview(description, lang) {
     var i = 200;
+    var text = "";
     if(description !== undefined ){
-        let preview = description.trim();
+        console.log(`Rendering description ${description} in ${lang}`);
+        if (typeof description == "string") {
+            text = description;
+        } else if(description[lang] !== undefined) {
+            text = description[lang];
+        } else {
+            text = description["default"];
+        }
+        let preview = text.trim();
         var firstSpace = preview.indexOf(" ");
         if(firstSpace >= 200){
             return preview.substring(0,200);
@@ -187,5 +205,5 @@ const initWeb3Modal = async() => {
         });
     }
 }
-export {DescriptionPreview, GetLanguage, LogIn, initWeb3, checkAuth, initWeb3Modal, clearWeb3Provider };
+export {DescriptionPreview, i18nString, GetLanguage, LogIn, initWeb3, checkAuth, initWeb3Modal, clearWeb3Provider };
 export default Utilities;

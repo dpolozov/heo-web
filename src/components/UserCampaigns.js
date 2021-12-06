@@ -6,7 +6,7 @@ import { Container, Row, Col, Card, ProgressBar, Button, Modal } from 'react-boo
 import { ChevronLeft, CheckCircle, ExclamationTriangle, HourglassSplit, XCircle } from 'react-bootstrap-icons';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
-import { DescriptionPreview, LogIn, initWeb3, checkAuth, initWeb3Modal } from '../util/Utilities';
+import { i18nString, DescriptionPreview, LogIn, initWeb3, checkAuth, initWeb3Modal } from '../util/Utilities';
 import { Trans } from 'react-i18next';
 import i18n from '../util/i18n';
 import {UserContext} from './UserContext';
@@ -31,7 +31,7 @@ class UserCampaigns extends Component {
             whiteListed:false,
             showTwoButtons: false,
             campaignAddress: '',
-            fileName: '',
+            fileName: ''
         };
     }
 
@@ -292,8 +292,8 @@ class UserCampaigns extends Component {
                                             <Link to={'/campaign/' + item._id} id='cardLink'>
                                             <Row>                                  
                                                 <Card.Body>
-                                                    <Card.Title>{item.title}</Card.Title> 
-                                                    <Card.Text>{`${DescriptionPreview(item.description)}...`}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span id='readMore'><Trans i18nKey='readMore'/></span></Card.Text>
+                                                    <Card.Title>{i18nString(item.title, i18n.language)}</Card.Title>
+                                                    <Card.Text>{`${DescriptionPreview(item.description, i18n.language)}...`}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span id='readMore'><Trans i18nKey='readMore'/></span></Card.Text>
                                                     <p id='progressBarLabel'><span id='progressBarLabelStart'>{`$${item.raisedAmount}`}</span>{i18n.t('raised')}{item.maxAmount} {i18n.t('goal')}</p>
                                                     <ProgressBar now={100 * item.raisedAmount/item.maxAmount} />
                                                 </Card.Body>
