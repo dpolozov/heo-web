@@ -19,6 +19,8 @@ import '../css/modal.css';
 import Web3Modal from 'web3modal';
 import Web3 from 'web3';
 import WalletConnectProvider from '@walletconnect/web3-provider';
+import ReactGA from "react-ga4";
+ReactGA.initialize("G-C657WZY5VT");
 
 class CreateCampaign extends React.Component {
     constructor(props) {
@@ -509,6 +511,7 @@ class CreateCampaign extends React.Component {
 
     async componentDidMount() {
         setEditorState({}, false);
+        ReactGA.send({ hitType: "pageview", page: this.props.location.pathname });
         await initWeb3Modal();
         let options = (config.get("chainconfigs")[config.get("CHAIN")]["currencyOptions"]);
         let currencyOptions = (config.get("chainconfigs")[config.get("CHAIN")]["currencies"]);
