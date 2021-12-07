@@ -22,7 +22,9 @@ import {UserContext} from './UserContext';
 import Web3Modal from 'web3modal';
 import Web3 from 'web3';
 import WalletConnectProvider from '@walletconnect/web3-provider';
+import ReactGA from "react-ga4";
 
+ReactGA.initialize("G-C657WZY5VT");
 class App extends Component {
     constructor(props) {
         super(props);
@@ -54,9 +56,21 @@ class App extends Component {
     async setLanguage(lang) {
         await i18n.changeLanguage(lang);
         this.setState({language: lang});
+        ReactGA.event({
+            category: "language",
+            action: "language_changed",
+            value: lang,
+            nonInteraction: false
+        });
     }
 
     async setSwitchBlockchain(chain) {
+        ReactGA.event({
+            category: "blockchain_switch",
+            action: "language_switched",
+            value: chain,
+            nonInteraction: false
+        });
         if(chain == "bsc") {
             window.location="https://app.heo.finance"
         } else if(chain == "eth") {
@@ -74,13 +88,30 @@ class App extends Component {
             await axios.post('/api/auth/logout');
             this.setState({isLoggedIn : false});
             this.props.history.push('/');
+            ReactGA.event({
+                category: "login",
+                action: "logout",
+                nonInteraction: false
+            });
         } else {
             if(!this.state.accounts || !this.state.accounts[0] || !this.state.web3) {
                 await initWeb3(this);
             }
             try {
+                ReactGA.event({
+                    category: "login",
+                    action: "login",
+                    value: this.state.accounts[0],
+                    nonInteraction: false
+                });
                 await LogIn(this.state.accounts[0], this.state.web3, this);
                 if(this.state.isLoggedIn) {
+                    ReactGA.event({
+                        category: "login",
+                        action: "login_success",
+                        value: this.state.accounts[0],
+                        nonInteraction: false
+                    });
                     this.props.history.push('/');
                 } else {
                     this.setState({showModal:true,
@@ -90,6 +121,12 @@ class App extends Component {
                         modalButtonMessage: 'closeBtn',
                         modalButtonVariant: "#E63C36"}
                     );
+                    ReactGA.event({
+                        category: "login",
+                        action: "login_failed",
+                        value: this.state.accounts[0],
+                        nonInteraction: false
+                    });
                     await clearWeb3Provider(this);
                 }
             } catch (err) {
@@ -101,6 +138,12 @@ class App extends Component {
                     modalButtonMessage: 'closeBtn',
                     modalButtonVariant: "#E63C36"}
                 );
+                ReactGA.event({
+                    category: "login",
+                    action: "login_error",
+                    value: err,
+                    nonInteraction: false
+                });
                 await clearWeb3Provider(this);
             }
 

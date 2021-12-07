@@ -67,7 +67,6 @@ function DescriptionPreview(description, lang) {
     var i = 200;
     var text = "";
     if(description !== undefined ){
-        console.log(`Rendering description ${description} in ${lang}`);
         if (typeof description == "string") {
             text = description;
         } else if(description[lang] !== undefined) {

@@ -11,8 +11,10 @@ import i18n from '../util/i18n';
 import countryMap from '../countryMap';
 import bnbIcon from '../images/binance-coin-bnb-logo.png';
 import busdIcon from '../images/binance-usd-busd-logo.png';
+import ReactGA from "react-ga4";
 
 const IMG_MAP = {BUSD: busdIcon, BNB: bnbIcon};
+ReactGA.initialize("G-C657WZY5VT");
 
 class CampaignList extends Component {
     constructor(props) {
@@ -26,6 +28,7 @@ class CampaignList extends Component {
     }
 
     async componentDidMount() {
+        ReactGA.send({ hitType: "pageview", page: "/" });
         this.setState({
             campaigns : (await this.getCampaigns())
         });

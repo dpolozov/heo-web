@@ -15,6 +15,7 @@ import '../css/modal.css';
 import Web3Modal from 'web3modal';
 import Web3 from 'web3';
 import WalletConnectProvider from '@walletconnect/web3-provider';
+import ReactGA from "react-ga4";
 
 import bnbIcon from '../images/binance-coin-bnb-logo.png';
 import busdIcon from '../images/binance-usd-busd-logo.png';
@@ -23,6 +24,7 @@ const IMG_MAP = {BUSD: busdIcon, BNB: bnbIcon};
 var HEOCampaign, ERC20Coin;
 const donationAmount="";
 const currencyName="";
+ReactGA.initialize("G-C657WZY5VT");
 
 class CampaignPage extends Component {
     constructor(props) {
@@ -52,7 +54,6 @@ class CampaignPage extends Component {
         let data = {ID : address};
         await axios.post('/api/campaign/loadOne', data, {headers: {"Content-Type": "application/json"}})
         .then(res => {
-            console.log(res.data);
             campaign = res.data;
             campaign.percentRaised = 100 * campaign.raisedAmount/campaign.maxAmount;
             var contentState = {};
@@ -121,6 +122,14 @@ class CampaignPage extends Component {
             var accounts = this.state.accounts;
             var campaignInstance = new web3.eth.Contract(HEOCampaign, this.state.address);
             var coinAddress = (await campaignInstance.methods.currency().call()).toLowerCase();
+            var toDonate = web3.utils.toWei(this.state.donationAmount);
+            ReactGA.event({
+                category: "donation",
+                action: "donate_button_click",
+                value: this.state.donationAmount, // optional, must be a number
+                nonInteraction: false
+            });
+            //check if donating to oneself
             if(accounts[0].toLowerCase() == this.state.campaign.beneficiaryId.toLowerCase()){
                 this.setState({
                     showModal: true, modalTitle: 'notAllowed',
@@ -128,9 +137,14 @@ class CampaignPage extends Component {
                     errorIcon: 'ExclamationTriangle', modalButtonMessage: 'closeBtn',
                     modalButtonVariant: '#E63C36', waitToClose: false
                 });
+                ReactGA.event({
+                    category: "donation",
+                    action: "self_donation_blocked",
+                    value: this.state.campaign.beneficiaryId, // optional, must be a number
+                    nonInteraction: false
+                });
                 return;
             }
-            var toDonate = web3.utils.toWei(this.state.donationAmount);
             var that = this;
             //for native donations
             if(coinAddress == "0x0000000000000000000000000000000000000000") {
@@ -202,6 +216,12 @@ class CampaignPage extends Component {
                 });
                 try {
                     if(window.web3Modal.cachedProvider != "injected") {
+                        ReactGA.event({
+                            category: "provider",
+                            action: "using_noninjected_provider",
+                            value: window.web3Modal.cachedProvider, // optional, must be a number
+                            nonInteraction: false
+                        });
                         // Binance Chain Extension Wallet does not support network events
                         // so we have to poll for transaction status instead of using
                         // event listeners and promises.
@@ -230,8 +250,20 @@ class CampaignPage extends Component {
                             //clearWeb3Provider(that)
                             console.log('error handler invoked in approval transaction')
                             console.log(error);
+                            ReactGA.event({
+                                category: "error",
+                                action: "donateerc20_approval_error",
+                                value: error, // optional, must be a number
+                                nonInteraction: false
+                            });
                         });
                     } else {
+                        ReactGA.event({
+                            category: "provider",
+                            action: "using_injected_provider",
+                            value: window.web3Modal.cachedProvider, // optional, must be a number
+                            nonInteraction: false
+                        });
                         console.log(`Using provider ${window.web3Modal.cachedProvider}`);
                         let result = await coinInstance.methods.approve(this.state.campaign._id, toDonate).send(
                             {from:accounts[0]}
@@ -267,6 +299,12 @@ class CampaignPage extends Component {
                         modalButtonVariant: '#E63C36', waitToClose: false,
                         modalMessage: 'blockChainTransactionFailed'
                     });
+                    ReactGA.event({
+                        category: "error",
+                        action: "transaction_error",
+                        value: err, // optional, must be a number
+                        nonInteraction: false
+                    });
                     clearWeb3Provider(this)
                     console.log(err);
                 }
@@ -278,6 +316,12 @@ class CampaignPage extends Component {
                 errorIcon: 'XCircle', modalButtonMessage: 'closeBtn',
                 modalButtonVariant: '#E63C36', waitToClose: false,
                 modalMessage: 'blockChainConnectFailed'
+            });
+            ReactGA.event({
+                category: "error",
+                action: "transaction_error",
+                value: err, // optional, must be a number
+                nonInteraction: false
             });
         }
     }
@@ -305,6 +349,12 @@ class CampaignPage extends Component {
                                         this.state.onModalClose();
                                     }
                                     this.setState({showModal: false, onModalClose: false});
+                                    ReactGA.event({
+                                        category: "button_click",
+                                        action: "modal_button_clicked",
+                                        value: this.state.modalButtonMessage, // optional, must be a number
+                                        nonInteraction: false
+                                    });
                                 }
                             }>
                             <Trans i18nKey={this.state.modalButtonMessage} />
@@ -376,6 +426,8 @@ class CampaignPage extends Component {
         });
         HEOCampaign = (await import("../remote/"+ config.get("CHAIN") + "/HEOCampaign")).default;
         ERC20Coin = (await import("../remote/"+ config.get("CHAIN") + "/ERC20")).default;
+
+        ReactGA.send({ hitType: "pageview", page: this.props.location.pathname });
     }
     
 }
@@ -426,6 +478,12 @@ function checkDonationTransaction(txnObject, that) {
             errorIcon: 'CheckCircle', modalButtonMessage: 'closeBtn',
             modalButtonVariant: '#588157', waitToClose: false
         });
+        ReactGA.event({
+            category: "donation",
+            action: "donation_succeeded",
+            value: that.state.donationAmount, // optional, must be a number
+            nonInteraction: false
+        });
     } else {
         that.state.web3.eth.getTransaction(txnObject.hash).then(function(txnObject2) {
             if(txnObject2) {
@@ -450,10 +508,22 @@ function checkApprovalTransaction(txnObject, that) {
             modalMessage: "approveDonate",
             errorIcon: 'HourglassSplit', modalButtonVariant: "gold", waitToClose: true
         });
+        ReactGA.event({
+            category: "donation",
+            action: "approval_succeeded",
+            value: that.state.donationAmount, // optional, must be a number
+            nonInteraction: false
+        });
         campaignInstance.methods.donateERC20(toDonate).send(
             {from:accounts[0]}
         ).once('transactionHash', function(transactionHash){
             console.log(`Got donation trnasaction hash ${transactionHash}`);
+            ReactGA.event({
+                category: "donation",
+                action: "donation_hash",
+                value: transactionHash, // optional, must be a number
+                nonInteraction: false
+            });
             web3.eth.getTransaction(transactionHash).then(
                 function(txnObject2) {
                     if(txnObject2) {
@@ -465,6 +535,12 @@ function checkApprovalTransaction(txnObject, that) {
                 }
             );
         }).on('error', function(error){
+            ReactGA.event({
+                category: "donation",
+                action: "donation_failed",
+                value: error, // optional, must be a number
+                nonInteraction: false
+            });
             that.setState({
                 showModal: true, modalTitle: 'failed',
                 errorIcon: 'XCircle', modalButtonMessage: 'closeBtn',
@@ -493,6 +569,12 @@ function checkApprovalTransaction(txnObject, that) {
                 errorIcon: 'XCircle', modalButtonMessage: 'closeBtn',
                 modalButtonVariant: '#E63C36', waitToClose: false,
                 modalMessage: 'blockChainTransactionFailed'
+            });
+            ReactGA.event({
+                category: "donation",
+                action: "transaction_failed",
+                value: "txnObject is null", // optional, must be a number
+                nonInteraction: false
             });
         }
     }

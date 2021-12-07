@@ -15,8 +15,10 @@ import i18next from 'i18next';
 import Web3Modal from 'web3modal';
 import Web3 from 'web3';
 import WalletConnectProvider from '@walletconnect/web3-provider';
+import ReactGA from "react-ga4";
 
 var CAMPAIGNINSTANCE;
+ReactGA.initialize("G-C657WZY5VT");
 
 class UserCampaigns extends Component {
     constructor(props) {
@@ -92,6 +94,7 @@ class UserCampaigns extends Component {
     }
 
     async componentDidMount() {
+        ReactGA.send({ hitType: "pageview", page: this.props.location.pathname });
         await initWeb3Modal(this);
         // is the user logged in?
         if(!this.state.isLoggedIn) {
