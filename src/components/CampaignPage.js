@@ -484,6 +484,13 @@ function checkDonationTransaction(txnObject, that) {
             value: that.state.donationAmount, // optional, must be a number
             nonInteraction: false
         });
+        ReactGA.event({
+            category: "purchase",
+            currency: that.state.campaign.currencyName,
+            action: "modal_button_clicked",
+            value: that.state.donationAmount, // optional, must be a number
+            items: [{item_id: that.state.address, item_name: that.state.campaign.title}]
+        });
     } else {
         that.state.web3.eth.getTransaction(txnObject.hash).then(function(txnObject2) {
             if(txnObject2) {
