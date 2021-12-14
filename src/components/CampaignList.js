@@ -16,7 +16,13 @@ import busdIcon from '../images/binance-usd-busd-logo.png';
 import usdcIcon from '../images/usd-coin-usdc-logo.png';
 import ethIcon from '../images/eth-diamond-purple.png';
 import cusdIcon from '../images/cusd-celo-logo.png';
-const IMG_MAP = {BUSD: busdIcon, BNB: bnbIcon, USDC: usdcIcon, ETH: ethIcon, cUSD: cusdIcon};
+import usdcAurora from '../images/usd-coin-aurora-logo.png';
+const IMG_MAP = {"BUSD-0xe9e7cea3dedca5984780bafc599bd69add087d56": busdIcon,
+    "BNB-0x0000000000000000000000000000000000000000": bnbIcon,
+    "USDC-0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48": usdcIcon,
+    "ETH-0x0000000000000000000000000000000000000000": ethIcon,
+    "cUSD-0x765DE816845861e75A25fCA122bb6898B8B1282a": cusdIcon,
+    "USDC-0xb12bfca5a55806aaf64e99521918a4bf0fc40802": usdcAurora};
 
 ReactGA.initialize("G-C657WZY5VT");
 
@@ -102,7 +108,7 @@ class CampaignList extends Component {
                                                     <div id='acceptingBtn' className='cardButtons'><p><Trans i18nKey='accepting'/></p>
                                                         <p id='currencyName'>
                                                             {Object.keys(item.coins).map((chain, i) =>
-                                                                <span><img src={IMG_MAP[item.coins[chain].name]} width={16} height={16} style={{marginLeft:5, marginRight:5}} />{item.coins[chain].name}</span>
+                                                                <span><img src={IMG_MAP[item.coins[chain].name+"-"+item.coins[chain].address]} width={20} height={20} style={{marginLeft:5, marginRight:5}} />{item.coins[chain].name}</span>
                                                             )}
 
                                                         </p>
