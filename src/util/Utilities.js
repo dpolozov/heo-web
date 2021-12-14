@@ -209,7 +209,16 @@ const initWeb3Modal = async(chainId) => {
                     rpc: rpc,
                     chainId: chainConfig["WEB3_RPC_CHAIN_ID"],
                     bridge: chainConfig["WC_BRIDGE_URL"],
-                    network: chainConfig["WC_CHAIN_NAME"]
+                    network: chainConfig["WC_CHAIN_NAME"],
+                    qrcodeModalOptions:{
+                        mobileLinks:[
+                            "metamask",
+                            "trust",
+                            "safepalwallet",
+                            "mathwallet",
+                            "celo"
+                        ]
+                    }
                 }
             },
             binancechainwallet: {
