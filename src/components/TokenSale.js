@@ -23,7 +23,7 @@ class TokenSale extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            step:1,
+            chain:"bsctest",
             showLoader:false,
             loaderMessage:"Please wait",
             showError:false,
@@ -45,9 +45,9 @@ class TokenSale extends React.Component {
 
     handleBuy = async (event, target) => {
         try {
-            await initWeb3Modal();
+            await initWeb3Modal(this.state.chain);
             if (!this.state.web3 || !this.state.accounts) {
-                await initWeb3(this);
+                await initWeb3(this.state.chain, this);
             }
             var web3 = this.state.web3;
             var toPay = web3.utils.toWei(this.state.amount+"");
@@ -222,12 +222,14 @@ class TokenSale extends React.Component {
     }
 
     async componentDidMount() {
-        await initWeb3Modal(this);
+        var chain = config.get("CHAIN");
+        await initWeb3Modal(chain);
         if(!this.state.web3 || !this.state.accounts) {
-            await initWeb3(this);
+            await initWeb3(chain, this);
         }
         var web3 = this.state.web3;
         var accounts = this.state.accounts;
+
         console.log(`Configured for ${config.get("CHAIN")}`);
         var abi = (await import("../remote/" + config.get("CHAIN") + "/HEOPriceOracle")).abi;
         var address = (await import("../remote/" + config.get("CHAIN") + "/HEOPriceOracle")).address;
@@ -249,6 +251,7 @@ class TokenSale extends React.Component {
         let _unsoldHeo = await web3.utils.fromWei(await HEOSale.methods.unsoldBalance().call());
         let _minInvestment = await web3.utils.fromWei(await HEOSale.methods.minInvestment().call());
         this.setState({
+            chain: chain,
             currencyAddress: _currencyAddress,
             heoPrice: _heoPrice,
             currencyName: _currencyName,
