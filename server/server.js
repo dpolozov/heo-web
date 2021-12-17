@@ -10,6 +10,7 @@ const jwt = require('express-jwt');
 const jsonwebtoken = require('jsonwebtoken');
 const cookieParser = require('cookie-parser')
 const ethereumutil = require("ethereumjs-util");
+const fs = require("fs");
 const PORT = process.env.PORT || 5000;
 
 require('dotenv').config({path : PATH.resolve(process.cwd(), '.env')});
@@ -47,6 +48,7 @@ function jwtErrorCatch (err, req, res, next) {
         next(err, req, res);
     }
 }
+
 APP.post('/api/uploadimage', (req,res) => {
     if(req.user && req.user.address) {
         const PARAMS = {
@@ -267,8 +269,35 @@ APP.post('/api/auth/logout', (req, res) => {
 
 // Handles any requests that don't match the ones above.
 // All other routing except paths defined above is done by React in the UI
-APP.get('*', (req,res) =>{
-    res.sendFile(PATH.join(__dirname, '..', 'build', 'index.html'));
+APP.get('*', async(req,res) =>{
+    var campaign, title, description, image;
+    var splitURL = req.url.split('/'); 
+    var campaignId = splitURL[splitURL.length -1]
+    if(splitURL.length > 2) {
+        try {
+            const DB = CLIENT.db(DBNAME);
+            campaign = await DB.collection("campaigns").findOne({"_id" : campaignId});     
+            title = campaign.title.default;
+            description = campaign.description.default;
+            image = campaign.mainImageURL;   
+            } catch (err){
+                console.log(error);
+            } 
+    } else {
+        title = "HEO App";
+        description = "Crowdfunding on blockchain.";
+        image = "https://app.heo.finance/static/media/heo-logo.e772bc1b";
+    }
+    const filePath = PATH.resolve(__dirname, '..', 'build', '_index.html');
+    fs.readFile(filePath, 'utf8', function (err, data){
+        if (err) {
+            return console.log(err);
+        }
+        data = data.replace(/\$OG_TITLE/g, title);
+        data = data.replace(/\$OG_DESCRIPTION/g, description);
+        result = data.replace(/\$OG_IMAGE/g, image);
+        res.send(result);
+    });
 });
 
 APP.listen(PORT);

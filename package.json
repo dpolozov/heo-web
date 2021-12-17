@@ -56,7 +56,7 @@
     "start-react": "react-scripts start",
     "start": "cd server && node server.js",
     "install-all": "npm --loglevel=error install && cd server && npm --loglevel=error install",
-    "build": "react-scripts build",
+    "build": "react-scripts build && mv build/index.html build/_index.html",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
