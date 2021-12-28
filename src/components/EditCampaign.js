@@ -294,11 +294,12 @@ class EditCampaign extends React.Component {
         this.setState({
             imageFileName : imgID,
         });
+        let fileType = this.state.mainImageFile.type.split("/")[1];
         const formData = new FormData();
         formData.append(
             "myFile",
             this.state.mainImageFile,
-            imgID,
+            `${imgID}.${fileType}`,
         );
         try {
             let res = await axios.post('/api/uploadimage', formData);
