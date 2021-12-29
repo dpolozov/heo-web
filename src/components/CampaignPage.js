@@ -152,6 +152,38 @@ class CampaignPage extends Component {
             }
         });
     }
+    handleDonateFiat = async () => {
+        let cardKeyData = await getPCIPublicKey();
+        let encryptedCardData = await encryptCardData(cardKeyData, {number:'4007400000000007', cvv:'123'});
+        let encryptedSecurityData = await encryptCardData(cardKeyData, {cvv:'123'});
+        let data = {
+            billingDetails: {
+                city: "San Francisco",
+                country: "US",
+                district: "CA",
+                line1: "111 Scott",
+                line2: "",
+                name: "Customer Zero",
+                postalCode: "94111"
+            },
+            keyId: cardKeyData.keyId,
+            encryptedCardData: encryptedCardData,
+            encryptedSecurityData: encryptedSecurityData,
+            expMonth: 12,
+            expYear: 2023,
+            email: "greg@heo.finance",
+            phoneNumber: "+16502790935",
+            campaignId: this.state.campaignId,
+            amount: this.state.donationAmount,
+            currency: "USD"
+        };
+        try{
+            let resp = await axios.post('/api/donatefiat', data, {headers: {"Content-Type": "application/json"}});
+        } catch (err) {
+
+        }
+
+    }
 
     handleDonateFiat = async () => {
         //TODO: check that this.state.donationAmount is larger than 0
