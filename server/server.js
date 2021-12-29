@@ -323,6 +323,7 @@ APP.post('/api/donatefiat', async (req, res) => {
         if(createCardResp && createCardResp.status >= 200 && createCardResp.data && createCardResp.data.data && createCardResp.data.data.id) {
             let paymentIdempotencyKey = uuidv4();
             //got card ID, can create a payment
+
             let paymentResp = await axios({
                 method: 'post',
                 baseURL: CIRCLE_API_URL,
@@ -439,7 +440,7 @@ APP.get('*', async(req,res) =>{
     var description = "Crowdfunding on blockchain.";
     var image = "https://app.heo.finance/static/media/heo-logo.e772bc1b.png";
     var url = "https://app.heo.finance";
-    var campaign;
+    var campaign, title, description, image;
     var splitURL = req.url.split('/');
     var campaignId = splitURL[splitURL.length -1]
 

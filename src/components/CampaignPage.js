@@ -115,61 +115,96 @@ class CampaignPage extends Component {
             }
         });
     }
+
     handleDonateFiat = async () => {
         //TODO: check that this.state.donationAmount is larger than 0
         let cardKeyData = await getPCIPublicKey();
-        let encryptedCardData = await encryptCardData(cardKeyData, {number:'4007400000000007', cvv:'123'});
-        let encryptedSecurityData = await encryptCardData(cardKeyData, {cvv:'123'});
+        let encryptedCardData = await encryptCardData(cardKeyData, {number:this.state.ccinfo.number, cvv:this.state.ccinfo.cvc});
+        let encryptedSecurityData = await encryptCardData(cardKeyData, {cvv:this.state.ccinfo.cvc});
         let data = {
             billingDetails: {
-                city: "San Francisco",
-                country: "US",
-                district: "CA",
-                line1: "111 Scott",
-                line2: "",
-                name: "Customer Zero",
-                postalCode: "94111"
+                city: this.state.ccinfo.city,
+                country: this.state.ccinfo.country,
+                district: this.state.ccinfo.district,
+                line1: this.state.ccinfo.line1,
+                line2: this.state.ccinfo.line2,
+                name: this.state.ccinfo.name,
+                postalCode: this.state.ccinfo.postalCode
             },
             keyId: cardKeyData.keyId,
             encryptedCardData: encryptedCardData,
             encryptedSecurityData: encryptedSecurityData,
-            expMonth: 12,
-            expYear: 2023,
-            email: "greg@heo.finance",
-            phoneNumber: "+16502790935",
+            expMonth: this.state.ccinfo.expMonth,
+            expYear: this.state.ccinfo.expYear,
+            email: this.state.ccinfo.email,
+            phoneNumber: this.state.ccinfo.phoneNumber,
             campaignId: this.state.campaignId,
             amount: this.state.donationAmount,
-            currency: "USD",
-            verification: "cvv"
+            currency: this.state.ccinfo.currency,
+            verification: this.state.ccinfo.verification,
         };
         try {
             this.setState({
                 showModal: true, modalTitle: 'processingWait',
-                modalMessage: "confirmDonation",
+                modalMessage: "plzWait",
                 errorIcon: 'HourglassSplit', modalButtonVariant: "gold", waitToClose: true
             });
             let resp = await axios.post('/api/donatefiat', data, {headers: {"Content-Type": "application/json"}});
-            console.log(resp);
-            if(resp.data.paymentStatus == "success") {
+            if(resp.data.paymentStatus === 'action_required'){
+                this.setState({showModal: false});
+                window.open(resp.data.redirectUrl, '_self');
+            } else if(resp.data.paymentStatus === "success") {
                 this.setState({
                     showModal: true, modalTitle: 'complete',
                     modalMessage: 'thankYouDonation',
                     errorIcon: 'CheckCircle', modalButtonMessage: 'closeBtn',
-                    modalButtonVariant: '#588157', waitToClose: false
+                    modalButtonVariant: '#588157', waitToClose: false, tryAgainCC: false, ccinfo: {}
                 });
             } else {
                 this.setState({
                     showModal: true, modalTitle: 'failed', modalMessage: PAYMENT_ERROR_MESSAGES[resp.data.paymentStatus],
-                    errorIcon: 'XCircle', modalButtonMessage: 'closeBtn',
-                    modalButtonVariant: '#E63C36', waitToClose: false
+                    errorIcon: 'XCircle', modalButtonMessage: 'tryAgain',
+                    modalButtonVariant: '#E63C36', waitToClose: false, tryAgainCC: true
                 });
+                this.setState(prevState => ({
+                    ccinfo: {
+                        ...prevState.ccinfo,
+                        ccError : PAYMENT_ERROR_MESSAGES[resp.data.paymentStatus]
+                    }
+                }));
             }
         } catch (err) {
+            console.log(err.response.data);
+            let errorFound = false;
+            Object.keys(CC_INFO_FIELDS_ERRORS).every((key)=>{
+                if(err.response.data.paymentStatus.message.includes(key)){
+                    this.setState({modalMessage: CC_INFO_FIELDS_ERRORS[key]});
+                    this.setState(prevState => ({
+                        ccinfo: {
+                            ...prevState.ccinfo,
+                            ccError: CC_INFO_FIELDS_ERRORS[key],
+                            ccErrorType: `${key}Input`
+                        }
+                    }));
+                    errorFound = true;
+                    return false;
+                }
+                return true;
+            })
             this.setState({
-                showModal: true, modalTitle: 'failed', modalMessage: 'cardPaymentGatewayFailure',
-                errorIcon: 'XCircle', modalButtonMessage: 'closeBtn',
-                modalButtonVariant: '#E63C36', waitToClose: false
+                showModal: true, modalTitle: 'failed',
+                errorIcon: 'XCircle', modalButtonMessage: 'tryAgain',
+                modalButtonVariant: '#E63C36', waitToClose: false, tryAgainCC: true
             });
+            if(!errorFound){
+                this.setState(prevState => ({
+                    ccinfo: {
+                        ...prevState.ccinfo,
+                        ccError: CC_INFO_FIELDS_ERRORS['default'],
+                        ccErrorType: 'default'
+                    }
+                }));
+            }
         }
 
     }
