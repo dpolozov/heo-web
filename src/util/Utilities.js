@@ -266,5 +266,6 @@ const encryptCardData = async(keyData, cardData) => {
     const encrypted = await encrypt({message, encryptionKeys: decodedPublicKey});
     return btoa(encrypted);
 }
+
 export {DescriptionPreview, i18nString, GetLanguage, LogIn, initWeb3, checkAuth, initWeb3Modal, clearWeb3Provider, getPCIPublicKey, encryptCardData };
 export default Utilities;
