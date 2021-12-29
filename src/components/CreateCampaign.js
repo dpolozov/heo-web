@@ -289,7 +289,7 @@ class CreateCampaign extends React.Component {
         formData.append(
             "myFile",
             this.state.mainImageFile,
-            imgID,
+            `${imgID}.${fileType}`,
         );
         try {
             let res = await axios.post('/api/uploadimage', formData);

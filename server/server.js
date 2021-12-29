@@ -56,7 +56,6 @@ APP.post('/api/uploadimage', (req,res) => {
             Key: process.env.SERVER_APP_IMG_DIR_NAME + '/' + req.files.myFile.name,
             Body: req.files.myFile.data
         }
-
         S3.upload(PARAMS, (error, data) => {
             if (error) {
                 console.log(error);
@@ -270,24 +269,34 @@ APP.post('/api/auth/logout', (req, res) => {
 // Handles any requests that don't match the ones above.
 // All other routing except paths defined above is done by React in the UI
 APP.get('*', async(req,res) =>{
-    var campaign, title, description, image;
+    var title = "HEO App";
+    var description = "Crowdfunding on blockchain.";
+    var image = "https://app.heo.finance/static/media/heo-logo.e772bc1b.png";
+    var url = "https://app.heo.finance";
+    var campaign;
     var splitURL = req.url.split('/'); 
     var campaignId = splitURL[splitURL.length -1]
+
     if(splitURL.length > 2) {
         try {
             const DB = CLIENT.db(DBNAME);
-            campaign = await DB.collection("campaigns").findOne({"_id" : campaignId});     
-            title = campaign.title.default;
-            description = campaign.description.default;
-            image = campaign.mainImageURL;   
+            campaign = await DB.collection("campaigns").findOne({"_id" : campaignId});
+                if(campaign){     
+                    title = campaign.title.default;
+                    description = campaign.description.default;
+                    image = campaign.mainImageURL;
+                    url = req.url;   
+                } else {
+                    title="This campaign is no longer available.";
+                    description="";
+                }
             } catch (err){
-                console.log(error);
+                console.log(err);
+                title="Information Currently Unavailable.";
+                description="";
             } 
-    } else {
-        title = "HEO App";
-        description = "Crowdfunding on blockchain.";
-        image = "https://app.heo.finance/static/media/heo-logo.e772bc1b";
-    }
+    } 
+    
     const filePath = PATH.resolve(__dirname, '..', 'build', '_index.html');
     fs.readFile(filePath, 'utf8', function (err, data){
         if (err) {
@@ -295,7 +304,8 @@ APP.get('*', async(req,res) =>{
         }
         data = data.replace(/\$OG_TITLE/g, title);
         data = data.replace(/\$OG_DESCRIPTION/g, description);
-        result = data.replace(/\$OG_IMAGE/g, image);
+        data = data.replace(/\$OG_URL/g, url)
+        let result = data.replace(/\$OG_IMAGE/g, image);
         res.send(result);
     });
 });
