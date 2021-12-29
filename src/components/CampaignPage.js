@@ -6,17 +6,21 @@ import { ChevronLeft, Gift, CheckCircle, ExclamationTriangle, HourglassSplit, XC
 import ReactPlayer from 'react-player';
 import { Link } from "react-router-dom";
 import { Trans } from 'react-i18next';
-import { i18nString, initWeb3, initWeb3Modal, clearWeb3Provider } from '../util/Utilities';
+import {
+    i18nString,
+    initWeb3,
+    initWeb3Modal,
+    clearWeb3Provider,
+    encryptCardData,
+    getPCIPublicKey
+} from '../util/Utilities';
 import i18n from '../util/i18n';
 import countryMap from '../countryMap';
 import { Editor, EditorState, convertFromRaw, CompositeDecorator } from "draft-js";
-import '../css/campaignPage.css';
-import '../css/modal.css';
-import Web3Modal from 'web3modal';
-import Web3 from 'web3';
-import WalletConnectProvider from '@walletconnect/web3-provider';
 import ReactGA from "react-ga4";
 
+import '../css/campaignPage.css';
+import '../css/modal.css';
 import bnbIcon from '../images/binance-coin-bnb-logo.png';
 import busdIcon from '../images/binance-usd-busd-logo.png';
 import usdcIcon from '../images/usd-coin-usdc-logo.png';
@@ -41,6 +45,7 @@ class CampaignPage extends Component {
             editorState: EditorState.createEmpty(),
             donationAmount:"10",
             campaign:{},
+            campaignId: "",
             waitToClose:false,
             raisedAmount:0,
             showModal: false,
@@ -99,6 +104,38 @@ class CampaignPage extends Component {
                 console.log(err);
             }
         });
+    }
+    handleDonateFiat = async () => {
+        let cardKeyData = await getPCIPublicKey();
+        let encryptedCardData = await encryptCardData(cardKeyData, {number:'4007400000000007', cvv:'123'});
+        let encryptedSecurityData = await encryptCardData(cardKeyData, {cvv:'123'});
+        let data = {
+            billingDetails: {
+                city: "San Francisco",
+                country: "US",
+                district: "CA",
+                line1: "111 Scott",
+                line2: "",
+                name: "Customer Zero",
+                postalCode: "94111"
+            },
+            keyId: cardKeyData.keyId,
+            encryptedCardData: encryptedCardData,
+            encryptedSecurityData: encryptedSecurityData,
+            expMonth: 12,
+            expYear: 2023,
+            email: "greg@heo.finance",
+            phoneNumber: "+16502790935",
+            campaignId: this.state.campaignId,
+            amount: this.state.donationAmount,
+            currency: "USD"
+        };
+        try{
+            let resp = await axios.post('/api/donatefiat', data, {headers: {"Content-Type": "application/json"}});
+        } catch (err) {
+
+        }
+
     }
 
     handleDonateClick = async (chainId) => {
@@ -434,6 +471,7 @@ class CampaignPage extends Component {
                                     />
                                     <InputGroup.Append>
                                         <DropdownButton id='donateButton' title={i18n.t('donate')}>
+                                            <Dropdown.Item key="_fiat" as="button" onClick={() => this.handleDonateFiat()}>Visa/MasterCard</Dropdown.Item>
                                                 {this.state.chains.map((item, i) =>
                                                     <Dropdown.Item key={item["CHAIN"]} as="button" onClick={() => this.handleDonateClick(item["CHAIN"])}><img src={IMG_MAP[this.state.campaign.coins[item["CHAIN"]].name+"-"+this.state.campaign.coins[item["CHAIN"]].address]} width={16} height={16} style={{marginRight:5}} />{this.state.campaign.coins[item["CHAIN"]].name} ({item["CHAIN_NAME"]})</Dropdown.Item>
                                                 )}
@@ -500,6 +538,7 @@ class CampaignPage extends Component {
 
         this.setState({
             chains: chains,
+            campaignId: campaignId,
             campaign : campaign,
             editorState: EditorState.createWithContent(contentState[i18n.language], createDecorator())
         });

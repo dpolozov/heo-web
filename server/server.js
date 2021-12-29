@@ -3,15 +3,16 @@ const PATH = require('path');
 const AWS = require('aws-sdk');
 const FILE_UPLOAD = require('express-fileupload');
 const CORS = require('cors');
-const AXIOS = require('axios');
 const { MongoClient } = require('mongodb');
 const { default: axios } = require('axios');
 const jwt = require('express-jwt');
 const jsonwebtoken = require('jsonwebtoken');
 const cookieParser = require('cookie-parser')
 const ethereumutil = require("ethereumjs-util");
+const { v4: uuidv4 } = require('uuid');
 const fs = require("fs");
 const PORT = process.env.PORT || 5000;
+
 
 require('dotenv').config({path : PATH.resolve(process.cwd(), '.env')});
 
@@ -23,6 +24,8 @@ APP.use(EXPRESS.json());
 const URL = `mongodb+srv://${process.env.MONGO_LOGIN}:${process.env.MONGODB_PWD}${process.env.MONGO_URL}`;
 const DBNAME = process.env.MONGO_DB_NAME;
 const CLIENT = new MongoClient(URL);
+const CIRCLE_API_URL = process.env.CIRCLE_API_URL;
+const CIRCLE_API_KEY = process.env.CIRCLE_API_KEY;
 
 CLIENT.connect(err => {
     if(err) {
@@ -265,7 +268,110 @@ APP.post('/api/auth/logout', (req, res) => {
     res.clearCookie('authToken').send({});
 });
 
+APP.get('/api/circle/publickey', async (req, res) => {
+    try {
+        let apiRes = await axios(
+            {
+                method: 'get',
+                baseURL: CIRCLE_API_URL,
+                url: '/v1/encryption/public',
+                headers: {
+                    'Accept': 'application/json',
+                    'Authorization': `Bearer ${CIRCLE_API_KEY}`
+                }
+            });
+        if(apiRes && apiRes.status == 200) {
+            res.send(apiRes.data);
+        } else {
+            console.log(apiRes);
+            console.log("Empty respone from Circle API");
+            res.sendStatus(500);
+        }
+    } catch (err) {
+        console.log("Error respone from Circle API");
+        console.log(err);
+        res.sendStatus(500);
+    }
+});
+APP.post('/api/donatefiat', async (req, res) => {
+    let cardIdempotencyKey = uuidv4();
+    let userIP = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    //first create card in Circle API
+    try {
+        let createCardResp = await axios({
+            method: 'post',
+            baseURL: CIRCLE_API_URL,
+            url: '/v1/cards',
+            headers: {
+                'Authorization': `Bearer ${CIRCLE_API_KEY}`
+            },
+            data: {
+                billingDetails: req.body.billingDetails,
+                idempotencyKey: cardIdempotencyKey,
+                keyId: req.body.keyId,
+                encryptedData: req.body.encryptedCardData,
+                expMonth: req.body.expMonth,
+                expYear: req.body.expYear,
+                metadata: {
+                    email: req.body.email,
+                    phoneNumber: req.body.phoneNumber,
+                    ipAddress: userIP,
+                    sessionId: req.body.campaignId
+                },
+            }
+        });
+        if(createCardResp && createCardResp.status >= 200 && createCardResp.data && createCardResp.data.data && createCardResp.data.data.id) {
+            let paymentIdempotencyKey = uuidv4();
+            //got card ID, can create a payment
+            let createPaymentResp = await axios({
+                method: 'post',
+                baseURL: CIRCLE_API_URL,
+                url: '/v1/payments',
+                headers: {
+                    'Authorization': `Bearer ${CIRCLE_API_KEY}`
+                },
+                data: {
+                    amount: {amount: req.body.amount, currency: req.body.currency},
+                    channel: "",
+                    description: req.body.campaignId,
+                    idempotencyKey: paymentIdempotencyKey,
+                    keyId: req.body.keyId,
+                    metadata: {
+                        email: req.body.email,
+                        phoneNumber: req.body.phoneNumber,
+                        ipAddress: userIP,
+                        sessionId: req.body.campaignId
+                    },
+                    source: {
+                        id: createCardResp.data.data.id,
+                        type: "card"
+                    },
+                    encryptedData: req.body.encryptedSecurityData,
+                    verification: "cvv"
+                }
+            });
 
+            if(createPaymentResp && createPaymentResp.data && createPaymentResp.status) {
+                console.log("Success");
+                res.sendStatus(200);
+            } else {
+                console.log(createPaymentResp);
+                res.sendStatus(500);
+            }
+        } else {
+            console.log("Bad response from card API");
+            console.log(createCardResp.data);
+            res.sendStatus(500);
+        }
+    } catch (err) {
+        console.log(err);
+        res.sendStatus(500);
+    }
+
+    //let billingDetails = req.body.billingDetails;
+    //expMonth
+
+})
 // Handles any requests that don't match the ones above.
 // All other routing except paths defined above is done by React in the UI
 APP.get('*', async(req,res) =>{
@@ -300,6 +406,7 @@ APP.get('*', async(req,res) =>{
     const filePath = PATH.resolve(__dirname, '..', 'build', '_index.html');
     fs.readFile(filePath, 'utf8', function (err, data){
         if (err) {
+            res.sendStatus(500);
             return console.log(err);
         }
         data = data.replace(/\$OG_TITLE/g, title);
