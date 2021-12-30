@@ -795,7 +795,6 @@ APP.get('*', async(req,res) =>{
         res.send(result);
     });
 });
-const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 APP.use(Sentry.Handlers.errorHandler());
 
@@ -806,6 +805,7 @@ APP.use(function onError(err, req, res, next) {
     res.end(res.sentry + "\n");
 });
 
+const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 APP.listen(PORT);
 
 console.log('App is listening on port ' + PORT);

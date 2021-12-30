@@ -153,6 +153,7 @@ class CampaignPage extends Component {
         });
     }
     handleDonateFiat = async () => {
+        //TODO: check that this.state.donationAmount is larger than 0
         let cardKeyData = await getPCIPublicKey();
         let encryptedCardData = await encryptCardData(cardKeyData, {number:'4007400000000007', cvv:'123'});
         let encryptedSecurityData = await encryptCardData(cardKeyData, {cvv:'123'});
@@ -175,12 +176,37 @@ class CampaignPage extends Component {
             phoneNumber: "+16502790935",
             campaignId: this.state.campaignId,
             amount: this.state.donationAmount,
-            currency: "USD"
+            currency: "USD",
+            verification: "cvv"
         };
-        try{
+        try {
+            this.setState({
+                showModal: true, modalTitle: 'processingWait',
+                modalMessage: "confirmDonation",
+                errorIcon: 'HourglassSplit', modalButtonVariant: "gold", waitToClose: true
+            });
             let resp = await axios.post('/api/donatefiat', data, {headers: {"Content-Type": "application/json"}});
+            console.log(resp);
+            if(resp.data.paymentStatus == "success") {
+                this.setState({
+                    showModal: true, modalTitle: 'complete',
+                    modalMessage: 'thankYouDonation',
+                    errorIcon: 'CheckCircle', modalButtonMessage: 'closeBtn',
+                    modalButtonVariant: '#588157', waitToClose: false
+                });
+            } else {
+                this.setState({
+                    showModal: true, modalTitle: 'failed', modalMessage: PAYMENT_ERROR_MESSAGES[resp.data.paymentStatus],
+                    errorIcon: 'XCircle', modalButtonMessage: 'closeBtn',
+                    modalButtonVariant: '#E63C36', waitToClose: false
+                });
+            }
         } catch (err) {
-
+            this.setState({
+                showModal: true, modalTitle: 'failed', modalMessage: 'cardPaymentGatewayFailure',
+                errorIcon: 'XCircle', modalButtonMessage: 'closeBtn',
+                modalButtonVariant: '#E63C36', waitToClose: false
+            });
         }
 
     }
