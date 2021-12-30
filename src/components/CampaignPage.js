@@ -38,8 +38,18 @@ const IMG_MAP = {"BUSD": busdIcon,
     "ETH": ethIcon,
     "cUSD": cusdIcon};
 
-const donationAmount="";
-const currencyName="";
+
+const PAYMENT_ERROR_MESSAGES = {
+    declined: "cardPaymentDeclined",
+    payment_stopped_by_issuer: "cardPaymentFailed_payment_stopped_by_issuer",
+    payment_fraud_detected: "cardPaymentFailed_payment_fraud_detected",
+    payment_denied: "cardPaymentFailed_payment_denied",
+    card_limit_violated: "cardPaymentFailed_card_limit_violated",
+    card_invalid: "cardPaymentFailed_card_invalid",
+    payment_not_funded: "cardPaymentFailed_payment_not_funded",
+    payment_not_supported_by_issuer: "cardPaymentFailed_payment_not_supported_by_issuer",
+    card_not_honored: "cardPaymentFailed_card_not_honored"
+};
 ReactGA.initialize("G-C657WZY5VT");
 var HEOCampaign, ERC20Coin;
 class CampaignPage extends Component {
@@ -111,6 +121,7 @@ class CampaignPage extends Component {
         });
     }
     handleDonateFiat = async () => {
+        //TODO: check that this.state.donationAmount is larger than 0
         let cardKeyData = await getPCIPublicKey();
         let encryptedCardData = await encryptCardData(cardKeyData, {number:'4007400000000007', cvv:'123'});
         let encryptedSecurityData = await encryptCardData(cardKeyData, {cvv:'123'});
@@ -133,12 +144,37 @@ class CampaignPage extends Component {
             phoneNumber: "+16502790935",
             campaignId: this.state.campaignId,
             amount: this.state.donationAmount,
-            currency: "USD"
+            currency: "USD",
+            verification: "cvv"
         };
-        try{
+        try {
+            this.setState({
+                showModal: true, modalTitle: 'processingWait',
+                modalMessage: "confirmDonation",
+                errorIcon: 'HourglassSplit', modalButtonVariant: "gold", waitToClose: true
+            });
             let resp = await axios.post('/api/donatefiat', data, {headers: {"Content-Type": "application/json"}});
+            console.log(resp);
+            if(resp.data.paymentStatus == "success") {
+                this.setState({
+                    showModal: true, modalTitle: 'complete',
+                    modalMessage: 'thankYouDonation',
+                    errorIcon: 'CheckCircle', modalButtonMessage: 'closeBtn',
+                    modalButtonVariant: '#588157', waitToClose: false
+                });
+            } else {
+                this.setState({
+                    showModal: true, modalTitle: 'failed', modalMessage: PAYMENT_ERROR_MESSAGES[resp.data.paymentStatus],
+                    errorIcon: 'XCircle', modalButtonMessage: 'closeBtn',
+                    modalButtonVariant: '#E63C36', waitToClose: false
+                });
+            }
         } catch (err) {
-
+            this.setState({
+                showModal: true, modalTitle: 'failed', modalMessage: 'cardPaymentGatewayFailure',
+                errorIcon: 'XCircle', modalButtonMessage: 'closeBtn',
+                modalButtonVariant: '#E63C36', waitToClose: false
+            });
         }
 
     }
@@ -148,6 +184,7 @@ class CampaignPage extends Component {
     }
 
     handleDonateClick = async (chainId) => {
+        //TODO: check that this.state.donationAmount is larger than 0
         try {
             await clearWeb3Provider(this);
             await initWeb3Modal(chainId);
@@ -189,15 +226,13 @@ class CampaignPage extends Component {
 
             var that = this;
             //for native donations
-            if(coinAddress == "0x0000000000000000000000000000000000000000") {
-                var toDonate = web3.utils.toWei(this.state.donationAmount);
-                var decimals = 18;
+            if(coinAddress === "0x0000000000000000000000000000000000000000") {
                 this.setState({
                     showModal: true, modalTitle: 'processingWait',
                     modalMessage: "confirmDonation",
                     errorIcon: 'HourglassSplit', modalButtonVariant: "gold", waitToClose: true
                 });
-                if(currentProvider != "metamask" && currentProvider != "injected") {
+                if(currentProvider !== "metamask" && currentProvider !== "injected") {
                     // Binance Chain Extension Wallet does not support network events
                     // so we have to poll for transaction status instead of using
                     // event listeners and promises.
@@ -226,7 +261,7 @@ class CampaignPage extends Component {
                     }
                 } else {
                     try {
-                        let result = await campaignInstance.methods.donateNative().send(
+                        await campaignInstance.methods.donateNative().send(
                             {from:accounts[0], value:(""+toDonate)}
                         ).once('transactionHash', function(transactionHash){
                             that.setState({modalMessage: "waitingForNetwork"})

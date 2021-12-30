@@ -374,7 +374,7 @@ APP.post('/api/donatefiat', async (req, res) => {
         if(createCardResp && createCardResp.status >= 200 && createCardResp.data && createCardResp.data.data && createCardResp.data.data.id) {
             let paymentIdempotencyKey = uuidv4();
             //got card ID, can create a payment
-            let createPaymentResp = await axios({
+            let paymentResp = await axios({
                 method: 'post',
                 baseURL: CIRCLE_API_URL,
                 url: '/v1/payments',
@@ -398,21 +398,81 @@ APP.post('/api/donatefiat', async (req, res) => {
                         type: "card"
                     },
                     encryptedData: req.body.encryptedSecurityData,
-                    verification: "cvv"
+                    verification: req.body.verification
                 }
             });
 
-            if(createPaymentResp && createPaymentResp.data && createPaymentResp.status) {
-                console.log("Success");
-                res.sendStatus(200);
+            if(paymentResp && paymentResp.data && paymentResp.data && paymentResp.data.data.status) {
+                console.log(`Payment id ${paymentResp.data.data.id}, status ${paymentResp.data.data.status}`);
+                let respData = paymentResp.data.data;
+                let safetyCounter = 0;
+                let safetyMax = 120;
+                while(respData.status == "pending" && safetyCounter < safetyMax) {
+                    try {
+                        safetyCounter++;
+                        await delay(1000);
+                        console.log(`Checking status of payment ${respData.id}`);
+                        paymentResp = await axios({
+                            method: 'get',
+                            baseURL: CIRCLE_API_URL,
+                            url: `/v1/payments/${respData.id}`,
+                            headers: {
+                                'Authorization': `Bearer ${CIRCLE_API_KEY}`
+                            }
+                        });
+                        respData = paymentResp.data.data;
+                        console.log(`Payment ${respData.id}, status ${respData.status}`);
+                    } catch (err) {
+                        console.log(err);
+                        break;
+                    }
+                }
+
+                if(respData.status == "confirmed" || respData.status == "paid") {
+                    res.status(200).send({paymentStatus:"success"});
+                    return;
+                }
+
+                if(respData.status == "failed") {
+                    if(respData.errorCode == "card_not_honored") {
+                        res.status(200).send({paymentStatus:"card_not_honored"});
+                    } else if(respData.errorCode == "payment_not_supported_by_issuer") {
+                        res.status(200).send({paymentStatus:"payment_not_supported_by_issuer"});
+                    } else if(respData.errorCode == "payment_not_funded") {
+                        res.status(200).send({paymentStatus:"payment_not_funded"});
+                    } else if(respData.errorCode == "card_invalid") {
+                        res.status(200).send({paymentStatus:"card_invalid"});
+                    } else if(respData.errorCode == "card_limit_violated") {
+                        res.status(200).send({paymentStatus:"card_limit_violated"});
+                    } else if(respData.errorCode == "payment_denied") {
+                        res.status(200).send({paymentStatus:"payment_denied"});
+                    } else if(respData.errorCode == "payment_fraud_detected") {
+                        res.status(200).send({paymentStatus:"payment_fraud_detected"});
+                    } else if(respData.errorCode == "payment_stopped_by_issuer") {
+                        res.status(200).send({paymentStatus:"payment_stopped_by_issuer"});
+                    } else {
+                        res.status(200).send({paymentStatus:"declined"});
+                    }
+                    //console.log(respData);
+                    return;
+                }
+
+                if(respData.status == "action_required") {
+                    if(respData.requiredAction && respData.requiredAction.redirectUrl) {
+                        res.redirect(respData.requiredAction.redirectUrl);
+                        return;
+                    } else {
+                        res.status(200).send({paymentStatus:"failed"});
+                        return;
+                    }
+                }
             } else {
-                console.log(createPaymentResp);
-                res.sendStatus(500);
+                res.status(200).send({paymentStatus:"failed"});
+                return;
             }
         } else {
-            console.log("Bad response from card API");
-            console.log(createCardResp.data);
-            res.sendStatus(500);
+            res.status(200).send({paymentStatus:"failed"});
+            return;
         }
     } catch (err) {
         console.log(err);
@@ -478,6 +538,8 @@ APP.use(function onError(err, req, res, next) {
     res.statusCode = 500;
     res.end(res.sentry + "\n");
 });
+
+const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 APP.listen(PORT);
 
