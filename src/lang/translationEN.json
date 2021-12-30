@@ -106,4 +106,14 @@
     "youAreNotTheOwner": "You are not the owner of this campaign!",
     "deployToChain": "Save to {{chainName}}/{{currencyName}}",
     "Text404": "Campaign with this ID does not exist. Please check the URL or click 'Back to Campaigns' to see the list of all active campaigns."
+    "cardPaymentGatewayFailure": "Card payment failed due to gateway error. Please try again later.",
+    "cardPaymentDeclined": "Payment declined. Please check payment details and try again.",
+    "cardPaymentFailed_card_not_honored": "Payment failed. Contact card issuer to query why payment failed.",
+    "cardPaymentFailed_payment_not_supported_by_issuer": "Payment failed. Card Issuer did not support the payment.",
+    "cardPaymentFailed_payment_not_funded": "Payment failed. Insufficient funds in account to fund payment.",
+    "cardPaymentFailed_card_invalid": "Payment failed. Please check card number and try again.",
+    "cardPaymentFailed_card_limit_violated": "Payment failed. Exceeded amount or frequency limits.",
+    "cardPaymentFailed_payment_denied": "Payment denied due to risk assessment.",
+    "cardPaymentFailed_payment_fraud_detected": "Card declined. Payment suspected of being associated with fraud.",
+    "cardPaymentFailed_payment_stopped_by_issuer": "Payment failed. A stop has been placed on the payment or card."
 }
