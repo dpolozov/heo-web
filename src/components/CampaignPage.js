@@ -46,6 +46,24 @@ const PAYMENT_ERROR_MESSAGES = {
     payment_not_supported_by_issuer: "cardPaymentFailed_payment_not_supported_by_issuer",
     card_not_honored: "cardPaymentFailed_card_not_honored"
 };
+
+const CC_INFO_FIELDS_ERRORS = {
+    name: 'checkCCName',
+    number: 'checkCCNumber',
+    expMonth: 'checkCCExpMonth',
+    expYear: 'checkCCExpYear',
+    cvv: 'checkCCcvv',
+    email: 'checkCCemail',
+    line1: 'checkCCstreet',
+    line2: 'checkCCstreet2',
+    city: 'checkCCcity',
+    country: 'checkCCcountry',
+    district: 'checkCCdistrict',
+    postalCode: 'checkCCpostalCode',
+    phoneNumber: 'checkCCphoneNumber',
+    default: 'checkCCdefault'
+}
+
 ReactGA.initialize("G-C657WZY5VT");
 var HEOCampaign, ERC20Coin;
 class CampaignPage extends Component {
@@ -142,6 +160,7 @@ class CampaignPage extends Component {
             amount: this.state.donationAmount,
             currency: this.state.ccinfo.currency,
             verification: this.state.ccinfo.verification,
+
         };
         try {
             this.setState({

@@ -323,7 +323,6 @@ APP.post('/api/donatefiat', async (req, res) => {
         if(createCardResp && createCardResp.status >= 200 && createCardResp.data && createCardResp.data.data && createCardResp.data.data.id) {
             let paymentIdempotencyKey = uuidv4();
             //got card ID, can create a payment
-
             let paymentResp = await axios({
                 method: 'post',
                 baseURL: CIRCLE_API_URL,
