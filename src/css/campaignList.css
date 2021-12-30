@@ -23,7 +23,7 @@ color: #0E161C;
 
 .cardButtons{
     font-family: 'Poppins', sans-serif;
-    height: 70px;
+    /*height: 70px;*/
     border: 1.5px solid #0E161C;
     border-radius: 4px;
     text-align: center;
