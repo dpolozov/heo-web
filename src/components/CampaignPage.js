@@ -39,6 +39,7 @@ const IMG_MAP = {"BUSD": busdIcon,
     "ETH": ethIcon,
     "cUSD": cusdIcon};
 
+
 const PAYMENT_ERROR_MESSAGES = {
     declined: "cardPaymentDeclined",
     payment_stopped_by_issuer: "cardPaymentFailed_payment_stopped_by_issuer",
