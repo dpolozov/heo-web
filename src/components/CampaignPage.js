@@ -76,6 +76,7 @@ class CampaignPage extends Component {
                 modalMessage,
             })
         })
+        campaign.raisedAmount = Math.round(campaign.raisedAmount * 100)/100;
         return campaign;
     }
 

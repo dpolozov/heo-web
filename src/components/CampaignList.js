@@ -63,7 +63,9 @@ class CampaignList extends Component {
                 errorMessage,
             })
         })
-
+        campaigns.forEach( campaign => {
+            campaign.raisedAmount = Math.round(campaign.raisedAmount * 100)/100;
+        })
         return campaigns;
     }
     
