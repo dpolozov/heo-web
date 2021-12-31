@@ -282,8 +282,8 @@ APP.get('*', async(req,res) =>{
             const DB = CLIENT.db(DBNAME);
             campaign = await DB.collection("campaigns").findOne({"_id" : campaignId});
                 if(campaign){     
-                    title = campaign.title.default;
-                    description = campaign.description.default;
+                    title = (campaign.title.default).replace(/"/g,"&quot;");
+                    description = (campaign.description.default).replace(/"/g,"&quot;");
                     image = campaign.mainImageURL;
                     url = req.url;   
                 } else {
