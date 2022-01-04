@@ -42,7 +42,6 @@ class CampaignList extends Component {
         this.setState({
             campaigns : (await this.getCampaigns())
         });
-        console.log(this.state.campaigns);
     }
 
     async getCampaigns(){

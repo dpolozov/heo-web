@@ -498,8 +498,7 @@ class CampaignPage extends Component {
             campaign : campaign,
             editorState: EditorState.createWithContent(contentState[i18n.language], createDecorator())
         });
-        console.log(`this.state.chains is ${this.state.chains}`);
-        console.log(this.state.chains);
+
         ReactGA.send({ hitType: "pageview", page: this.props.location.pathname });
     }
 
