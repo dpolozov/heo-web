@@ -1,4 +1,4 @@
-import React, {lazy, useState, Component} from 'react';
+import React, {Component} from 'react';
 import config from "react-global-configuration";
 import axios from 'axios';
 import { Container, Row, Col, Card, ProgressBar, Button, DropdownButton, Dropdown, Modal, Image, InputGroup, FormControl } from 'react-bootstrap';
@@ -91,6 +91,9 @@ class CampaignPage extends Component {
                 modalMessage,
             })
         })
+        if(campaign.raisedAmount) {
+            campaign.raisedAmount = Math.round(campaign.raisedAmount * 100)/100;
+        }
         return campaign;
     }
 
@@ -527,7 +530,11 @@ class CampaignPage extends Component {
         window.scrollTo(0,0);
         let toks = this.props.location.pathname.split("/");
         let campaignId = toks[toks.length -1];
-        let campaign = (await this.getCampaign(campaignId))
+        let campaign = (await this.getCampaign(campaignId));
+        if(!campaign) {
+            this.props.history.push("/404");
+            return;
+        }
         campaign.percentRaised = 100 * campaign.raisedAmount/campaign.maxAmount;
         var contentState = {};
         if(campaign.descriptionEditor[i18n.language]) {

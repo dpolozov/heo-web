@@ -33,7 +33,7 @@ class CampaignList extends Component {
             campaigns: [],
             showError:false,
             errorMessage:"",
-            lang:'',          
+            lang:'',
         };
     }
 
@@ -52,7 +52,7 @@ class CampaignList extends Component {
         .then(res => {
             campaigns = res.data;
         }).catch(err => {
-            if (err.response) { 
+            if (err.response) {
                 errorMessage = 'Failed to load campaigns. We are having technical difficulties'}
             else if(err.request) {
                 errorMessage = 'Failed to load campaings. Please check your internet connection'
@@ -63,13 +63,15 @@ class CampaignList extends Component {
                 errorMessage,
             })
         })
-
+        campaigns.forEach( campaign => {
+            campaign.raisedAmount = Math.round(campaign.raisedAmount * 100)/100;
+        })
         return campaigns;
     }
-    
+
     render() {
         return (
-            <div> 
+            <div>
                 <Modal show={this.state.showError} onHide={()=>{}} >
                     <Modal.Header closeButton>
                     <Modal.Title>Failed to connect to network.</Modal.Title>
@@ -80,22 +82,22 @@ class CampaignList extends Component {
                         Close
                     </Button>
                     </Modal.Footer>
-                </Modal>           
+                </Modal>
                 <div id="campaingListMainDiv">
                     <Container>
                         {this.state.campaigns.map((item, i) =>
                             <Row style={{marginBottom: '20px'}} key={i}>
-                                <Link to={'/campaign/' + item._id} id='cardLink'>
+                                <Link to={'/campaign/' + item._id} id='cardLink' key={i}>
                                 <Card>
                                     <Row>
                                         <Col sm='3' id='picColumn'>
                                             <Card.Img src={item.mainImageURL} fluid='true' />
                                         </Col>
                                         <Col >
-                                            <Row>                                  
+                                            <Row>
                                                 <Card.Body>
                                                     <Card.Title>{i18nString(item.title, i18n.language)}</Card.Title>
-                                                    <Card.Text><h2>{i18nString(item.org, i18n.language)} ({countryMap[item.cn]})</h2>
+                                                    <Card.Text><span className={"h2"}>{i18nString(item.org, i18n.language)} ({countryMap[item.cn]})</span><br/>
                                                         {`${DescriptionPreview(item.description, i18n.language)}...`}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span id='readMore'><Trans i18nKey='readMore'/></span>
                                                     </Card.Text>
                                                     <p id='progressBarLabel'><span id='progressBarLabelStart'>
@@ -107,20 +109,20 @@ class CampaignList extends Component {
                                                 <Col className='buttonCol'>
                                                     <div id='acceptingBtn' className='cardButtons'><p><Trans i18nKey='accepting'/></p>
                                                         <p id='currencyName'>
-                                                            {Object.keys(item.coins).map((chain, i) =>
-                                                                <span><img src={IMG_MAP[item.coins[chain].name+"-"+item.coins[chain].address]} width={20} height={20} style={{marginLeft:5, marginRight:5}} />{item.coins[chain].name}</span>
+                                                            {Object.keys(item.coins).map((chain, j) =>
+                                                                <span key={item._id + "-" + chain + "-" + item.coins[chain].address}><img src={IMG_MAP[item.coins[chain].name+"-"+item.coins[chain].address]} width={20} height={20} style={{marginLeft:5, marginRight:5}} />{item.coins[chain].name}</span>
                                                             )}
 
                                                         </p>
                                                     </div></Col>
                                                 <Col className='buttonCol'><Button variant="danger" id='donateBtn' block><Trans i18nKey='donate'/></Button></Col>
-                                            </Row> 
+                                            </Row>
                                         </Col>
                                     </Row>
                                 </Card>
                                 </Link>
-                            </Row>                           
-                        )} 
+                            </Row>
+                        )}
                     </Container>
                 </div>
             </div>

@@ -5,6 +5,7 @@ import CreateCampaign from './CreateCampaign';
 import UserCampaigns from './UserCampaigns';
 import EditCampaign from './EditCampaign';
 import MyDonations from './MyDonations';
+import Page404 from "./Page404";
 import TokenSale from './TokenSale'
 import logo from '../images/heo-logo.png';
 import Home from "./Home";
@@ -148,6 +149,7 @@ class App extends Component {
                                 <Route path="/rewards" component={MyDonations} />
                                 <Route path="/editCampaign" component={EditCampaign} />
                                 <Route path="/invest" component={TokenSale} />
+                                <Route path="/404" component={Page404} />
                                 <Route path="/" component={Home} />
                                 <Route component={Error} />
                             </Switch>
