@@ -1,4 +1,4 @@
-import React, {lazy, useState, Component} from 'react';
+import React, {Component} from 'react';
 import config from "react-global-configuration";
 import axios from 'axios';
 import { Container, Row, Col, Card, ProgressBar, Button, DropdownButton, Dropdown, Modal, Image, InputGroup, FormControl } from 'react-bootstrap';
@@ -52,7 +52,7 @@ class CampaignPage extends Component {
             chainId:"",
             chains:[]
         };
-        
+
     }
 
     handleDonationAmount = (e) => {this.setState({donationAmount: e.target.value})};
@@ -76,7 +76,9 @@ class CampaignPage extends Component {
                 modalMessage,
             })
         })
-        campaign.raisedAmount = Math.round(campaign.raisedAmount * 100)/100;
+        if(campaign.raisedAmount) {
+            campaign.raisedAmount = Math.round(campaign.raisedAmount * 100)/100;
+        }
         return campaign;
     }
 
@@ -86,7 +88,7 @@ class CampaignPage extends Component {
         campaignInstance.methods.raisedAmount().call({from:accounts[0]}, function(err, result) {
             if(!err) {
                 if(decimals == 18) {
-                    campaign.raisedAmount = parseFloat(web3.utils.fromWei(result));    
+                    campaign.raisedAmount = parseFloat(web3.utils.fromWei(result));
                 } else {
                     campaign.raisedAmount = parseFloat(result/Math.pow(10, decimals));
                 }
@@ -371,8 +373,8 @@ class CampaignPage extends Component {
                                    values={{donationAmount: this.state.donationAmount, currencyName: this.state.campaign.currencyName }} />
                         </p>
                         {!this.state.waitToClose &&
-                        <Button className='myModalButton' 
-                            style={{backgroundColor : this.state.modalButtonVariant, borderColor : this.state.modalButtonVariant}} 
+                        <Button className='myModalButton'
+                            style={{backgroundColor : this.state.modalButtonVariant, borderColor : this.state.modalButtonVariant}}
                             onClick={ () => {
                                     if(this.state.onModalClose) {
                                         this.state.onModalClose();
@@ -389,7 +391,7 @@ class CampaignPage extends Component {
                             <Trans i18nKey={this.state.modalButtonMessage} />
                         </Button>
                         }
-                    </Modal.Body>                
+                    </Modal.Body>
                 </Modal>
                 <Container className='backToCampaignsDiv'>
                     <p className='backToCampaigns'><Link className={"backToCampaignsLink"} to="/"><ChevronLeft id='backToCampaignsChevron'/><Trans i18nKey='backToCampaigns'/></Link></p>
@@ -455,7 +457,11 @@ class CampaignPage extends Component {
         window.scrollTo(0,0);
         let toks = this.props.location.pathname.split("/");
         let campaignId = toks[toks.length -1];
-        let campaign = (await this.getCampaign(campaignId))
+        let campaign = (await this.getCampaign(campaignId));
+        if(!campaign) {
+            this.props.history.push("/404");
+            return;
+        }
         campaign.percentRaised = 100 * campaign.raisedAmount/campaign.maxAmount;
         var contentState = {};
         if(campaign.descriptionEditor[i18n.language]) {
@@ -496,7 +502,7 @@ class CampaignPage extends Component {
         console.log(this.state.chains);
         ReactGA.send({ hitType: "pageview", page: this.props.location.pathname });
     }
-    
+
 }
 
 function createDecorator(){
