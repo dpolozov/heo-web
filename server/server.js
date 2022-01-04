@@ -28,7 +28,7 @@ CLIENT.connect(err => {
     if(err) {
         console.log(err);
     }
-    console.log('connected succesfully to server');    
+    console.log('connected succesfully to server');
 });
 
 // Serve the static files from the React APP
@@ -133,7 +133,7 @@ APP.post('/api/campaign/deactivate', async (req, res) => {
     }  else {
         console.log('failed to deactivate');
         res.sendStatus(401);
-    }   
+    }
 });
 
 APP.post('/api/campaign/add', (req, res) => {
@@ -274,29 +274,29 @@ APP.get('*', async(req,res) =>{
     var image = "https://app.heo.finance/static/media/heo-logo.e772bc1b.png";
     var url = "https://app.heo.finance";
     var campaign;
-    var splitURL = req.url.split('/'); 
+    var splitURL = req.url.split('/');
     var campaignId = splitURL[splitURL.length -1]
 
     if(splitURL.length > 2) {
         try {
             const DB = CLIENT.db(DBNAME);
             campaign = await DB.collection("campaigns").findOne({"_id" : campaignId});
-                if(campaign){     
-                    title = (campaign.title.default).replace(/"/g,"&quot;");
-                    description = (campaign.description.default).replace(/"/g,"&quot;");
-                    image = campaign.mainImageURL;
-                    url = req.url;   
-                } else {
-                    title="This campaign is no longer available.";
-                    description="";
-                }
-            } catch (err){
-                console.log(err);
-                title="Information Currently Unavailable.";
+            if(campaign){
+                title = (campaign.title.default).replace(/"/g,"&quot;");
+                description = (campaign.description.default).replace(/"/g,"&quot;");
+                image = campaign.mainImageURL;
+                url = req.url;
+            } else {
+                title="This campaign is no longer available.";
                 description="";
-            } 
-    } 
-    
+            }
+        } catch (err){
+            console.log(err);
+            title="Information Currently Unavailable.";
+            description="";
+        }
+    }
+
     const filePath = PATH.resolve(__dirname, '..', 'build', '_index.html');
     fs.readFile(filePath, 'utf8', function (err, data){
         if (err) {
