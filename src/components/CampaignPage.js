@@ -154,7 +154,7 @@ class CampaignPage extends Component {
     handleDonateFiat = async () => {
         //TODO: check that this.state.donationAmount is larger than 0
         let cardKeyData = await getPCIPublicKey();
-        let encryptedCardData = await encryptCardData(cardKeyData, {number:this.state.ccinfo.number, cvv:this.state.ccinfo.cvc});
+        let encryptedCardData = await encryptCardData(cardKeyData, {number :this.state.ccinfo.number, cvv:this.state.ccinfo.cvc});
         let encryptedSecurityData = await encryptCardData(cardKeyData, {cvv:this.state.ccinfo.cvc});
         let data = {
             billingDetails: {
