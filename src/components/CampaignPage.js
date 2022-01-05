@@ -27,6 +27,7 @@ import usdcIcon from '../images/usd-coin-usdc-logo.png';
 import ethIcon from '../images/eth-diamond-purple.png';
 import cusdIcon from '../images/cusd-celo-logo.png';
 import usdcAurora from '../images/usd-coin-aurora-logo.png';
+import CCData from '../components/CCData';
 const IMG_MAP = {"BUSD-0xe9e7cea3dedca5984780bafc599bd69add087d56": busdIcon,
     "BNB-0x0000000000000000000000000000000000000000": bnbIcon,
     "USDC-0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48": usdcIcon,
@@ -83,9 +84,21 @@ class CampaignPage extends Component {
             modalButtonMessage: "",
             modalButtonVariant: "",
             chainId:"",
-            chains:[]
+            chains:[],
+            ccinfo:{},
+            showCCinfoModal: false,
         };
+        this.handleGetCCInfo = this.handleGetCCInfo.bind(this);
+        this.handleCCInfoCancel = this.handleCCInfoCancel.bind(this);
+    }
 
+    handleGetCCInfo(info){
+        this.setState({ccinfo : info});
+        this.handleDonateFiat();
+    }
+
+    handleCCInfoCancel(){
+        this.setState({showCCinfoModal : false});
     }
 
     handleDonationAmount = (e) => {this.setState({donationAmount: e.target.value})};
@@ -160,7 +173,6 @@ class CampaignPage extends Component {
             amount: this.state.donationAmount,
             currency: this.state.ccinfo.currency,
             verification: this.state.ccinfo.verification,
-
         };
         try {
             this.setState({
@@ -528,6 +540,7 @@ class CampaignPage extends Component {
                     <p className='backToCampaigns'><Link className={"backToCampaignsLink"} to="/"><ChevronLeft id='backToCampaignsChevron'/><Trans i18nKey='backToCampaigns'/></Link></p>
                 </Container>
                 <Container id='mainContainer'>
+                    {this.state.showCCinfoModal && <CCData handleCCInfoCancel = {this.handleCCInfoCancel} handleGetCCInfo = {this.handleGetCCInfo}/>}
                     <Row id='topRow'>
                         <Col id='imgCol'>
                             <Image src={this.state.campaign.mainImageURL} id='mainImage'/>
@@ -560,7 +573,7 @@ class CampaignPage extends Component {
                                     />
                                     <InputGroup.Append>
                                         <DropdownButton id='donateButton' title={i18n.t('donate')}>
-                                            <Dropdown.Item key="_fiat" as="button" onClick={() => this.handleDonateFiat()}>Visa/MasterCard</Dropdown.Item>
+                                            <Dropdown.Item key="_fiat" as="button" onClick={() => this.setState({showCCinfoModal : true})}>Visa/MasterCard</Dropdown.Item>
                                                 {this.state.chains.map((item, i) =>
                                                     <Dropdown.Item key={item["CHAIN"]} as="button" onClick={() => this.handleDonateClick(item["CHAIN"])}><img src={IMG_MAP[this.state.campaign.coins[item["CHAIN"]].name+"-"+this.state.campaign.coins[item["CHAIN"]].address]} width={16} height={16} style={{marginRight:5}} />{this.state.campaign.coins[item["CHAIN"]].name} ({item["CHAIN_NAME"]})</Dropdown.Item>
                                                 )}
