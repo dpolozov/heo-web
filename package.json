@@ -24,6 +24,7 @@
     "i18next": "^20.2.2",
     "i18next-browser-languagedetector": "^6.1.0",
     "i18next-http-backend": "^1.2.2",
+    "libphonenumber-js": "^1.9.44",
     "luxon": "^1.26.0",
     "mongodb": "^3.6.5",
     "npm-which": "^3.0.1",
