@@ -347,6 +347,14 @@ APP.get('/api/circle/publickey', async (req, res) => {
 APP.post('/api/donatefiat', async (req, res) => {
     let cardIdempotencyKey = uuidv4();
     let userIP = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    if(userIP.indexOf(",") > 0) {
+        try {
+            let ips = userIP.split(",");
+            userIP = ips[0];
+        } catch (err) {
+            console.log(`failed to parse user IP: ${userIP}`);
+        }
+    }
     //first create card in Circle API
     try {
         let createCardResp = await axios({
