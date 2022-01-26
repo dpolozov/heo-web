@@ -54,7 +54,7 @@ class CCData extends Component {
                         } else {
                             return;
                         }
-                }
+                    }
                     break;
                 case 'expMonth':
                     if(!(/[0-9]/).test(value.charAt(value.length-1)) || value.length > 2) {
@@ -96,7 +96,6 @@ class CCData extends Component {
                     } else {
                         this.setState({errorMessage: ''});
                     }
-
             }
         }
         this.setState(prevState => ({
@@ -146,7 +145,7 @@ class CCData extends Component {
                                 />
                                 <br/>
                                 <Form.Control type="text" name="number" placeholder={i18n.t('cardNumber')} required className='ccInfoFormPlaceHolder'
-                                    pattern="[0-9 ]{19}" title={i18n.t('cardNumber16digit')} value={this.state.ccinfo.number}
+                                    pattern="([0-9 ]{19})|([0-9]{16})" title={i18n.t('cardNumber16digit')} value={this.state.ccinfo.number}
                                     onChange={this.handleInputChange}  
                                 />
                                 <br/>

@@ -27,7 +27,7 @@ import usdcIcon from '../images/usd-coin-usdc-logo.png';
 import ethIcon from '../images/eth-diamond-purple.png';
 import cusdIcon from '../images/cusd-celo-logo.png';
 import usdcAurora from '../images/usd-coin-aurora-logo.png';
-import CCData from '../components/CCData';
+import CCData from './CCData';
 const IMG_MAP = {"BUSD-0xe9e7cea3dedca5984780bafc599bd69add087d56": busdIcon,
     "BNB-0x0000000000000000000000000000000000000000": bnbIcon,
     "USDC-0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48": usdcIcon,
@@ -131,7 +131,7 @@ class CampaignPage extends Component {
     handleDonateFiat = async () => {
         //TODO: check that this.state.donationAmount is larger than 0
         let cardKeyData = await getPCIPublicKey();
-        let encryptedCardData = await encryptCardData(cardKeyData, {number :this.state.ccinfo.number, cvv:this.state.ccinfo.cvc});
+        let encryptedCardData = await encryptCardData(cardKeyData, {number:this.state.ccinfo.number, cvv:this.state.ccinfo.cvc});
         let encryptedSecurityData = await encryptCardData(cardKeyData, {cvv:this.state.ccinfo.cvc});
         let data = {
             billingDetails: {
@@ -515,7 +515,7 @@ class CampaignPage extends Component {
                                     />
                                     <InputGroup.Append>
                                         <DropdownButton id='donateButton' title={i18n.t('donate')}>
-                                            <Dropdown.Item key="_fiat" as="button" onClick={() => this.setState({showCCinfoModal : true})}>Visa/MasterCard</Dropdown.Item>
+                                            <Dropdown.Item key="_fiat" as="button" onClick={() => this.setState({showCCinfoModal: true})}>Visa/MasterCard</Dropdown.Item>
                                                 {this.state.chains.map((item, i) =>
                                                     <Dropdown.Item key={item["CHAIN"]} as="button" onClick={() => this.handleDonateClick(item["CHAIN"])}><img src={IMG_MAP[this.state.campaign.coins[item["CHAIN"]].name+"-"+this.state.campaign.coins[item["CHAIN"]].address]} width={16} height={16} style={{marginRight:5}} />{this.state.campaign.coins[item["CHAIN"]].name} ({item["CHAIN_NAME"]})</Dropdown.Item>
                                                 )}
