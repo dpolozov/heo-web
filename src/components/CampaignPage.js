@@ -67,6 +67,7 @@ const CC_INFO_FIELDS_ERRORS = {
 
 ReactGA.initialize("G-C657WZY5VT");
 var HEOCampaign, ERC20Coin;
+
 class CampaignPage extends Component {
     constructor(props) {
         super(props);
@@ -87,6 +88,7 @@ class CampaignPage extends Component {
             chains:[],
             ccinfo:{},
             showCCinfoModal: false,
+            tryAgainCC: false,
         };
         this.handleGetCCInfo = this.handleGetCCInfo.bind(this);
         this.handleCCInfoCancel = this.handleCCInfoCancel.bind(this);
@@ -500,6 +502,12 @@ class CampaignPage extends Component {
         }
     }
 
+    onModalClose() {
+        if(this.state.tryAgainCC){
+            this.setState({showCCinfoModal:true});
+        }
+    }
+
     render() {
         return (
             <div>
@@ -519,9 +527,7 @@ class CampaignPage extends Component {
                         <Button className='myModalButton'
                             style={{backgroundColor : this.state.modalButtonVariant, borderColor : this.state.modalButtonVariant}}
                             onClick={ () => {
-                                    if(this.state.onModalClose) {
-                                        this.state.onModalClose();
-                                    }
+                                    this.onModalClose();
                                     this.setState({showModal: false, onModalClose: false});
                                     ReactGA.event({
                                         category: "button_click",
@@ -540,7 +546,7 @@ class CampaignPage extends Component {
                     <p className='backToCampaigns'><Link className={"backToCampaignsLink"} to="/"><ChevronLeft id='backToCampaignsChevron'/><Trans i18nKey='backToCampaigns'/></Link></p>
                 </Container>
                 <Container id='mainContainer'>
-                    {this.state.showCCinfoModal && <CCData handleCCInfoCancel = {this.handleCCInfoCancel} handleGetCCInfo = {this.handleGetCCInfo}/>}
+                    {this.state.showCCinfoModal && <CCData handleCCInfoCancel = {this.handleCCInfoCancel} handleGetCCInfo = {this.handleGetCCInfo} currentCCInfo = {this.state.ccinfo}/>}
                     <Row id='topRow'>
                         <Col id='imgCol'>
                             <Image src={this.state.campaign.mainImageURL} id='mainImage'/>
