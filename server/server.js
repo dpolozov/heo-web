@@ -433,8 +433,8 @@ APP.post('/api/donatefiat', async (req, res) => {
             return;
         }
     } catch (err) {
-        console.log(err);
-        res.sendStatus(500);
+        console.log(err.response.data);
+        res.status(500).send({paymentStatus: err.response.data});
     }
 
     //let billingDetails = req.body.billingDetails;
