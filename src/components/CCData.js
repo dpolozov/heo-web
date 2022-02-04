@@ -6,6 +6,11 @@ import { isValidPhoneNumber, parsePhoneNumber } from 'libphonenumber-js';
 import countries from '../countries';
 import states from '../states';
 
+const COUNTRIES_FOR_3DS = [
+'AT', 'BE', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR', 'DE', 'GR', 'HU', 
+'IE', 'IT', 'LV', 'LT', 'LU', 'MT', 'NL', 'PL', 'PT', 'RO', 'SK', 'SI', 'ES', 'SE',
+]
+
 class CCData extends Component {
 
     constructor(props) {
@@ -26,10 +31,12 @@ class CCData extends Component {
                 currency: 'USD',
                 name: '',
                 number: '',
+                verification: 'cvv'
             },
             focus: '',
             knownStates: false,
-            errorMessage: ''
+            errorMessage: '',
+            threeDs: false,
         };
         if(Object.keys(this.props.currentCCInfo)){
             Object.keys(this.props.currentCCInfo).forEach((key) => {
@@ -50,7 +57,7 @@ class CCData extends Component {
             } else if(this.props.currentCCInfo.ccError === 'cardPaymentDeclined'){
                 this.ccvInput.focus();
             } else if(this.props.currentCCInfo.ccError === 'Invalid District/State'){
-                this.stateInput.focus();
+                this.districtInput.focus();
             } else if(this.props.currentCCInfo.ccErrorType === 'default'){
                 //no specific focus, unknown error
             } else {
@@ -112,6 +119,12 @@ class CCData extends Component {
                     if(this.state.errorMessage){
                         this.setState({errorMessage:''});
                     }
+                    //choose verification process
+                    if(COUNTRIES_FOR_3DS.includes(value)){
+                        this.setState({ threeDs: true });
+                    } else {
+                        this.setState({ threeDs: false });
+                    }
                     break;
                 case 'district':
                     if(!this.state.ccinfo.country){
@@ -121,6 +134,10 @@ class CCData extends Component {
                     } else {
                         this.setState({errorMessage: ''});
                     }
+                    break;
+                case 'threeDs':
+                    this.setState({threeDs: !this.state.threeDs})
+                    break;
             }
         }
         this.setState(prevState => ({
@@ -136,7 +153,7 @@ class CCData extends Component {
         if(this.state.ccinfo.phoneNumber, this.state.ccinfo.country){
             if(!isValidPhoneNumber(this.state.ccinfo.phoneNumber, this.state.ccinfo.country)){
                 this.setState({errorMessage : 'validPhone'});
-                this.phoneInput.focus();
+                this.phoneNumberInput.focus();
                 return;
             } else {
                 this.setState({errorMessage: ''});
@@ -148,6 +165,11 @@ class CCData extends Component {
         phoneNumberE164.format('E.164');
         this.setState({errorMessage: ''});
         data.phoneNumber = phoneNumberE164.number;
+        if(this.state.threeDs) { 
+            data.verification = 'three_d_secure';
+        } else {
+            data.verification = 'cvv';
+        }
         this.props.handleGetCCInfo(data); 
         this.props.handleCCInfoCancel();
         
@@ -224,6 +246,9 @@ class CCData extends Component {
                                     onChange={this.handleInputChange} value={this.state.ccinfo.phoneNumber}  autoComplete='tel'
                                     ref={(input) => this.phoneNumberInput = input}
                                 />
+                                <br/>
+                                <label><input type="checkbox" checked={this.state.threeDs} value={this.state.threeDs} name="threeDs" onChange={this.handleInputChange} />  {i18n.t('3dsV')}</label>
+                                <br/>
                                 <span className='warning'>{i18n.t(`${this.state.errorMessage}`)}</span>
                                 <br/>
                                 <br/>

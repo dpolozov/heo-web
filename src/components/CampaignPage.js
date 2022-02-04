@@ -652,6 +652,28 @@ class CampaignPage extends Component {
         });
 
         ReactGA.send({ hitType: "pageview", page: this.props.location.pathname });
+
+        const params = new Proxy(new URLSearchParams(window.location.search), {
+            get: (searchParams, prop) => searchParams.get(prop),
+        });
+
+        if(params.fp){
+            if(params.fp === 's'){
+                this.setState({
+                    showModal: true, modalTitle: 'complete',
+                    modalMessage: 'thankYouDonation',
+                    errorIcon: 'CheckCircle', modalButtonMessage: 'closeBtn',
+                    modalButtonVariant: '#588157', waitToClose: false, tryAgainCC: false, ccinfo: {}
+                });
+            } else if(params.fp === 'f') {
+                this.setState({
+                    showModal: true, modalTitle: 'failed', modalMessage: 'failed3ds',
+                    errorIcon: 'XCircle', modalButtonMessage: 'tryAgain',
+                    modalButtonVariant: '#E63C36', waitToClose: false, tryAgainCC: true,
+                    donationAmount: params.am
+                });
+            }
+        }
     }
 
 }

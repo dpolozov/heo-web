@@ -330,6 +330,11 @@ APP.post('/api/donatefiat', async (req, res) => {
         });
         if(createCardResp && createCardResp.status >= 200 && createCardResp.data && createCardResp.data.data && createCardResp.data.data.id) {
             let paymentIdempotencyKey = uuidv4();
+            let verificationUrl = req.headers.referer;
+            if(verificationUrl.includes('?')){
+                verificationUrlArray = verificationUrl.split('?');
+                verificationUrl = verificationUrlArray[0]; 
+            }
             //got card ID, can create a payment
             let paymentResp = await axios({
                 method: 'post',
@@ -355,7 +360,9 @@ APP.post('/api/donatefiat', async (req, res) => {
                         type: "card"
                     },
                     encryptedData: req.body.encryptedSecurityData,
-                    verification: req.body.verification
+                    verification: req.body.verification,
+                    verificationSuccessUrl: `${verificationUrl}?fp=s`,
+                    verificationFailureUrl: `${verificationUrl}?fp=f&am=${req.body.amount}`,
                 }
             });
 
@@ -384,6 +391,10 @@ APP.post('/api/donatefiat', async (req, res) => {
                         break;
                     }
                 }
+                if(respData.status === 'action_required') { 
+                    res.status(200).send({paymentStatus: 'action_required', redirectUrl: respData.requiredAction.redirectUrl});
+                    return;
+                };
 
                 if(respData.status == "confirmed" || respData.status == "paid") {
                     res.status(200).send({paymentStatus:"success"});
@@ -414,15 +425,6 @@ APP.post('/api/donatefiat', async (req, res) => {
                     return;
                 }
 
-                if(respData.status == "action_required") {
-                    if(respData.requiredAction && respData.requiredAction.redirectUrl) {
-                        res.redirect(respData.requiredAction.redirectUrl);
-                        return;
-                    } else {
-                        res.status(200).send({paymentStatus:"failed"});
-                        return;
-                    }
-                }
             } else {
                 res.status(200).send({paymentStatus:"failed"});
                 return;
