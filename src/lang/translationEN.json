@@ -158,7 +158,9 @@
     "checkCCdistrict": "Please check the district/state",
     "checkCCpostalCode": "Please check the postal/zip code",
     "checkCCphoneNumber": "please check the phone number",
-    "checkCCdefault": "Please check the information you entered"
+    "checkCCdefault": "Please check the information you entered",
+    "failed3ds": "Failed 3DS verfication",
+    "3dsV": "Use 3DS verification"
 }
 
 
