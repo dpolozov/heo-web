@@ -159,7 +159,7 @@ class CampaignPage extends Component {
                         campaignInstance.methods.donateNative().send(
                             {from:accounts[0], value:(""+toDonate)}
                         ).once('transactionHash', function(transactionHash){
-                            that.setState({modalMessage: "waitingForNetowork"});
+                            that.setState({modalMessage: "waitingForNetwork"});
                             web3.eth.getTransaction(transactionHash).then(
                                 function(txnObject) {
                                     if(txnObject) {
@@ -183,7 +183,7 @@ class CampaignPage extends Component {
                         let result = await campaignInstance.methods.donateNative().send(
                             {from:accounts[0], value:(""+toDonate)}
                         ).once('transactionHash', function(transactionHash){
-                            that.setState({modalMessage: "waitingForNetowork"})
+                            that.setState({modalMessage: "waitingForNetwork"})
                         });
                         await this.updateRaisedAmount(accounts, campaignInstance, web3, 18);
                         this.setState({
@@ -240,7 +240,7 @@ class CampaignPage extends Component {
                             coinInstance.methods.approve(campaignAddress, ""+toDonate).send(
                                 {from:accounts[0]}
                             ).once('transactionHash', function(transactionHash){
-                                that.setState({modalMessage: "waitingForNetowork"});
+                                that.setState({modalMessage: "waitingForNetwork"});
                                 web3.eth.getTransaction(transactionHash).then(
                                     function(txnObject) {
                                         if(txnObject) {
@@ -282,7 +282,7 @@ class CampaignPage extends Component {
                         let result = await coinInstance.methods.approve(campaignAddress, ""+toDonate).send(
                             {from:accounts[0]}
                         ).once('transactionHash', function(transactionHash){
-                            that.setState({modalMessage: "waitingForNetowork"})
+                            that.setState({modalMessage: "waitingForNetwork"})
                         });
                         console.log('Approved spending');
                         ReactGA.event({
@@ -300,7 +300,7 @@ class CampaignPage extends Component {
                             {from:accounts[0]}
                         ).once('transactionHash', function(transactionHash){
                             console.log(`transaction hash for donateERC20 ${transactionHash}`);
-                            that.setState({modalMessage: "waitingForNetowork"})
+                            that.setState({modalMessage: "waitingForNetwork"})
                         });
                         console.log(`Done with transactions`);
 

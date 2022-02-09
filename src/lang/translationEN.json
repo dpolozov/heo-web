@@ -24,7 +24,7 @@
     "blockChainConnectFailed": "Failed to connect to blockchain",
     "checkMetamask": "Please check your crypto wallet for more details",
     "processingWait": "Processing...",
-    "waitingForNetowork": "Waiting for the network to confirm transaction",
+    "waitingForNetwork": "Waiting for the network to confirm transaction",
     "technicalDifficulties": "We are having technical difficulties",
     "checkYourConnection": "Please check your connection",
     "confirmMetamask": "Please confirm transaction in your wallet. If your wallet does not prompt for a confirmation, please reload the page, log out and log back in",

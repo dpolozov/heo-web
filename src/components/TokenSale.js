@@ -67,7 +67,7 @@ class TokenSale extends React.Component {
                     currencyInstance.methods.approve(that.state.saleContractAddress, toPay).send(
                         {from:accounts[0]}
                     ).once('transactionHash', function(transactionHash){
-                        that.setState({modalMessage: "waitingForNetowork"});
+                        that.setState({modalMessage: "waitingForNetwork"});
                         web3.eth.getTransaction(transactionHash).then(
                             function(txnObject) {
                                 if(txnObject) {
@@ -94,7 +94,7 @@ class TokenSale extends React.Component {
                     let result = await currencyInstance.methods.approve(that.state.saleContractAddress, toPay).send(
                         {from:accounts[0]}
                     ).once('transactionHash', function(transactionHash){
-                        that.setState({modalMessage: "waitingForNetowork"})
+                        that.setState({modalMessage: "waitingForNetwork"})
                     });
                     console.log('Approved spending');
                     this.setState({
@@ -106,7 +106,7 @@ class TokenSale extends React.Component {
                         {from:accounts[0]}
                     ).once('transactionHash', function(transactionHash){
                         console.log(`transaction hash for sell ${transactionHash}`);
-                        that.setState({modalMessage: "waitingForNetowork"})
+                        that.setState({modalMessage: "waitingForNetwork"})
                     });
                     console.log(`Done with transactions`);
 
@@ -246,7 +246,7 @@ class TokenSale extends React.Component {
         console.log(priceObject);
         let _heoPrice = priceObject.price/priceObject.decimals;
         currencyInstance = new web3.eth.Contract(ERC20Coin, _currencyAddress);
-        
+
         let _currencyName = await currencyInstance.methods.symbol().call();
         let _unsoldHeo = await web3.utils.fromWei(await HEOSale.methods.unsoldBalance().call());
         let _minInvestment = await web3.utils.fromWei(await HEOSale.methods.minInvestment().call());

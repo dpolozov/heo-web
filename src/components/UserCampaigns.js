@@ -117,7 +117,7 @@ class UserCampaigns extends Component {
 
     async loadCampaigns() {
         this.setState({showModal:true, modalTitle: 'processingWait',
-            modalMessage: 'waitingForNetowork', errorIcon:'HourglassSplit',
+            modalMessage: 'waitingForNetwork', errorIcon:'HourglassSplit',
             modalButtonVariant: "gold", waitToClose: true});
         var campaigns = [];
         var modalTitle = 'failedToLoadCampaigns';
@@ -184,8 +184,8 @@ class UserCampaigns extends Component {
         return axios.post('/api/deleteimage', data, {headers: {"Content-Type": "application/json"}})
         .then(res => {
             console.log("Success deleting image");
-        }).catch(err => {              
-            console.log(err);                   
+        }).catch(err => {
+            console.log(err);
         });
     }
 
@@ -194,19 +194,19 @@ class UserCampaigns extends Component {
         return axios.post('/api/campaign/deactivate', data, {headers: {"Content-Type": "application/json"}})
         .then(res => {
             console.log("Success deleting db entry");
-        }).catch(err => {              
-            console.log(err);                   
+        }).catch(err => {
+            console.log(err);
         });
     }
 
     render() {
         return (
-            <div> 
+            <div>
                 <Container>
-                    {this.state.campaigns.length == 0 && 
+                    {this.state.campaigns.length == 0 &&
                         <h1>
                             <Trans i18nKey='noUserCampaigns'>You did not create any campaigns yet. Click <Link to="/new">here</Link> to create your first campaign.</Trans>
-                        </h1>                       
+                        </h1>
                     }
                 </Container>
                 <Modal show={this.state.showModal} onHide={()=>{}} className='myModal' centered>
@@ -285,7 +285,7 @@ class UserCampaigns extends Component {
                                         </Col>
                                         <Col >
                                             <Link to={'/campaign/' + item._id} id='cardLink'>
-                                            <Row>                                  
+                                            <Row>
                                                 <Card.Body>
                                                     <Card.Title>{i18nString(item.title, i18n.language)}</Card.Title>
                                                     <Card.Text>{`${DescriptionPreview(item.description, i18n.language)}...`}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span id='readMore'><Trans i18nKey='readMore'/></span></Card.Text>
@@ -297,12 +297,12 @@ class UserCampaigns extends Component {
                                             <Row id='buttonsRow'>
                                                 <Col className='buttonCol'><Button variant="danger" id='donateBtn' block onClick={() => this.closeCampaignPrep(item._id, item.mainImageURL)}><Trans i18nKey='closeCmpnBtn'/></Button></Col>
                                                 <Col className='buttonCol'><Link to={'/editCampaign/' + item._id} id='cardLink'><Button id='editBtn' block><Trans i18nKey='editCmpnBtn'/></Button></Link></Col>
-                                            </Row> 
+                                            </Row>
                                         </Col>
                                     </Row>
                                 </Card>
-                            </Row>                           
-                        )} 
+                            </Row>
+                        )}
                     </Container>
                 </div>
             </div>

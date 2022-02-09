@@ -23,7 +23,7 @@
     "blockChainTransactionFailed": "Транзакция в блокчейне не прошла",
     "checkMetamask": "Проверьте сообщения в крипто-кошельке",
     "processingWait": "Подождите...",
-    "waitingForNetowork": "Ждём подтверждения транзакции в блокчейне",
+    "waitingForNetwork": "Ждём подтверждения транзакции в блокчейне",
     "technicalDifficulties": "У нас технические неполадки",
     "checkYourConnection": "Пожалуйста проверьте ваше соединение",
     "confirmMetamask": "Пожалуйста подтвердите транзакцию в крипто-кошельке",

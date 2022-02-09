@@ -157,7 +157,7 @@ class EditCampaign extends React.Component {
             return false;
         }
         this.setState({showModal:true, modalTitle: 'processingWait',
-                modalMessage: 'waitingForNetowork',
+                modalMessage: 'waitingForNetwork',
                 errorIcon:'HourglassSplit',
                 modalButtonVariant: "gold", waitToClose: true});
         var newImgUrl = this.state.mainImageURL;
@@ -246,7 +246,7 @@ class EditCampaign extends React.Component {
                     .on('transactionHash',
                         function(transactionHash) {
                             that.setState({showModal:true, modalTitle: 'processingWait',
-                                modalMessage: 'waitingForNetowork', modalIcon: 'HourglassSplit',
+                                modalMessage: 'waitingForNetwork', modalIcon: 'HourglassSplit',
                                 modalButtonVariant: "gold", waitToClose: true});
                         });
                 if(result && result.events && result.events.CampaignDeployed && result.events.CampaignDeployed.address) {
@@ -276,7 +276,7 @@ class EditCampaign extends React.Component {
                 } else {
                     this.setState({currentError : ''});
                 }
-                return false; 
+                return false;
             }
         } catch (error) {
             this.setState({currentError : 'checkMetamask'});
@@ -330,13 +330,13 @@ class EditCampaign extends React.Component {
                         <p className='modalTitle'><Trans i18nKey={this.state.modalTitle}/></p>
                         <p className='modalMessage'><Trans i18nKey={this.state.modalMessage}/></p>
                         {!this.state.waitToClose &&
-                        <Button className='myModalButton' 
-                            style={{backgroundColor : this.state.modalButtonVariant, borderColor : this.state.modalButtonVariant}} 
+                        <Button className='myModalButton'
+                            style={{backgroundColor : this.state.modalButtonVariant, borderColor : this.state.modalButtonVariant}}
                             onClick={ () => {this.setState({showModal:false})}}>
                             <Trans i18nKey={this.state.modalButtonMessage} />
                         </Button>
                         }
-                    </Modal.Body>                
+                    </Modal.Body>
                 </Modal>
                 <Container className='backToCampaignsDiv'>
                     <Link to="/myCampaigns">
@@ -350,13 +350,13 @@ class EditCampaign extends React.Component {
                             <Form.Label><Trans i18nKey='organization'/><span className='redAsterisk'>*</span></Form.Label>
                             <Form.Control required type="text" className="createFormPlaceHolder" placeholder={i18n.t('on')}
                                 name='org' value={this.state.org} onChange={this.handleChange} />
-                        </Form.Group>     
+                        </Form.Group>
                         <hr/>
                         <Form.Row>
                             <Form.Group as={Col}>
                                 <Form.Label><Trans i18nKey='selectConuntry'/><span className='redAsterisk'>*</span></Form.Label>
                                 <Form.Control required as="select" name='cn' value={this.state.cn} onChange={this.handleChange} >
-                                {countries.map( (data)=> 
+                                {countries.map( (data)=>
                                     <option value={data.value}>{data.text}</option>
                                 )}
                                 </Form.Control>
@@ -375,8 +375,8 @@ class EditCampaign extends React.Component {
                             <Form.Label><Trans i18nKey='selectCoverImage'/><span className='redAsterisk'>*</span></Form.Label>
                             <Form.Label><span className='optional'>(<Trans i18nKey='coverImageHint'/>)</span></Form.Label>
                             <Form.File
-                                name='imageFile' className="position-relative" 
-                                id="campaignImgInput" accept='.jpg,.png,.jpeg,.gif' 
+                                name='imageFile' className="position-relative"
+                                id="campaignImgInput" accept='.jpg,.png,.jpeg,.gif'
                                 onChange={this.fileSelected}
                             />
                         </Form.Group>

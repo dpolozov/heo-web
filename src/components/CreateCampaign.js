@@ -227,7 +227,7 @@ class CreateCampaign extends React.Component {
                     .send({from:this.state.accounts[0]})
                     .once('transactionHash', function(transactionHash) {
                         that.setState({showModal:true, modalTitle: 'processingWait',
-                            modalMessage: 'waitingForNetowork', modalIcon: 'HourglassSplit',
+                            modalMessage: 'waitingForNetwork', modalIcon: 'HourglassSplit',
                             modalButtonVariant: "gold", waitToClose: true}
                         );
                         web3.eth.getTransaction(transactionHash).then(
@@ -243,7 +243,7 @@ class CreateCampaign extends React.Component {
                     .on('transactionHash',
                         function(transactionHash) {
                             that.setState({showModal:true, modalTitle: 'processingWait',
-                                modalMessage: 'waitingForNetowork', modalIcon: 'HourglassSplit',
+                                modalMessage: 'waitingForNetwork', modalIcon: 'HourglassSplit',
                                 modalButtonVariant: "gold", waitToClose: true});
                         });
                 if(result && result.events && result.events.CampaignDeployed && result.events.CampaignDeployed.address) {
@@ -385,7 +385,7 @@ class CreateCampaign extends React.Component {
                                 )}
                         </UserContext.Consumer>
                         }
-                    </Modal.Body>                
+                    </Modal.Body>
                 </Modal>
                 <Container className='backToCampaignsDiv'>
                     <p className='backToCampaigns'><Link class={"backToCampaignsLink"} to="/"><ChevronLeft id='backToCampaignsChevron'/> <Trans i18nKey='backToCampaigns'/></Link></p>
@@ -448,7 +448,7 @@ class CreateCampaign extends React.Component {
                                           name='description' value={this.state.description}
                                           maxLength='195' onChange={this.handleTextArea}/>
                             <Form.Label><Trans i18nKey='campaignDescription'/><span className='redAsterisk'>*</span></Form.Label>
-                            <TextEditor />                  
+                            <TextEditor />
                         </Form.Group>
                         <Button onClick={() => this.handleClick()} id='createCampaignBtn' name='ff3'>
                             {i18n.t('createCampaignBtn')}
