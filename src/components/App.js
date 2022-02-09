@@ -53,7 +53,7 @@ class App extends Component {
         ReactGA.event({
             category: "language",
             action: "language_changed",
-            value: lang,
+            label: lang,
             nonInteraction: false
         });
     }
