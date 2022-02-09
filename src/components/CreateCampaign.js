@@ -42,7 +42,6 @@ class CreateCampaign extends React.Component {
             vl:"",
             title:"",
             maxAmount:10000,
-            title:"",
             description:"",
             raisedAmount:0,
             percentRaised: "0%",
@@ -83,7 +82,7 @@ class CreateCampaign extends React.Component {
                 this.setState(
                     {showModal:true, modalTitle: 'requiredFieldsTitle',
                         modalMessage: 'orgRequired', modalIcon: 'ExclamationTriangle',
-                        modalButtonVariant: "gold", waitToClose: false,
+                        waitToClose: false,
                         modalButtonMessage: 'closeBtn', modalButtonVariant: '#E63C36'
                     });
                 return false;
@@ -92,7 +91,7 @@ class CreateCampaign extends React.Component {
                 this.setState(
                     {showModal:true, modalTitle: 'requiredFieldsTitle',
                         modalMessage: 'cnRequired', modalIcon: 'ExclamationTriangle',
-                        modalButtonVariant: "gold", waitToClose: false,
+                        waitToClose: false,
                         modalButtonMessage: 'closeBtn', modalButtonVariant: '#E63C36'
                     });
                 return false;
@@ -101,7 +100,7 @@ class CreateCampaign extends React.Component {
                 this.setState(
                     {showModal:true, modalTitle: 'requiredFieldsTitle',
                         modalMessage: 'titleRequired', modalIcon: 'ExclamationTriangle',
-                        modalButtonVariant: "gold", waitToClose: false,
+                        waitToClose: false,
                         modalButtonMessage: 'closeBtn', modalButtonVariant: '#E63C36'
                     });
                 return false;
@@ -110,7 +109,7 @@ class CreateCampaign extends React.Component {
                 this.setState(
                     {showModal:true, modalTitle: 'requiredFieldsTitle',
                         modalMessage: 'shortDescRequired', modalIcon: 'ExclamationTriangle',
-                        modalButtonVariant: "gold", waitToClose: false,
+                        waitToClose: false,
                         modalButtonMessage: 'closeBtn', modalButtonVariant: '#E63C36'
                     });
                 return false;
@@ -119,7 +118,7 @@ class CreateCampaign extends React.Component {
                 this.setState(
                     {showModal:true, modalTitle: 'requiredFieldsTitle',
                         modalMessage: 'longDescRequired', modalIcon: 'ExclamationTriangle',
-                        modalButtonVariant: "gold", waitToClose: false,
+                        waitToClose: false,
                         modalButtonMessage: 'closeBtn', modalButtonVariant: '#E63C36'
                     });
                 return false;
@@ -279,7 +278,7 @@ class CreateCampaign extends React.Component {
             this.setState(
                 {showModal:true, modalTitle: 'coverImageRequiredTitle',
                     modalMessage: 'coverImageRequired', modalIcon: 'ExclamationTriangle',
-                    modalButtonVariant: "gold", waitToClose: false,
+                    waitToClose: false,
                     modalButtonMessage: 'closeBtn', modalButtonVariant: '#E63C36'
                 });
             return false;

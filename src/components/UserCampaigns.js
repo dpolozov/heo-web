@@ -175,7 +175,7 @@ class UserCampaigns extends Component {
             this.setState({
                 waitToClose: false, modalMessage: 'technicalDifficulties',
                 errorIcon:'XCircle', modalButtonMessage: 'closeBtn', modalTitle: 'failed',
-                modalButtonVariant: "#E63C36", waitToClose: false, showTwoButtons: false})
+                modalButtonVariant: "#E63C36", showTwoButtons: false})
         }
     }
 
