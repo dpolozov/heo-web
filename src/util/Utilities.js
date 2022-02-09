@@ -3,8 +3,11 @@ import axios from 'axios';
 import Web3 from 'web3';
 import Web3Modal from 'web3modal';
 import WalletConnectProvider from '@walletconnect/web3-provider';
+import ReactGA from "react-ga4";
 
 import { CheckCircle, HourglassSplit, XCircle } from 'react-bootstrap-icons';
+
+ReactGA.initialize("G-C657WZY5VT");
 
 class Utilities {
 
@@ -117,14 +120,32 @@ const initWeb3 = async (chainId, that) => {
         var currentChainId = await window.ethereum.request({ method: 'eth_chainId' });
         if(currentChainId != hexChainID) {
             try {
+                ReactGA.event({
+                    category: "provider",
+                    action: "switching_network",
+                    label: chainConfig["CHAIN_NAME"],
+                    nonInteraction: false
+                });
                 await window.ethereum.request({
                     method: 'wallet_switchEthereumChain',
                     params: [{ chainId: hexChainID }],
+                });
+                ReactGA.event({
+                    category: "provider",
+                    action: "switched_network",
+                    label: chainConfig["CHAIN_NAME"],
+                    nonInteraction: false
                 });
             } catch (switchError) {
                 // This error code indicates that the chain has not been added to MetaMask.
                 if (switchError.code === 4902) {
                     try {
+                        ReactGA.event({
+                            category: "provider",
+                            action: "adding_network",
+                            label: chainConfig["CHAIN_NAME"],
+                            nonInteraction: false
+                        });
                         await window.ethereum.request({
                             method: 'wallet_addEthereumChain',
                             params: [{
@@ -137,6 +158,12 @@ const initWeb3 = async (chainId, that) => {
                     } catch (addError) {
                         console.log(`Failed to add provider for ${chainId} and ${chainConfig["WEB3_RPC_NODE_URL"]}`)
                         console.log(addError);
+                        ReactGA.event({
+                            category: "provider",
+                            action: "failed_to_add_provider",
+                            label: chainConfig["CHAIN_NAME"],
+                            nonInteraction: false
+                        });
                     }
                 } else {
                     console.log(`Failed to switch provider to ${chainId} and ${chainConfig["WEB3_RPC_NODE_URL"]}`)
