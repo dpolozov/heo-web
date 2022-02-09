@@ -35,7 +35,6 @@ const IMG_MAP = {"BUSD-0xe9e7cea3dedca5984780bafc599bd69add087d56": busdIcon,
     "cUSD-0x765DE816845861e75A25fCA122bb6898B8B1282a": cusdIcon,
     "USDC-0xb12bfca5a55806aaf64e99521918a4bf0fc40802": usdcAurora};
 
-
 const PAYMENT_ERROR_MESSAGES = {
     declined: "cardPaymentDeclined",
     payment_stopped_by_issuer: "cardPaymentFailed_payment_stopped_by_issuer",
@@ -239,7 +238,6 @@ class CampaignPage extends Component {
                 }));
             }
         }
-
     }
 
     handleDonateClick = async (chainId) => {
