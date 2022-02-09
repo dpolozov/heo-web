@@ -107,7 +107,7 @@ const initWeb3 = async (chainId, that) => {
         await initWeb3Modal(chainId);
     }
     let provider = await window.web3Modal.connect();
-    provider.on("disconnect", (code: number, reason: string) => {
+    provider.on("disconnect", (code, reason) => {
         that.setState({web3:null, accounts: null});
     });
 
