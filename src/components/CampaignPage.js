@@ -356,7 +356,7 @@ class CampaignPage extends Component {
             ReactGA.event({
                 category: "error",
                 action: "transaction_error",
-                label: err, // optional, must be a number
+                label: (err && err.message ? err.message : "blockChainConnectFailed"), // optional, must be a number
                 nonInteraction: false
             });
         }
