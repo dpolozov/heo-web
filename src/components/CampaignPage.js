@@ -243,7 +243,6 @@ class CampaignPage extends Component {
                 }));
             }
         }
-
     }
 
     showCoinbaseCommerce = async() => {
