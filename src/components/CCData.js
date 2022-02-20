@@ -17,20 +17,20 @@ class CCData extends Component {
         super(props);
         this.state = {
             ccinfo : {
-                city: '',
-                country: '',
-                district: '',
-                line1: '',
+                city: 'redwood city',
+                country: 'US',
+                district: 'CA',
+                line1: '333 sometown',
                 line2: '',
-                postalCode: '',
-                cvc: '',
-                expMonth: '',
-                expYear: '',
-                email: '',
-                phoneNumber: '',
+                postalCode: '94061',
+                cvc: '111',
+                expMonth: '11',
+                expYear: '2023',
+                email: 'example@email.com',
+                phoneNumber: '+16503334567',
                 currency: 'USD',
-                name: '',
-                number: '',
+                name: 'customer zero',
+                number: '4007410000000006',
                 verification: 'cvv'
             },
             focus: '',
@@ -188,35 +188,35 @@ class CCData extends Component {
                             <Form onSubmit={this.handleSubmit}>
                                 <div className="ccInfoTitles">{i18n.t('cardInfo')}</div>
                                 <Form.Control type="text" name="name" placeholder={i18n.t('name')} required className='ccInfoFormPlaceHolder'
-                                    pattern="([\S]+([\s]+[\S]+)+)" title={i18n.t('firstNlast')} onChange={this.handleInputChange} value={this.state.ccinfo.name}
+                                    pattern="([\S]+([\s]+[\S]+)+)" title={i18n.t('firstNlast')} onChange={this.handleInputChange} value='customer zero'
                                     ref={(input) => this.nameInput = input} autoComplete='cc-name'
                                 />
                                 <br/>
                                 <Form.Control type="text" name="number" placeholder={i18n.t('cardNumber')} required className='ccInfoFormPlaceHolder'
-                                    pattern="([0-9 ]{19})|([0-9]{16})" title={i18n.t('cardNumber16digit')} value={this.state.ccinfo.number}
+                                    pattern="([0-9 ]{19})|([0-9]{16})" title={i18n.t('cardNumber16digit')} value='4007410000000006'
                                     onChange={this.handleInputChange} ref={(input) => this.numberInput = input} autoComplete='cc-number'
                                 />
                                 <br/>
                                 <div id='experation'>
                                     <Form.Control type="text" name="expMonth" placeholder={i18n.t('expMM')} required className='experationInput'
-                                        pattern="(0[1-9]|1[0-2])" title={i18n.t('monthExp')} onChange={this.handleInputChange} value={this.state.ccinfo.expMonth}
+                                        pattern="(0[1-9]|1[0-2])" title={i18n.t('monthExp')} onChange={this.handleInputChange} value='11'
                                         ref={(input) => this.expMonthInput = input} autoComplete='cc-exp-month'
                                     />
                                     <Form.Control type="text" name="expYear" placeholder={i18n.t('expYY')} required className='experationInput'
-                                        pattern="(20)[2,3]{1}[0-9]{1}" title={i18n.t('yearExp')} onChange={this.handleInputChange} value={this.state.ccinfo.expYear}
+                                        pattern="(20)[2,3]{1}[0-9]{1}" title={i18n.t('yearExp')} onChange={this.handleInputChange} value='2023'
                                         ref={(input) => this.expYearInput = input} autoComplete='cc-exp-year'
                                     />
                                     <Form.Control type="text" name="cvc" placeholder={i18n.t('cvc')} required className='cvcInput'
-                                    pattern="[0-9]{3}" title={i18n.t('cvc3digit')} value={this.state.ccinfo.cvc} onChange={this.handleInputChange}   
+                                    pattern="[0-9]{3}" title={i18n.t('cvc3digit')} value='111' onChange={this.handleInputChange}   
                                     ref={(input) => this.cvvInput = input} autoComplete='cc-csc'/> 
                                 </div>
                                 <div className="ccInfoTitles">{i18n.t('billingInfo')}</div>
                                 <Form.Control type="text" name="email" placeholder={i18n.t('email')} required className='ccInfoFormPlaceHolder'
-                                    pattern="[\S]+[@]{1}[\S]+[.]{1}[\S]+" title={i18n.t('emailFaulty')} onChange={this.handleInputChange} value={this.state.ccinfo.email}
+                                    pattern="[\S]+[@]{1}[\S]+[.]{1}[\S]+" title={i18n.t('emailFaulty')} onChange={this.handleInputChange} value='example@email.com'
                                     ref={(input) => this.emailInput = input} autoComplete='email'
                                 />
                                 <Form.Control type="text" name="line1" placeholder={i18n.t('streetAddress1')} required className='ccInfoFormPlaceHolder'
-                                    onChange={this.handleInputChange} value={this.state.ccinfo.line1}  ref={(input) => this.line1Input = input}
+                                    onChange={this.handleInputChange} value='345 elm street'  ref={(input) => this.line1Input = input}
                                     autoComplete='address-line1'
                                 />
                                 <Form.Control type="text" name="line2" placeholder={i18n.t('streetAddress2')} className='ccInfoFormPlaceHolder'
@@ -224,26 +224,26 @@ class CCData extends Component {
                                     autoComplete='address-line2'
                                 />
                                 <Form.Control type="text" name="city" placeholder={i18n.t('city')} required className='ccInfoFormPlaceHolder'
-                                    onChange={this.handleInputChange} value={this.state.ccinfo.city}  ref={(input) => this.cityInput = input}
+                                    onChange={this.handleInputChange} value='wondertown'  ref={(input) => this.cityInput = input}
                                 />
-                                <Form.Control as="select" name='country' required className='countryZip' value={this.state.country} onChange={this.handleInputChange}
+                                <Form.Control as="select" name='country' required className='countryZip' value='US' onChange={this.handleInputChange}
                                  ref={(input) => this.countryInput = input} autoComplete='country' >
                                     <option value={this.state.ccinfo.country ? this.state.ccinfo.country : ''}>{this.state.ccinfo.country ? this.state.ccinfo.country : i18n.t('country')}</option>
                                     {countries.map((data) => <option value={data.value}>{data.text}</option>)} 
                                 </Form.Control>
                                 <Form.Control type="text" name="postalCode" placeholder={i18n.t('postalCode')} required className='countryZip' autoComplete='postal-code'
-                                    value={this.state.ccinfo.postalCode} onChange={this.handleInputChange}  ref={(input) => this.postalCodeInput = input}
+                                    value='94061' onChange={this.handleInputChange}  ref={(input) => this.postalCodeInput = input}
                                 />
                                 {this.state.knownStates && <Form.Control as="select" name="district" required className='ccInfoFormPlaceHolder' onChange={this.handleInputChange}
                                     ref={(input)=> this.districtInput = input}> 
-                                    <option value=''>{i18n.t('state')}</option>
+                                    <option value='CA'>{i18n.t('state')}</option>
                                     {states[this.state.ccinfo.country].map((data) => <option value={data.value}>{data.text}</option>)}
                                 </Form.Control>}
                                 {!this.state.knownStates && <Form.Control type="text" name="district" placeholder={i18n.t('state')} required className='ccInfoFormPlaceHolder'
-                                    onChange={this.handleInputChange} value={this.state.ccinfo.district} ref={(input)=> this.districtInput = input}
+                                    onChange={this.handleInputChange} value='CA' ref={(input)=> this.districtInput = input}
                                 />}
                                 <Form.Control type="text" name="phoneNumber" placeholder={i18n.t('phoneNumber')} required className='ccInfoFormPlaceHolder'
-                                    onChange={this.handleInputChange} value={this.state.ccinfo.phoneNumber}  autoComplete='tel'
+                                    onChange={this.handleInputChange} value='+16503334567'  autoComplete='tel'
                                     ref={(input) => this.phoneNumberInput = input}
                                 />
                                 <br/>

@@ -26,6 +26,7 @@ const DBNAME = process.env.MONGO_DB_NAME;
 const CLIENT = new MongoClient(URL);
 const CIRCLE_API_URL = process.env.CIRCLE_API_URL;
 const CIRCLE_API_KEY = process.env.CIRCLE_API_KEY;
+const SUBSCRIBER_ENDPOINT_URL = 'https://my-app.loca.lt/';
 
 CLIENT.connect(err => {
     if(err) {
@@ -51,6 +52,34 @@ function jwtErrorCatch (err, req, res, next) {
         next(err, req, res);
     }
 }
+
+//subscribe to notifications
+/*
+async function subscribeToCircle() {
+    try {
+        let subscrption = await axios({
+            method: 'post',
+            url: 'https://api-sandbox.circle.com/v1/notifications/subscriptions',
+            headers: {
+                'Accept' : 'application/json',
+                'Content-Type' : 'application/json',
+                'Authorization': `Bearer ${CIRCLE_API_KEY}`,
+            },
+            data : `{\"endpoint\": \"${SUBSCRIBER_ENDPOINT_URL}\"}`
+        })
+        console.log(subscrption.data);
+    } catch (err) {
+        console.log(err);
+    }
+}
+
+subscribeToCircle();
+*/
+
+APP.post('/api/paymentNotification', (req, res) => {
+    console.log('notification received from httpserver');
+    console.log(Object.keys(req.body)[0]);
+})
 
 APP.post('/api/uploadimage', (req,res) => {
     if(req.user && req.user.address) {
@@ -185,7 +214,7 @@ APP.post('/api/campaign/loadAll', (req, res) => {
     DB.collection("campaigns").find({active: true}).sort({"lastDonationTime" : -1}).toArray(function(err, result) {
         if (err) throw err;
         res.send(result);
-      });
+    });
 })
 
 APP.post('/api/campaign/loadOne', async (req, res) => {
@@ -294,6 +323,7 @@ APP.get('/api/circle/publickey', async (req, res) => {
         res.sendStatus(500);
     }
 });
+
 APP.post('/api/donatefiat', async (req, res) => {
     let cardIdempotencyKey = uuidv4();
     let userIP = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
@@ -367,7 +397,19 @@ APP.post('/api/donatefiat', async (req, res) => {
                 }
             });
 
-            if(paymentResp && paymentResp.data && paymentResp.data && paymentResp.data.data.status) {
+            if(paymentResp && paymentResp.data && paymentResp.data.data.status) {
+                //create initial payment record
+                let data = {
+                    _id: paymentResp.data.data.id,
+                    campaignId: req.body.campaignId,
+                    createDate: paymentResp.data.data.createDate,
+                    notifications: {
+                        [new Date().toLocaleString()]: paymentResp.data.data
+                    }
+                }
+                try{
+                   // await createPaymentRecord(data);
+                } catch (err) {console.log(err)}
                 console.log(`Payment id ${paymentResp.data.data.id}, status ${paymentResp.data.data.status}`);
                 let respData = paymentResp.data.data;
                 let safetyCounter = 0;
@@ -443,6 +485,30 @@ APP.post('/api/donatefiat', async (req, res) => {
     //expMonth
 
 })
+
+//create initial payment record in mongodb
+createPaymentRecord = async (data) => {
+    console.log('inside create payment record function');
+    const DB = CLIENT.db(DBNAME);
+    try {
+        DB.collection('fiatPaymentRecords')
+            .insertOne(data, function (err, result) {
+                if (err) {
+                    console.log(err);
+                } else {
+                    console.log("1 entry was insterted in db");
+                }
+            });
+    } catch (err) {
+        console.log(err);
+    }
+
+    DB.collection('fiatPaymentRecords').find().toArray(function(err, result) {
+        if (err) throw err;
+        //console.log(JSON.stringify(result));
+    });
+    
+}
 // Handles any requests that don't match the ones above.
 // All other routing except paths defined above is done by React in the UI
 APP.get('*', async(req,res) =>{
