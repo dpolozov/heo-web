@@ -174,6 +174,7 @@ class CampaignPage extends Component {
             amount: this.state.donationAmount,
             currency: this.state.ccinfo.currency,
             verification: this.state.ccinfo.verification,
+            campaignId : this.state.campaignId
         };
         try {
             this.setState({
