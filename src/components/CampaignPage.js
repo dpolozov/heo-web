@@ -23,12 +23,11 @@ import usdcIcon from '../images/usd-coin-usdc-logo.png';
 import ethIcon from '../images/eth-diamond-purple.png';
 import cusdIcon from '../images/cusd-celo-logo.png';
 import usdcAurora from '../images/usd-coin-aurora-logo.png';
-const IMG_MAP = {"BUSD-0xe9e7cea3dedca5984780bafc599bd69add087d56": busdIcon,
-    "BNB-0x0000000000000000000000000000000000000000": bnbIcon,
-    "USDC-0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48": usdcIcon,
-    "ETH-0x0000000000000000000000000000000000000000": ethIcon,
-    "cUSD-0x765DE816845861e75A25fCA122bb6898B8B1282a": cusdIcon,
-    "USDC-0xb12bfca5a55806aaf64e99521918a4bf0fc40802": usdcAurora};
+const IMG_MAP = {"BUSD": busdIcon,
+    "BNB": bnbIcon,
+    "USDC": usdcIcon,
+    "ETH": ethIcon,
+    "cUSD": cusdIcon};
 
 const donationAmount="";
 const currencyName="";
@@ -50,7 +49,8 @@ class CampaignPage extends Component {
             modalButtonMessage: "",
             modalButtonVariant: "",
             chainId:"",
-            chains:[]
+            chains:[],
+            coins:[]
         };
 
     }
@@ -418,8 +418,8 @@ class CampaignPage extends Component {
                             <Row id='acceptingRow'>
                                 <div id='acceptingDiv'>
                                     <p><Trans i18nKey='accepting'/>:
-                                        {this.state.chains.map((item, i) =>
-                                            <span className='coinRewardInfo'><img src={IMG_MAP[this.state.campaign.coins[item["CHAIN"]].name+"-"+this.state.campaign.coins[item["CHAIN"]].address]} width={20} height={20} style={{marginRight:5, marginLeft:5}} />{this.state.campaign.coins[item["CHAIN"]].name} </span>
+                                        {this.state.coins.map((item, i) =>
+                                            <span className='coinRewardInfo'><img src={IMG_MAP[item]} width={20} height={20} style={{marginRight:5, marginLeft:5}} />{item} </span>
                                             )}
                                     </p>
                                 </div>
@@ -435,7 +435,7 @@ class CampaignPage extends Component {
                                     <InputGroup.Append>
                                         <DropdownButton id='donateButton' title={i18n.t('donate')}>
                                                 {this.state.chains.map((item, i) =>
-                                                    <Dropdown.Item key={item["CHAIN"]} as="button" onClick={() => this.handleDonateClick(item["CHAIN"])}><img src={IMG_MAP[this.state.campaign.coins[item["CHAIN"]].name+"-"+this.state.campaign.coins[item["CHAIN"]].address]} width={16} height={16} style={{marginRight:5}} />{this.state.campaign.coins[item["CHAIN"]].name} ({item["CHAIN_NAME"]})</Dropdown.Item>
+                                                    <Dropdown.Item key={item["CHAIN"]} as="button" onClick={() => this.handleDonateClick(item["CHAIN"])}><img src={IMG_MAP[this.state.campaign.coins[item["CHAIN"]].name]} width={16} height={16} style={{marginRight:5}} />{this.state.campaign.coins[item["CHAIN"]].name} ({item["CHAIN_NAME"]})</Dropdown.Item>
                                                 )}
                                         </DropdownButton>
                                     </InputGroup.Append>
@@ -498,9 +498,19 @@ class CampaignPage extends Component {
             }
         }
 
+        //dedupe coin names for "accepting" section
+        let dedupedCoinNames = [];
+        for(var coin in campaign.coins) {
+            let coinName = campaign.coins[coin].name;
+            if(!dedupedCoinNames.includes(coinName)) {
+                dedupedCoinNames.push(coinName);
+            }
+        }
+
         this.setState({
             chains: chains,
             campaign : campaign,
+            coins: dedupedCoinNames,
             editorState: EditorState.createWithContent(contentState[i18n.language], createDecorator())
         });
 

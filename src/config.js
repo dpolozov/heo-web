@@ -87,6 +87,14 @@ const config = {
             "currencies":{
                 "0x765DE816845861e75A25fCA122bb6898B8B1282a":"cUSD"
             }
+        },
+        "polygon":{
+            "currencyOptions":[
+                {"text":"USDC", "value":"0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174"}
+            ],
+            "currencies":{
+                "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174":"USDC"
+            }
         }
     }
 };
