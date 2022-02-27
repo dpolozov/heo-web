@@ -66,7 +66,7 @@ class CampaignList extends Component {
             })
         })
         campaigns.forEach( campaign => {
-            campaign.raisedAmount = Math.round(campaign.raisedAmount * 100)/100;
+            campaign.raisedAmount = Math.round((campaign.raisedAmount + campaign.raisedOnCoinbase) * 100)/100;
             //dedupe coin names for "accepting" section
             let dedupedCoinNames = [];
             for(var chain in campaign.coins) {

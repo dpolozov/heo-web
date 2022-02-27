@@ -78,8 +78,8 @@ class CampaignPage extends Component {
                 modalMessage,
             })
         })
-        if(campaign.raisedAmount) {
-            campaign.raisedAmount = Math.round(campaign.raisedAmount * 100)/100;
+        if(campaign.raisedAmount || campaign.raisedOnCoinbase) {
+            campaign.raisedAmount = Math.round((campaign.raisedAmount + campaign.raisedOnCoinbase) * 100)/100;
         }
         return campaign;
     }
@@ -95,7 +95,6 @@ class CampaignPage extends Component {
                     campaign.raisedAmount = parseFloat(result/Math.pow(10, decimals));
                 }
                 that.setState({campaign:campaign});
-                console.log(that.state.raisedAmount)
             } else {
                 console.log("Failed to update raised amount.")
                 console.log(err);
@@ -481,7 +480,7 @@ class CampaignPage extends Component {
             this.props.history.push("/404");
             return;
         }
-        campaign.percentRaised = 100 * campaign.raisedAmount/campaign.maxAmount;
+        campaign.percentRaised = 100 * (campaign.raisedAmount)/campaign.maxAmount;
         var contentState = {};
         if(campaign.descriptionEditor[i18n.language]) {
             for(var lng in campaign.descriptionEditor) {
