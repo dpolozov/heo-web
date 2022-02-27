@@ -12,9 +12,6 @@ import countryMap from '../countryMap';
 import { Editor, EditorState, convertFromRaw, CompositeDecorator } from "draft-js";
 import '../css/campaignPage.css';
 import '../css/modal.css';
-import Web3Modal from 'web3modal';
-import Web3 from 'web3';
-import WalletConnectProvider from '@walletconnect/web3-provider';
 import ReactGA from "react-ga4";
 
 import bnbIcon from '../images/binance-coin-bnb-logo.png';
@@ -22,7 +19,11 @@ import busdIcon from '../images/binance-usd-busd-logo.png';
 import usdcIcon from '../images/usd-coin-usdc-logo.png';
 import ethIcon from '../images/eth-diamond-purple.png';
 import cusdIcon from '../images/cusd-celo-logo.png';
-import usdcAurora from '../images/usd-coin-aurora-logo.png';
+import coinBaseLogo from '../images/coinbase-c-logo.png';
+import btcLogo from '../images/bitcoin-logo.png';
+import daiLogo from '../images/dai-logo.png';
+import ltcLogo from '../images/ltc-logo.png'
+
 const IMG_MAP = {"BUSD": busdIcon,
     "BNB": bnbIcon,
     "USDC": usdcIcon,
@@ -43,6 +44,7 @@ class CampaignPage extends Component {
             waitToClose:false,
             raisedAmount:0,
             showModal: false,
+            showCoinbaseModal: false,
             modalMessage:"",
             modalTitle:"",
             errorIcon:"",
@@ -99,6 +101,10 @@ class CampaignPage extends Component {
                 console.log(err);
             }
         });
+    }
+
+    showCoinbaseCommerce = async() => {
+        this.setState({showCoinbaseModal: true});
     }
 
     handleDonateClick = async (chainId) => {
@@ -421,6 +427,10 @@ class CampaignPage extends Component {
                                         {this.state.coins.map((item, i) =>
                                             <span className='coinRewardInfo'><img src={IMG_MAP[item]} width={20} height={20} style={{marginRight:5, marginLeft:5}} />{item} </span>
                                             )}
+                                        {this.state.campaign.coinbaseCommerceId && <span className='coinRewardInfo'><img src={ethIcon} width={20} height={20} style={{marginRight:5, marginLeft:5}} />ETH </span> }
+                                        {this.state.campaign.coinbaseCommerceId && <span className='coinRewardInfo'><img src={btcLogo} width={20} height={20} style={{marginRight:5, marginLeft:5}} />BTC </span> }
+                                        {this.state.campaign.coinbaseCommerceId && <span className='coinRewardInfo'><img src={daiLogo} width={20} height={20} style={{marginRight:5, marginLeft:5}} />DAI </span> }
+                                        {this.state.campaign.coinbaseCommerceId && <span className='coinRewardInfo'><img src={ltcLogo} width={20} height={20} style={{marginRight:5, marginLeft:5}} />LTC </span> }
                                     </p>
                                 </div>
                             </Row>
@@ -437,7 +447,11 @@ class CampaignPage extends Component {
                                                 {this.state.chains.map((item, i) =>
                                                     <Dropdown.Item key={item["CHAIN"]} as="button" onClick={() => this.handleDonateClick(item["CHAIN"])}><img src={IMG_MAP[this.state.campaign.coins[item["CHAIN"]].name]} width={16} height={16} style={{marginRight:5}} />{this.state.campaign.coins[item["CHAIN"]].name} ({item["CHAIN_NAME"]})</Dropdown.Item>
                                                 )}
+                                            {this.state.campaign.coinbaseCommerceId &&
+                                                <Dropdown.Item key="DonateCoinbaseCommerce" href={`https://commerce.coinbase.com/checkout/${this.state.campaign.coinbaseCommerceId}`} target="_blank"><img src={coinBaseLogo} width={16} height={16} style={{marginRight:5}} /><Trans i18nKey="otherCoinsCoinbase" /></Dropdown.Item>
+                                            }
                                         </DropdownButton>
+
                                     </InputGroup.Append>
                                 </InputGroup>
                             </Row>

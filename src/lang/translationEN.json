@@ -105,5 +105,6 @@
     "approveInvest": "Please follow the prompts in your wallet to approve purchase transaction",
     "youAreNotTheOwner": "You are not the owner of this campaign!",
     "deployToChain": "Save to {{chainName}}/{{currencyName}}",
-    "Text404": "Campaign with this ID does not exist. Please check the URL or click 'Back to Campaigns' to see the list of all active campaigns."
+    "Text404": "Campaign with this ID does not exist. Please check the URL or click 'Back to Campaigns' to see the list of all active campaigns.",
+    "otherCoinsCoinbase": "Other coins (via Coinbase)"
 }
