@@ -15,6 +15,8 @@ const MessageValidator = require('sns-validator')
 const fetch = require('node-fetch');
 const Sentry = require('@sentry/node');
 const Tracing = require("@sentry/tracing");
+const MessageValidator = require('sns-validator')
+const fetch = require('node-fetch');
 const PORT = process.env.PORT || 5000;
 
 
@@ -499,7 +501,7 @@ APP.post('/api/donatefiat', async (req, res) => {
             let verificationUrl = req.headers.referer;
             if(verificationUrl.includes('?')){
                 verificationUrlArray = verificationUrl.split('?');
-                verificationUrl = verificationUrlArray[0]; 
+                verificationUrl = verificationUrlArray[0];
             }
             //got card ID, can create a payment
             let paymentResp = await axios({
@@ -579,7 +581,7 @@ APP.post('/api/donatefiat', async (req, res) => {
                         break;
                     }
                 }
-                if(respData.status === 'action_required') { 
+                if(respData.status === 'action_required') {
                     res.status(200).send({paymentStatus: 'action_required', redirectUrl: respData.requiredAction.redirectUrl});
                     return;
                 };
