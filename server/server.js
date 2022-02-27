@@ -11,6 +11,8 @@ const cookieParser = require('cookie-parser')
 const ethereumutil = require("ethereumjs-util");
 const { v4: uuidv4 } = require('uuid');
 const fs = require("fs");
+const MessageValidator = require('sns-validator')
+const fetch = require('node-fetch');
 const PORT = process.env.PORT || 5000;
 
 
@@ -26,7 +28,8 @@ const DBNAME = process.env.MONGO_DB_NAME;
 const CLIENT = new MongoClient(URL);
 const CIRCLE_API_URL = process.env.CIRCLE_API_URL;
 const CIRCLE_API_KEY = process.env.CIRCLE_API_KEY;
-const SUBSCRIBER_ENDPOINT_URL = 'https://my-app.loca.lt/';
+const CIRCLEARN = /^arn:aws:sns:.*:908968368384:(sandbox|prod)_platform-notifications-topic$/;
+const validator = new MessageValidator();
 
 CLIENT.connect(err => {
     if(err) {
@@ -53,32 +56,74 @@ function jwtErrorCatch (err, req, res, next) {
     }
 }
 
-//subscribe to notifications
-/*
-async function subscribeToCircle() {
-    try {
-        let subscrption = await axios({
-            method: 'post',
-            url: 'https://api-sandbox.circle.com/v1/notifications/subscriptions',
-            headers: {
-                'Accept' : 'application/json',
-                'Content-Type' : 'application/json',
-                'Authorization': `Bearer ${CIRCLE_API_KEY}`,
-            },
-            data : `{\"endpoint\": \"${SUBSCRIBER_ENDPOINT_URL}\"}`
+APP.head('/api/circlenotifications', (req, res) => {
+    res.writeHead(200, {
+        'Content-Type': 'text/html',
+    });
+    res.end(`HEAD request for ${req.url}`);
+})
+
+
+APP.post('/api/circlenotifications', (req, res) => {   
+    let body = ''
+    req.on('data', (data) => {
+      body += data
+    })
+    req.on('end', () => {
+        //console.log(`POST request, \nPath: ${req.url}`)
+        //console.log('Headers: ')
+        //console.dir(req.headers)
+        //console.log(`Body: ${body}`)
+
+        res.writeHead(200, {
+        'Content-Type': 'text/html',
         })
-        console.log(subscrption.data);
-    } catch (err) {
-        console.log(err);
-    }
-}
+        res.end(`POST request for ${req.url}`)
+        const envelope = JSON.parse(body)
+        validator.validate(envelope, async (err)=> {
+        if (err) {
+            console.error(err)
+        } else {
+            switch (envelope.Type) {
+            case 'SubscriptionConfirmation': {
+                if (!CIRCLEARN.test(envelope.TopicArn)) {
+                console.error(`\nUnable to confirm the subscription as the topic arn is not expected ${envelope.TopicArn}. Valid topic arn must match ${CIRCLEARN}.`)
+                break
+                }
+                await axios.post(envelope.SubscribeURL)
+                    .then(console.log('subscription confirmend'))
+                    .catch(err => console.log('subscription not confirmed' + err));
+                break
+                }
+            case 'Notification': {
+                console.log(`Received message ${envelope.Message}`)
+                let messageData  = JSON.parse(envelope.Message);
+                if(messageData.notificationType === 'settlements'){
+                    const url = `https://api-sandbox.circle.com/v1/payments?settlementId=${messageData.settlement.id}`;
+                    const options = {
+                    method: 'GET',
+                    headers: {
+                        Accept: 'application/json',
+                        Authorization: `Bearer ${CIRCLE_API_KEY}`
+                    }
+                    };
 
-subscribeToCircle();
-*/
-
-APP.post('/api/paymentNotification', (req, res) => {
-    console.log('notification received from httpserver');
-    console.log(Object.keys(req.body)[0]);
+                    fetch(url, options)
+                    .then(res => res.json())
+                    .then(json => {console.log(json); json.data.forEach(element => {
+                        console.log(element.id);
+                    });})
+                    .catch(err => console.error('error:' + err));
+                }
+                break
+                }
+                default: {
+                    console.error(`Message of type ${body.Type} not supported`)
+                }
+            }
+        }
+        })
+    })
 })
 
 APP.post('/api/uploadimage', (req,res) => {
@@ -397,18 +442,6 @@ APP.post('/api/donatefiat', async (req, res) => {
             });
 
             if(paymentResp && paymentResp.data && paymentResp.data.data.status) {
-                //create initial payment record
-                let data = {
-                    _id: paymentResp.data.data.id,
-                    campaignId: req.body.campaignId,
-                    createDate: paymentResp.data.data.createDate,
-                    notifications: {
-                        [new Date().toLocaleString()]: paymentResp.data.data
-                    }
-                }
-                try{
-                   // await createPaymentRecord(data);
-                } catch (err) {console.log(err)}
                 console.log(`Payment id ${paymentResp.data.data.id}, status ${paymentResp.data.data.status}`);
                 let respData = paymentResp.data.data;
                 let safetyCounter = 0;
@@ -463,7 +496,6 @@ APP.post('/api/donatefiat', async (req, res) => {
                     } else {
                         res.status(200).send({paymentStatus:"declined"});
                     }
-                    //console.log(respData);
                     return;
                 }
 
@@ -479,10 +511,6 @@ APP.post('/api/donatefiat', async (req, res) => {
         console.log(err.response.data);
         res.status(500).send({paymentStatus: err.response.data});
     }
-
-    //let billingDetails = req.body.billingDetails;
-    //expMonth
-
 })
 
 //create initial payment record in mongodb
