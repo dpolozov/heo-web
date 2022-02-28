@@ -42,6 +42,7 @@ class CreateCampaign extends React.Component {
             vl:"",
             title:"",
             maxAmount:10000,
+            beneficiaryAddress:"",
             description:"",
             raisedAmount:0,
             percentRaised: "0%",
@@ -222,7 +223,7 @@ class CreateCampaign extends React.Component {
 
             if(window.web3Modal.cachedProvider == "binancechainwallet") {
                 HEOCampaignFactory.methods.createCampaign(
-                    this.state.web3.utils.toWei(`${this.state.maxAmount}`), this.state.chainConfig.currencyOptions.value, this.state.accounts[0], compressed_meta)
+                    this.state.web3.utils.toWei(`${this.state.maxAmount}`), this.state.chainConfig.currencyOptions.value, this.state.beneficiaryAddress, compressed_meta)
                     .send({from:this.state.accounts[0]})
                     .once('transactionHash', function(transactionHash) {
                         that.setState({showModal:true, modalTitle: 'processingWait',
@@ -237,7 +238,7 @@ class CreateCampaign extends React.Component {
                     });
             } else {
                 let result = await HEOCampaignFactory.methods.createCampaign(
-                    this.state.web3.utils.toWei(`${this.state.maxAmount}`), this.state.chainConfig.currencyOptions.value, this.state.accounts[0], compressed_meta)
+                    this.state.web3.utils.toWei(`${this.state.maxAmount}`), this.state.chainConfig.currencyOptions.value, this.state.beneficiaryAddress, compressed_meta)
                     .send({from:this.state.accounts[0]})
                     .on('transactionHash',
                         function(transactionHash) {
@@ -415,6 +416,13 @@ class CreateCampaign extends React.Component {
                             <Form.Control required type="number" className="createFormPlaceHolder"
                                           value={this.state.maxAmount} placeholder={this.state.maxAmount}
                                           name='maxAmount' onChange={this.handleChange} onwheel="this.blur()" />
+
+                            <Form.Label><Trans i18nKey='beneficiaryAddress'/><span
+                                className='redAsterisk'>*</span></Form.Label>
+                            <Form.Control ria-describedby="currencyHelpBlock"
+                                          className="createFormPlaceHolder"
+                                          value={this.state.beneficiaryAddress} placeholder={this.state.beneficiaryAddress}
+                                          name='beneficiaryAddress' onChange={this.handleChange} onwheel="this.blur()" />
                         </Form.Group>
                         <Form.Group>
                             <Form.Label><Trans i18nKey='selectCoverImage'/><span className='redAsterisk'>*</span></Form.Label>
@@ -472,16 +480,17 @@ class CreateCampaign extends React.Component {
             let address = (await import("../remote/" + chainId + "/HEOParameters")).address;
             var HEOParameters = new this.state.web3.eth.Contract(abi, address);
             let wlEnabled = await HEOParameters.methods.intParameterValue(11).call();
+            let accounts = await this.state.web3.eth.getAccounts();
             if(wlEnabled > 0) {
                 console.log('WL enabled')
                 //is user white listed?
-                let accounts = await this.state.web3.eth.getAccounts();
                 this.setState({accounts: accounts});
                 let whiteListed = await HEOParameters.methods.addrParameterValue(5, accounts[0].toLowerCase()).call();
                 if(whiteListed > 0) {
                     this.setState({
                         isLoggedIn : true,
                         whiteListed: true,
+                        beneficiaryAddress: accounts[0],
                         showModal: false,
                         goHome: false
                     });
@@ -507,7 +516,8 @@ class CreateCampaign extends React.Component {
                     isLoggedIn : true,
                     whiteListed: true,
                     goHome: false,
-                    showModal: false
+                    showModal: false,
+                    beneficiaryAddress: accounts[0]
                 });
             }
         } catch (err) {
