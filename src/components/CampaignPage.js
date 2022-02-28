@@ -10,9 +10,11 @@ import { i18nString, initWeb3, initWeb3Modal, clearWeb3Provider } from '../util/
 import i18n from '../util/i18n';
 import countryMap from '../countryMap';
 import { Editor, EditorState, convertFromRaw, CompositeDecorator } from "draft-js";
+import Web3 from 'web3';
 import '../css/campaignPage.css';
 import '../css/modal.css';
 import ReactGA from "react-ga4";
+
 
 import bnbIcon from '../images/binance-coin-bnb-logo.png';
 import busdIcon from '../images/binance-usd-busd-logo.png';
@@ -239,10 +241,10 @@ class CampaignPage extends Component {
                             } else {
                                 decimals = result;
                                 console.log(`${coinAddress} has ${result} decimals`);
-                                toDonate = that.state.donationAmount * Math.pow(10, decimals);
-                                console.log(`Adjusted donation amount is ${toDonate}`);
+                                toDonate = new web3.utils.BN(""+that.state.donationAmount).mul(new web3.utils.BN(new web3.utils.BN("10").pow(new web3.utils.BN(""+decimals))));
+                                console.log(`Adjusted donation amount is ${toDonate.toString()}`);
                             }
-                            coinInstance.methods.approve(campaignAddress, ""+toDonate).send(
+                            coinInstance.methods.approve(campaignAddress, ""+toDonate.toString()).send(
                                 {from:accounts[0]}
                             ).once('transactionHash', function(transactionHash){
                                 that.setState({modalMessage: "waitingForNetwork"});
@@ -283,7 +285,8 @@ class CampaignPage extends Component {
                             nonInteraction: false
                         });
                         decimals = await coinInstance.methods.decimals().call();
-                        toDonate = this.state.donationAmount * Math.pow(10, decimals);
+                        toDonate = new web3.utils.BN(""+that.state.donationAmount).mul(new web3.utils.BN(new web3.utils.BN("10").pow(new web3.utils.BN(""+decimals))));
+                        //toDonate = this.state.donationAmount * Math.pow(10, decimals);
                         let result = await coinInstance.methods.approve(campaignAddress, ""+toDonate).send(
                             {from:accounts[0]}
                         ).once('transactionHash', function(transactionHash){
