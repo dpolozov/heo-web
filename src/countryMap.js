@@ -191,6 +191,8 @@ const countryMap = {
     ST: 'Sao Tome and Principe',
     SA: 'Saudi Arabia',
     SN: 'Senegal',
+    ME: 'Montenegro',
+    RS: 'Serbia',
     CS: 'Serbia and Montenegro',
     SC: 'Seychelles',
     SL: 'Sierra Leone',

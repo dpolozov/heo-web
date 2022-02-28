@@ -144,6 +144,7 @@ APP.post('/api/campaign/add', (req, res) => {
             ownerId: req.user.address.toLowerCase(),
             title: req.body.mydata.title,
             mainImageURL: req.body.mydata.mainImageURL,
+            qrCodeImageURL: req.body.mydata.qrCodeImageURL,
             vl: req.body.mydata.vl,
             cn: req.body.mydata.cn,
             fn: req.body.mydata.fn,

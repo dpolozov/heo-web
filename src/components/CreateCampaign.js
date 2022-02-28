@@ -48,6 +48,8 @@ class CreateCampaign extends React.Component {
             percentRaised: "0%",
             mainImageURL: "",
             mainImageFile:"",
+            qrCodeImageURL:"",
+            qrCodeImageFile:"",
             waitToClose: false,
             goHome:false,
             getContent: false,
@@ -57,7 +59,7 @@ class CreateCampaign extends React.Component {
             chainId:""
         };
 
-    }
+    };
 
     onSubmit = (e) => {
         e.preventDefault();
@@ -66,18 +68,24 @@ class CreateCampaign extends React.Component {
 
     handleTextArea = (e) => {
         this.setState({description:e.target.value});
-    }
+    };
+
     handleChange = e => {
         this.setState({ [e.target.name]: e.target.value });
     };
 
     fileSelected = e => {
         this.setState({mainImageFile:e.target.files[0], mainImageURL: URL.createObjectURL(e.target.files[0])});
-    }
+    };
+
+    qrfileSelected = e => {
+        this.setState({qrCodeImageFile:e.target.files[0], qrCodeImageURL: URL.createObjectURL(e.target.files[0])});
+    };
 
     async handleClick (event) {
         //this.showHtml();
         let imgID = uuid();
+        let qrImgID = uuid();
         try {
             if(!this.state.org) {
                 this.setState(
@@ -124,10 +132,14 @@ class CreateCampaign extends React.Component {
                     });
                 return false;
             }
-            let imgUrl = await this.uploadImageS3(imgID);
+            let qrImgUrl = '';
+            let imgUrl = await this.uploadImageS3('main', imgID);
+            if(this.state.qrCodeImageURL) {
+                qrImgUrl = await this.uploadImageS3('qrCode', qrImgID);
+            }
             if(imgUrl) {
                 if(window.web3Modal.cachedProvider != "binancechainwallet") {
-                    let campaignData = await this.createCampaign(imgUrl);
+                    let campaignData = await this.createCampaign(imgUrl, qrImgUrl);
                     if (campaignData) {
                         await this.addCampaignToDb(campaignData);
                     }
@@ -154,6 +166,7 @@ class CreateCampaign extends React.Component {
             campaignData.description = {"default": this.state.description};
             campaignData.description[i18n.language] = this.state.description;
             campaignData.mainImageURL = this.state.mainImageURL;
+            campaignData.qrCodeImageURL = this.state.qrCodeImageURL;
             campaignData.maxAmount = this.state.maxAmount;
             campaignData.vl = this.state.vl;
             campaignData.fn = this.state.fn;
@@ -185,7 +198,7 @@ class CreateCampaign extends React.Component {
         }
     }
 
-    async createCampaign(imgUrl) {
+    async createCampaign(imgUrl, qrImgUrl) {
         var titleObj = {"default": this.state.title};
         titleObj[i18n.language] = this.state.title;
         var orgObj = {"default": this.state.org};
@@ -199,6 +212,7 @@ class CreateCampaign extends React.Component {
             {   title: titleObj,
                 description: descriptionObj,
                 mainImageURL: imgUrl,
+                qrCodeImageURL: qrImgUrl,
                 fn: this.state.fn,
                 ln: this.state.ln,
                 org: orgObj,
@@ -269,13 +283,13 @@ class CreateCampaign extends React.Component {
         return false;
     }
 
-    async uploadImageS3 (imgID) {
+    async uploadImageS3 (type, imgID) {
         this.setState(
             {showModal:true, modalTitle: 'processingWait',
             modalMessage: 'uploadingImageWait', modalIcon: 'HourglassSplit',
             modalButtonVariant: "gold", waitToClose: true
             });
-        if(!this.state.mainImageFile || !this.state.mainImageFile.type) {
+        if(type === 'main' && (!this.state.mainImageFile || !this.state.mainImageFile.type)) {
             this.setState(
                 {showModal:true, modalTitle: 'coverImageRequiredTitle',
                     modalMessage: 'coverImageRequired', modalIcon: 'ExclamationTriangle',
@@ -284,16 +298,30 @@ class CreateCampaign extends React.Component {
                 });
             return false;
         }
-        let fileType = this.state.mainImageFile.type.split("/")[1];
+        let fileType;
         const formData = new FormData();
-        formData.append(
-            "myFile",
-            this.state.mainImageFile,
-            `${imgID}.${fileType}`,
-        );
+        if(type === 'main'){
+            fileType = this.state.mainImageFile.type.split("/")[1];
+            formData.append(
+                "myFile",
+                this.state.mainImageFile,
+                `${imgID}.${fileType}`,
+            );
+        } else if(type === 'qrCode'){
+            fileType = this.state.qrCodeImageFile.type.split("/")[1];
+            formData.append(
+                "myFile",
+                this.state.qrCodeImageFile,
+                `${imgID}.${fileType}`,
+            );
+        }
         try {
             let res = await axios.post('/api/uploadimage', formData);
-            this.setState({showModal:false, mainImageURL: res.data});
+            if(type === 'main'){
+                this.setState({showModal:false, mainImageURL: res.data});
+            } else if(type === 'qrCode'){
+                this.setState({showModal:false, qrCodeImageURL: res.data});
+            }
             if(res.data) {
                 return res.data;
             } else {
@@ -456,6 +484,15 @@ class CreateCampaign extends React.Component {
                                           maxLength='195' onChange={this.handleTextArea}/>
                             <Form.Label><Trans i18nKey='campaignDescription'/><span className='redAsterisk'>*</span></Form.Label>
                             <TextEditor />
+                        </Form.Group>
+                        <Form.Group>
+                            <Form.Label><Trans i18nKey='selectQRCodeImage'/></Form.Label>
+                            <Form.File
+                                name='qrCodeImageFile' className="position-relative"
+                                id="campaignImgInput" accept='.jpg,.png,.jpeg,.gif'
+                                onChange={this.qrfileSelected}
+                            />
+                            <Image id='qrCodeImg' src={this.state.qrCodeImageURL}/>
                         </Form.Group>
                         <Button onClick={() => this.handleClick()} id='createCampaignBtn' name='ff3'>
                             {i18n.t('createCampaignBtn')}
