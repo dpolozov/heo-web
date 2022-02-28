@@ -104,5 +104,6 @@
     "deployToChain": "Запустить на {{chainName}}/{{currencyName}}",
     "deployToMoreChains": "Запустить на других блокчейнах",
     "Text404": "Такой кампании нет. Пожалуйста, проверьте URL или нажмите 'Назад К Кампаниям', чтобы перейти к полному списку активных кампаний.",
-    "otherCoinsCoinbase": "Другие монеты (через Coinbase)"
+    "otherCoinsCoinbase": "Другие монеты (через Coinbase)",
+    "beneficiaryAddress": " Адрес кошелька получателя"
 }
