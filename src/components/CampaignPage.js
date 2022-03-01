@@ -222,7 +222,7 @@ class CampaignPage extends Component {
 
                 try {
                     var decimals = 6;
-                    var toDonate = this.state.donationAmount * 1000000;
+                    var toDonate = new web3.utils.BN(""+this.state.donationAmount).mul(new web3.utils.BN("1000000"));
                     if(currentProvider != "metamask") {
                         ReactGA.event({
                             category: "provider",
@@ -606,7 +606,8 @@ function checkApprovalTransaction(txnObject, decimals, chainId, that) {
         let web3 = that.state.web3;
         let accounts = that.state.accounts;
         let campaignInstance = new web3.eth.Contract(HEOCampaign, that.state.campaign.addresses[chainId]);
-        let toDonate = that.state.donationAmount * Math.pow(10, decimals);
+        let toDonate = new web3.utils.BN(""+that.state.donationAmount).mul(new web3.utils.BN(new web3.utils.BN("10").pow(new web3.utils.BN(""+decimals))));
+        //let toDonate = that.state.donationAmount * Math.pow(10, decimals);
         that.setState({
             showModal: true, modalTitle: 'processingWait',
             modalMessage: "approveDonate",
