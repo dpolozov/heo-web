@@ -447,7 +447,7 @@ class CreateCampaign extends React.Component {
                                           name='description' value={this.state.description}
                                           maxLength='195' onChange={this.handleTextArea}/>
                             <Form.Label><Trans i18nKey='campaignDescription'/><span className='redAsterisk'>*</span></Form.Label>
-                            <TextEditor />
+                            <TextEditor/>
                         </Form.Group>
                         <Button onClick={() => this.handleClick()} id='createCampaignBtn' name='ff3'>
                             {i18n.t('createCampaignBtn')}

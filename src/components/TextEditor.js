@@ -1,10 +1,13 @@
 import React from 'react';
-import {Editor, EditorState, getDefaultKeyBinding, RichUtils, convertToRaw, convertFromRaw, CompositeDecorator} from 'draft-js';
+import ReactDom from 'react-dom';
+import {Editor, EditorState, getDefaultKeyBinding, RichUtils, convertToRaw, convertFromRaw, CompositeDecorator, AtomicBlockUtils} from 'draft-js';
 import {Popover, OverlayTrigger} from 'react-bootstrap';
 import '../css/RichEditor.css'
 import '../../node_modules/draft-js/dist/Draft.css';
 import { Link } from 'react-bootstrap-icons';
 import i18n from '../util/i18n';
+import uuid from 'react-uuid';
+import axios from 'axios';
 
 var DESCRIPTIONRAW;
 var STATEHASCHANGED = false;
@@ -36,6 +39,8 @@ class TextEditor extends React.Component {
       this.confirmLink = this._confirmLink.bind(this);
       this.onLinkInputKeyDown = this._onLinkInputKeyDown.bind(this);
       this.removeLink = this._removeLink.bind(this);
+      this.handlePastedFiles = this._handlePastedFiles.bind(this);
+      this.insertImage = this._insertImage.bind(this);
     }
 
     componentDidMount(){
@@ -44,6 +49,7 @@ class TextEditor extends React.Component {
       } else {
         this.setState({editorState : EditorState.createEmpty(this.createDecorator())});
       }
+      //this.handlePastedFiles();
     }
 
     _promptForLink(e) {
@@ -75,7 +81,46 @@ class TextEditor extends React.Component {
           setTimeout(() => this.refs.url.focus(), 0);
         });
       } 
+
     }
+
+    async _handlePastedFiles(files) {
+      console.log('handle pasted files called');
+      let imgID = uuid();
+      let fileType = files[0].type.split("/")[1]
+      const formData = new FormData();
+      formData.append(
+        "myFile",
+        files[0],
+        `${imgID}.${fileType}`,
+      );
+      await axios.post('/api/uploadimage', formData)
+        .then(res => this.insertImage(res.data))
+        .catch(err => console.log(err)); 
+    }
+    
+    _insertImage(url) {
+      console.log('insert image called');
+      try{
+        const {editorState} = this.state;
+        const contentState = editorState.getCurrentContent();
+        const contentStateWithEntity = contentState.createEntity(
+            'IMAGE',
+            'IMMUTABLE',
+            { src: url },)
+        const entityKey = contentStateWithEntity.getLastCreatedEntityKey();
+        const newEditorState = EditorState.set( editorState, { currentContent: contentStateWithEntity });
+        this.setState({
+          editorState: AtomicBlockUtils.insertAtomicBlock(
+            newEditorState,
+            entityKey,
+            ``
+          )
+        })
+        //AtomicBlockUtils.insertAtomicBlock(newEditorState, entityKey, ' ');
+      }catch (err) {console.log(err)}
+    };
+
 
     _confirmLink(e) {
       e.preventDefault();
@@ -244,7 +289,7 @@ class TextEditor extends React.Component {
             {this.state.popoverMessage}
           </Popover.Content>
         </Popover>);
-      
+
       return ( 
         <div className="RichEditor-root">
           <BlockStyleControls
@@ -278,6 +323,7 @@ class TextEditor extends React.Component {
               handleKeyCommand={this.handleKeyCommand}
               keyBindingFn={this.mapKeyToEditorCommand}
               onChange={this.onChange}
+              handlePastedFiles={this.handlePastedFiles}
               placeholder="Tell a story..."
               ref="editor"
               spellCheck={true}
