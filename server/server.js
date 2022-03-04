@@ -632,6 +632,7 @@ APP.post('/api/donatefiat', async (req, res) => {
 createPaymentRecord = async (data) => {
     console.log(data);
     const DB = CLIENT.db(DBNAME);
+    DB.collection('fiatPaymentRecords').drop();
     try {
         DB.collection('fiatPaymentRecords')
             .insertOne(data, function (err, result) {
