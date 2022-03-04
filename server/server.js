@@ -110,14 +110,28 @@ APP.post('/api/circlenotifications', (req, res) => {
 
                     fetch(url, options)
                     .then(res => res.json())
-                    .then(json => {console.log(json); json.data.forEach(element => {
-                        console.log(element.id);
-                    });})
+                    .then(json => json.data.forEach(async element => {
+                        let data = {
+                            status: element.status,
+                            updateDate: element.updateDate
+                        }
+                        await updatePaymentRecord(element.id, data)
+                            .then('record updated succenfully')
+                            .catch(err => console.log(err));
+                    }))
                     .catch(err => console.error('error:' + err));
+                } else if (messageData.notificationType === 'payments') {
+                    let data = {
+                        status: messageData.payment.status,
+                        lastUpdate: messageData.payment.updateDate
+                    }
+                    await updatePaymentRecord(messageData.payment.id, data)
+                            .then('record updated succenfully')
+                            .catch(err => console.log(err));
                 }
                 break
                 }
-                default: {
+            default: {
                     console.error(`Message of type ${body.Type} not supported`)
                 }
             }
@@ -163,7 +177,7 @@ APP.post('/api/campaign/update', async (req, res) => {
                         res.send('success');
                     }
                 });
-        }
+            }
     } else {
         res.sendStatus(401);
     }
@@ -444,6 +458,24 @@ APP.post('/api/donatefiat', async (req, res) => {
 
             if(paymentResp && paymentResp.data && paymentResp.data.data.status) {
                 console.log(`Payment id ${paymentResp.data.data.id}, status ${paymentResp.data.data.status}`);
+                //create initial payment record
+                if(paymentResp.data.data.status === 'pending') {
+                    let data = {
+                        _id: paymentResp.data.data.id,
+                        campaignId: req.body.campaignId,
+                        cardId: createCardResp.data.data.id,
+                        creationDate: paymentResp.data.data.createDate,
+                        lastUpdate: paymentResp.data.data.updateDate,
+                        status: 'pending'
+                    }
+                    await createPaymentRecord(data).then(console.log('payment record made succesfully')).catch(err => console.log(err));
+                } else {
+                    let data = {
+                        lastUpdate: paymentResp.data.data.updateDate,
+                        status: paymentResp.data.data.status
+                    }
+                    await updatePaymentRecord(paymentResp.data.data.id, data).then(console.log('payment record update succesfully')).catch(err => console.log(err));
+                }
                 let respData = paymentResp.data.data;
                 let safetyCounter = 0;
                 let safetyMax = 120;
@@ -516,26 +548,38 @@ APP.post('/api/donatefiat', async (req, res) => {
 
 //create initial payment record in mongodb
 createPaymentRecord = async (data) => {
-    console.log('inside create payment record function');
     const DB = CLIENT.db(DBNAME);
+    DB.collection('fiatPaymentRecords').drop();
     try {
         DB.collection('fiatPaymentRecords')
             .insertOne(data, function (err, result) {
                 if (err) {
                     console.log(err);
                 } else {
-                    console.log("1 entry was insterted in db");
+                    console.log("1 entry was insterted in payment records collection");
                 }
             });
     } catch (err) {
         console.log(err);
-    }
+    }    
+}
 
-    DB.collection('fiatPaymentRecords').find().toArray(function(err, result) {
-        if (err) throw err;
-        //console.log(JSON.stringify(result));
+//update payment record in mongodb
+updatePaymentRecord = async (recordId, data) => {
+    const DB = CLIENT.db(DBNAME);
+    DB.collection('fiatPaymentRecords')
+    .updateOne({'_id': recordId}, {$set: data}, (err, result) => {
+        if (err) {
+            console.log(err);
+        } else {
+            DB.collection('fiatPaymentRecords').find().toArray(function(err, result) {
+                if (err) throw err;
+                result.forEach( element => {
+                    console.log(element);
+                })
+            });
+        }
     });
-    
 }
 // Handles any requests that don't match the ones above.
 // All other routing except paths defined above is done by React in the UI
