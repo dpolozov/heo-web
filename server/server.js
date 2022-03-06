@@ -94,11 +94,6 @@ APP.post('/api/circlenotifications', (req, res) => {
       body += data
     })
     req.on('end', () => {
-        //console.log(`POST request, \nPath: ${req.url}`)
-        //console.log('Headers: ')
-        //console.dir(req.headers)
-        //console.log(`Body: ${body}`)
-
         res.writeHead(200, {
         'Content-Type': 'text/html',
         })
@@ -120,9 +115,11 @@ APP.post('/api/circlenotifications', (req, res) => {
                 break
                 }
             case 'Notification': {
-                console.log(`Received message ${envelope.Message}`)
-                let messageData  = JSON.parse(envelope.Message);
-                if(messageData.notificationType === 'settlements'){
+                let messageData;
+                try{
+                    messageData = JSON.parse(envelope.Message);
+                } catch(err) {console.log(err)}
+                if(messageData && messageData.notificationType === 'settlements'){
                     const url = `https://api-sandbox.circle.com/v1/payments?settlementId=${messageData.settlement.id}`;
                     const options = {
                     method: 'GET',
@@ -599,7 +596,6 @@ APP.post('/api/donatefiat', async (req, res) => {
 //create initial payment record in mongodb
 createPaymentRecord = async (data) => {
     const DB = CLIENT.db(DBNAME);
-    DB.collection('fiatPaymentRecords').drop();
     try {
         DB.collection('fiatPaymentRecords')
             .insertOne(data, function (err, result) {
