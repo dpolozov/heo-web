@@ -2,6 +2,19 @@ body {
     margin-top: 85px !important;
 }
 
+#qrCodeImg{
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 50%;
+}
+
+#donateCC{
+    align-self: center;
+    font-size: larger;
+    margin-left: 25px;
+}
+
 .backToCampaignsLink {
     color: #3F5663;
 }

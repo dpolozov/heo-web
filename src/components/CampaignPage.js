@@ -469,6 +469,11 @@ class CampaignPage extends Component {
                             <Editor editorState={this.state.editorState} readOnly={true} decorators={true}/>
                         </Container>
                     </Row>
+                    {this.state.campaign.qrCodeImageURL &&
+                    <Row>
+                        <Image src={this.state.campaign.qrCodeImageURL} id='qrCodeImg'/>
+                    </Row>
+                    }
                 </Container>
             </div>
         );

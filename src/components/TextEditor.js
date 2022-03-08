@@ -1,5 +1,5 @@
 import React from 'react';
-import {Editor, EditorState, getDefaultKeyBinding, RichUtils, convertToRaw, convertFromRaw, CompositeDecorator} from 'draft-js';
+import { Editor, EditorState, getDefaultKeyBinding, RichUtils, convertToRaw, convertFromRaw, CompositeDecorator} from 'draft-js';
 import {Popover, OverlayTrigger} from 'react-bootstrap';
 import '../css/RichEditor.css'
 import '../../node_modules/draft-js/dist/Draft.css';

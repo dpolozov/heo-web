@@ -107,5 +107,8 @@
     "deployToChain": "Save to {{chainName}}/{{currencyName}}",
     "Text404": "Campaign with this ID does not exist. Please check the URL or click 'Back to Campaigns' to see the list of all active campaigns.",
     "otherCoinsCoinbase": "Other coins (via Coinbase)",
-    "beneficiaryAddress": "Beneficiary address"
+    "beneficiaryAddress": "Beneficiary address",
+    "selectQRCodeImage": "Optional QR Code for credit card donations"
 }
+
+
