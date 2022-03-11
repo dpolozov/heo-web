@@ -179,7 +179,8 @@ class CampaignPage extends Component {
             amount: this.state.donationAmount,
             currency: this.state.ccinfo.currency,
             verification: this.state.ccinfo.verification,
-            campaignId : this.state.campaignId
+            campaignId: this.state.campaignId,
+            walletId: this.state.campaign.walletId
         };
         try {
             this.setState({
@@ -707,7 +708,6 @@ class CampaignPage extends Component {
             }
         }
     }
-
 }
 
 function createDecorator(){

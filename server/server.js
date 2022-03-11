@@ -94,23 +94,34 @@ APP.post('/api/circlenotifications', (req, res) => {
                 let messageData;
                 try{
                     messageData = JSON.parse(envelope.Message);
+                    console.log(messageData);
                 } catch(err) {console.log(err)}
                 if(messageData && messageData.notificationType === 'settlements'){
                     const url = `https://api-sandbox.circle.com/v1/payments?settlementId=${messageData.settlement.id}`;
                     const options = {
-                    method: 'GET',
-                    headers: {
-                        Accept: 'application/json',
-                        Authorization: `Bearer ${CIRCLE_API_KEY}`
-                    }
+                        method: 'GET',
+                        headers: {
+                            Accept: 'application/json',
+                            Authorization: `Bearer ${CIRCLE_API_KEY}`
+                        }
                     };
-
                     fetch(url, options)
                     .then(res => res.json())
                     .then(json => json.data.forEach(async element => {
+                        console.log(element);
+                        let info = {
+                            recordId: element.id, 
+                            circleFees: element.fees.amount, 
+                            amount: element.amount.amount,
+                            currency: element.amount.currency,
+                            heoWallet: element.merchantWalletId,
+                        }      
+                        await transferWithinCircle(info)
+                            .then('wallet transwer succesfull')
+                            .catch(err => console.log(err));
                         let data = {
-                            status: element.status,
-                            updateDate: element.updateDate
+                            paymentStatus: element.status,
+                            lastUpdated: element.updateDate
                         }
                         await updatePaymentRecord(element.id, data)
                             .then('record updated succenfully')
@@ -119,12 +130,24 @@ APP.post('/api/circlenotifications', (req, res) => {
                     .catch(err => console.error('error:' + err));
                 } else if (messageData.notificationType === 'payments') {
                     let data = {
-                        status: messageData.payment.status,
-                        lastUpdate: messageData.payment.updateDate
+                        paymentStatus: messageData.payment.status,
+                        lastUpdated: messageData.payment.updateDate,
+                        circleFees: messageData.payment.fees.amount
                     }
                     await updatePaymentRecord(messageData.payment.id, data)
                             .then('record updated succenfully')
                             .catch(err => console.log(err));
+                } else if(messageData.notificationType === 'transfers'){
+                    let data = {
+                        transferStatus: messageData.transfer.status
+                    }
+                    const DB = CLIENT.db(DBNAME);
+                    let paymentRecord = await DB.collection('fiatPaymentRecords').findOne({'transferId': messageData.transfer.id});
+                    if(paymentRecord){
+                        await updatePaymentRecord(paymentRecord._id, data)
+                    }else{
+                        console.log('could not find payment record with proper transfer id')
+                    }
                 }
                 break
                 }
@@ -224,8 +247,12 @@ APP.post('/api/campaign/deactivate', async (req, res) => {
     }
 });
 
-APP.post('/api/campaign/add', (req, res) => {
+APP.post('/api/campaign/add', async (req, res) => {
     if(req.user && req.user.address) {
+        let newWalletId;
+        await createCircleWallet(req.body.mydata.address, (callback) => {
+            newWalletId = callback;
+        });       
         const ITEM = {
             _id: req.body.mydata.address.toLowerCase(),
             beneficiaryId: req.body.mydata.beneficiaryId.toLowerCase(),
@@ -242,6 +269,7 @@ APP.post('/api/campaign/add', (req, res) => {
             currencyName: req.body.mydata.currencyName,
             maxAmount: req.body.mydata.maxAmount,
             descriptionEditor: req.body.mydata.descriptionEditor,
+            walletId: newWalletId,
             raisedAmount: 0,
             creationDate: Date.now(),
             lastDonationTime: 0,
@@ -249,6 +277,7 @@ APP.post('/api/campaign/add', (req, res) => {
             addresses: req.body.mydata.addresses,
             active: true
         }
+        console.log(ITEM);
         const DB = CLIENT.db(DBNAME);
         DB.collection('campaigns')
             .insertOne(ITEM, function (err, result) {
@@ -459,17 +488,21 @@ APP.post('/api/donatefiat', async (req, res) => {
                 if(paymentResp.data.data.status === 'pending') {
                     let data = {
                         _id: paymentResp.data.data.id,
+                        walletId: req.body.walletId,
                         campaignId: req.body.campaignId,
                         cardId: createCardResp.data.data.id,
-                        creationDate: paymentResp.data.data.createDate,
-                        lastUpdate: paymentResp.data.data.updateDate,
-                        status: 'pending'
+                        paymentCreationDate: paymentResp.data.data.createDate,
+                        paymentAmount: paymentResp.data.data.amount.amount,
+                        lastUpdated: paymentResp.data.data.updateDate,
+                        heoFees: '0',
+                        paymentStatus: paymentResp.data.data.status
+                        
                     }
                     await createPaymentRecord(data).then(console.log('payment record made succesfully')).catch(err => console.log(err));
                 } else {
                     let data = {
-                        lastUpdate: paymentResp.data.data.updateDate,
-                        status: paymentResp.data.data.status
+                        lastUpdated: paymentResp.data.data.updateDate,
+                        paymentStatus: paymentResp.data.data.status
                     }
                     await updatePaymentRecord(paymentResp.data.data.id, data).then(console.log('payment record update succesfully')).catch(err => console.log(err));
                 }
@@ -545,6 +578,7 @@ APP.post('/api/donatefiat', async (req, res) => {
 
 //create initial payment record in mongodb
 createPaymentRecord = async (data) => {
+    console.log(data);
     const DB = CLIENT.db(DBNAME);
     try {
         DB.collection('fiatPaymentRecords')
@@ -563,20 +597,108 @@ createPaymentRecord = async (data) => {
 //update payment record in mongodb
 updatePaymentRecord = async (recordId, data) => {
     const DB = CLIENT.db(DBNAME);
-    DB.collection('fiatPaymentRecords')
-    .updateOne({'_id': recordId}, {$set: data}, (err, result) => {
+    await DB.collection('fiatPaymentRecords')
+    .updateOne({'_id': recordId}, {$set: data}, async (err, result) => {
         if (err) {
             console.log(err);
         } else {
-            DB.collection('fiatPaymentRecords').find().toArray(function(err, result) {
-                if (err) throw err;
-                result.forEach( element => {
-                    console.log(element);
-                })
-            });
+            console.log('payment record updated successfully');
+            console.log(await DB.collection('fiatPaymentRecords').findOne({'_id': recordId}));
         }
     });
 }
+
+createCircleWallet = async (campaignId, callback) => {
+    const walletKey = uuidv4();
+    const url = 'https://api-sandbox.circle.com/v1/wallets';
+    const data = {
+        idempotencyKey: walletKey,
+        description: campaignId
+    }
+    const options = {
+        method: 'POST',
+        headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${CIRCLE_API_KEY}`
+        },
+        body: JSON.stringify(data)
+    }
+
+    await fetch(url, options)
+    .then(res => res.json())
+    .then(json => {
+        console.log(json);
+        if(json.data.walletId){
+            return callback(json.data.walletId);
+        } else {
+            return callback('');
+        }
+    })
+    .catch(err => {
+        console.error('error:' + err);
+        return callback('');
+    })
+}
+
+//transfer settled funds
+transferWithinCircle = async (info) => {
+    const DB = CLIENT.db(DBNAME);
+    let paymentRecord = await DB.collection('fiatPaymentRecords').findOne({'_id': info.recordId});
+    if(!paymentRecord.walletId || paymentRecord.walletId === null){
+        //check the campaign in mongo for wallet id
+        //this comes up if new wallet was just created but front end state variable was not reloaded.
+        let campaign = await DB.collection("campaigns").findOne({"_id" : paymentRecord.campaignId});
+        if(campaign.walletId) {
+            paymentRecord.walletId = campaign.walletId;
+            let data = {walletId: campaign.walletId};
+            updatePaymentRecord(info.recordId, data)
+        } else {
+            await createCircleWallet(paymentRecord.campaignId, (callback) => {
+                console.log('callback comes back as ' + callback);
+                paymentRecord.walletId = callback;
+                let data = {walletId: callback};
+                updatePaymentRecord(info.recordId, data);
+                DB.collection('campaigns').updateOne({_id: paymentRecord.campaignId}, {$set: data}, (err, result) =>{
+                    if(err) console.log(err)
+                    else console.log('wallet updated in campaign successfully');
+                });
+            });
+        }
+    }
+    let amountToTransfer = info.amount - (info.circleFees + paymentRecord.heoFees);   
+    let idemKey = uuidv4();
+    const url = 'https://api-sandbox.circle.com/v1/transfers';
+    const options = {
+        method: 'POST',
+        headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${CIRCLE_API_KEY}`
+        },
+        body: JSON.stringify({
+            source: {id: info.heoWallet, type: 'wallet'},
+            destination: {id: paymentRecord.walletId, type: 'wallet'},
+            amount: {amount: amountToTransfer, currency: info.currency},
+            idempotencyKey: idemKey
+        })
+    };
+
+    await fetch(url, options)
+    .then(res => res.json())
+    .then(json => {
+        let data = {
+            transferId: json.data.id,
+            transferAmount: json.data.amount.amount,
+            transferCurrency: json.data.amount.currency,
+            transferCreateDate: json.data.createDate,
+            transferStatus: json.data.status,
+        }
+        updatePaymentRecord(info.recordId, data);
+    })
+    .catch(err => console.error('error:' + err));
+}
+
 // Handles any requests that don't match the ones above.
 // All other routing except paths defined above is done by React in the UI
 APP.get('*', async(req,res) =>{
