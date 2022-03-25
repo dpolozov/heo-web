@@ -13,12 +13,34 @@ const { v4: uuidv4 } = require('uuid');
 const fs = require("fs");
 const MessageValidator = require('sns-validator')
 const fetch = require('node-fetch');
+const Sentry = require('@sentry/node');
+const Tracing = require("@sentry/tracing");
 const PORT = process.env.PORT || 5000;
 
 
 require('dotenv').config({path : PATH.resolve(process.cwd(), '.env')});
 
 const APP = EXPRESS();
+
+Sentry.init({
+    dsn: process.env.SENTRY_DSN,
+    integrations: [
+        // enable HTTP calls tracing
+        new Sentry.Integrations.Http({ tracing: true }),
+        // enable Express.js middleware tracing
+        new Tracing.Integrations.Express({ APP }),
+    ],
+    // Set tracesSampleRate to 1.0 to capture 100%
+    // of transactions for performance monitoring.
+    // We recommend adjusting this value in production
+    tracesSampleRate: 0.1,
+});
+// RequestHandler creates a separate execution context using domains, so that every
+// transaction/span/breadcrumb is attached to its own Hub instance
+APP.use(Sentry.Handlers.requestHandler());
+// TracingHandler creates a trace for every incoming request
+APP.use(Sentry.Handlers.tracingHandler());
+
 APP.use(FILE_UPLOAD());
 APP.use(CORS());
 APP.use(EXPRESS.json());
@@ -34,6 +56,7 @@ const validator = new MessageValidator();
 CLIENT.connect(err => {
     if(err) {
         console.log(err);
+        Sentry.captureException(new Error(err));
     }
     console.log('connected succesfully to server');
 });
@@ -50,6 +73,7 @@ APP.use(jwt({ secret: process.env.JWT_SECRET, credentialsRequired:false, getToke
 APP.use(jwtErrorCatch);
 function jwtErrorCatch (err, req, res, next) {
     if(err && err.code == "invalid_token") {
+        Sentry.captureException(new Error(err));
         next(null, req, res.clearCookie('authToken'));
     } else {
         next(err, req, res);
@@ -169,6 +193,7 @@ APP.post('/api/uploadimage', (req,res) => {
         }
         S3.upload(PARAMS, (error, data) => {
             if (error) {
+                Sentry.captureException(new Error(error));
                 console.log(error);
                 res.sendStatus(500);
             } else {
@@ -176,6 +201,7 @@ APP.post('/api/uploadimage', (req,res) => {
             }
         });
     } else {
+        Sentry.captureException(new Error('Image upload Error 401'));
         res.sendStatus(401);
     }
 });
@@ -185,12 +211,14 @@ APP.post('/api/campaign/update', async (req, res) => {
         const DB = CLIENT.db(DBNAME);
         let result = await DB.collection("campaigns").findOne({"_id" : req.body.mydata.address});
         if(!result || result.ownerId != req.user.address.toLowerCase()) {
+            Sentry.captureException(new Error(`Campaign's ownerId (${result.ownerId}) does not match the user (${req.user.address})`));
             res.sendStatus(500);
             console.log(`Campaign's ownerId (${result.ownerId}) does not match the user (${req.user.address})`);
         } else {
             DB.collection('campaigns')
                 .updateOne({'_id': req.body.mydata.address}, {$set: req.body.mydata.dataToUpdate}, (err, result) => {
                     if (err) {
+                        Sentry.captureException(new Error(err));
                         res.sendStatus(500);
                         console.log(err);
                     } else {
@@ -199,6 +227,7 @@ APP.post('/api/campaign/update', async (req, res) => {
                 });
             }
     } else {
+        Sentry.captureException(new Error('campaign update error 401'));
         res.sendStatus(401);
     }
 });
@@ -211,6 +240,7 @@ APP.post('/api/deleteimage', (req, res) => {
         }
         S3.deleteObject(PARAMS, (error, data) => {
             if (error) {
+                Sentry.captureException(new Error(error));
                 console.log(error, error.stack);
                 res.sendStatus(500);
             } else {
@@ -219,6 +249,7 @@ APP.post('/api/deleteimage', (req, res) => {
         });
     }  else {
         console.log('failed to delete');
+        Sentry.captureException(new Error('failed to delete image 401'));
         res.sendStatus(401);
     }
 });
@@ -228,12 +259,14 @@ APP.post('/api/campaign/deactivate', async (req, res) => {
         const DB = CLIENT.db(DBNAME);
         let result = await DB.collection("campaigns").findOne({"_id" : req.body.id});
         if(!result || result.ownerId != req.user.address.toLowerCase()) {
+            Sentry.captureException(new Error(`Campaign's ownerId (${result.ownerId}) does not match the user (${req.user.address})`));
             res.sendStatus(500);
             console.log(`Campaign's ownerId (${result.ownerId}) does not match the user (${req.user.address})`);
         } else {
             DB.collection('campaigns')
             .updateOne({'_id': req.body.id}, {$set: {active:false}}, (err, result) => {
                 if (err) {
+                    Sentry.captureException(new Error(err));
                     res.sendStatus(500);
                     console.log(err);
                 } else {
@@ -243,6 +276,7 @@ APP.post('/api/campaign/deactivate', async (req, res) => {
         }
     }  else {
         console.log('failed to deactivate');
+        Sentry.captureException(new Error('failed to deactivate campaign 401'));
         res.sendStatus(401);
     }
 });
@@ -282,6 +316,7 @@ APP.post('/api/campaign/add', async (req, res) => {
         DB.collection('campaigns')
             .insertOne(ITEM, function (err, result) {
                 if (err) {
+                    Sentry.captureException(new Error(err));
                     res.sendStatus(500);
                     console.log(err);
                 } else {
@@ -290,14 +325,16 @@ APP.post('/api/campaign/add', async (req, res) => {
                 }
             });
     } else {
+        Sentry.captureException(new Error('failed to add campaign 401'));
         res.sendStatus(401);
     }
 });
 
 APP.post('/api/campaign/loadAll', (req, res) => {
     const DB = CLIENT.db(DBNAME);
-    DB.collection("campaigns").find({active: true}).sort({"lastDonationTime" : -1}).toArray(function(err, result) {
+    DB.collection("campaigns22").find({active: true}).sort({"lastDonationTime" : -1}).toArray(function(err, result) {
         if (err) throw err;
+        Sentry.captureException(new Error(err));
         res.send(result);
     });
 })
@@ -305,7 +342,11 @@ APP.post('/api/campaign/loadAll', (req, res) => {
 APP.post('/api/campaign/loadOne', async (req, res) => {
     const DB = CLIENT.db(DBNAME);
     let result = await DB.collection("campaigns").findOne({"_id" : req.body.ID});
-    res.send(result);
+    if(result){
+        res.send(result);
+    } else {
+        Sentry.captureException(new Error('failed to load campaign'));
+    }
 })
 
 APP.post('/api/campaign/loadUserCampaigns',
@@ -314,6 +355,7 @@ APP.post('/api/campaign/loadUserCampaigns',
         const DB = CLIENT.db(DBNAME);
         DB.collection("campaigns").find({"ownerId" : {$eq: req.user.address}}).toArray(function(err, result) {
             if (err) {
+                Sentry.captureException(new Error(err));
                 console.log(err);
                 res.sendStatus(500);
             } else {
@@ -321,6 +363,7 @@ APP.post('/api/campaign/loadUserCampaigns',
             }
         });
     } else {
+        Sentry.captureException(new Error('failed to load campaigns 401'));
         res.sendStatus(401);
     }
 })
@@ -328,16 +371,20 @@ APP.post('/api/campaign/loadUserCampaigns',
 APP.get('/api/env', async (req,res) => {
     const DB = CLIENT.db(DBNAME);
     let configs = await DB.collection('configs').find().toArray();
-    var chains = {};
-    for (let i=0; i<configs.length; i++) {
-        chains[configs[i]._id] = configs[i];
-    }
+    if(configs) {
+        var chains = {};
+        for (let i=0; i<configs.length; i++) {
+            chains[configs[i]._id] = configs[i];
+        }
 
-    res.json(
-        {
-            CHAINS: chains,
-            CHAIN: process.env.CHAIN
-        });
+        res.json(
+            {
+                CHAINS: chains,
+                CHAIN: process.env.CHAIN
+            });
+    } else {
+        Sentry.captureException(new Error('failed to load configs'));
+    }
 });
 
 APP.get('/api/auth/msg', (req, res) => {
@@ -360,6 +407,7 @@ APP.post('/api/auth/jwt', async(req, res) => {
         const addrBuf = ethereumutil.pubToAddress(pubKey);
         const addr = ethereumutil.bufferToHex(addrBuf).toLowerCase();
         if(addr != req.body.addr.toLowerCase()) {
+            Sentry.captureException(new Error('auth failed'));
             res.sendStatus(401);
         } else {
             let token = jsonwebtoken.sign({ address:addr }, process.env.JWT_SECRET, { expiresIn: '7d' });
@@ -367,6 +415,7 @@ APP.post('/api/auth/jwt', async(req, res) => {
         }
     } catch (err) {
         console.log(err);
+        Sentry.captureException(new Error(err));
         res.sendStatus(401);
     }
 });
@@ -375,6 +424,7 @@ APP.get('/api/auth/status', (req, res) => {
     if(req.user && req.user.address) {
         res.send({addr:req.user.address});
     } else {
+        Sentry.captureException(new Error('failed addr vs usr addr'));
         res.sendStatus(401);
     }
 });
@@ -720,10 +770,12 @@ APP.get('*', async(req,res) =>{
                 image = campaign.mainImageURL;
                 url = req.url;
             } else {
+                Sentry.captureException(new Error('campaign no longer available'));
                 title="This campaign is no longer available.";
                 description="";
             }
         } catch (err){
+            Sentry.captureException(new Error(err));
             console.log(err);
             title="Information Currently Unavailable.";
             description="";
@@ -744,6 +796,16 @@ APP.get('*', async(req,res) =>{
     });
 });
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+APP.use(Sentry.Handlers.errorHandler());
+
+APP.use(function onError(err, req, res, next) {
+    // The error id is attached to `res.sentry` to be returned
+    // and optionally displayed to the user for support.
+    res.statusCode = 500;
+    res.end(res.sentry + "\n");
+});
+
 APP.listen(PORT);
 
 console.log('App is listening on port ' + PORT);
