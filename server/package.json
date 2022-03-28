@@ -12,6 +12,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@sentry/node": "^6.19.2",
+    "@sentry/tracing": "^6.19.2",
     "aws-sdk": "*",
     "cookie-parser": "^1.4.5",
     "cors": "^2.8.5",
