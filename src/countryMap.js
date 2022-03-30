@@ -1,4 +1,5 @@
 const countryMap = {
+    International: 'International',
     AF: 'Afghanistan',
     AX: 'Åland Islands',
     AL: 'Albania',
