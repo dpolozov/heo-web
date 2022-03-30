@@ -1,4 +1,5 @@
 const countries = [
+  {text: 'International', value: 'International'},
   {text: 'Afghanistan', value: 'AF'},
   {text: 'Åland Islands', value: 'AX'},
   {text: 'Albania', value: 'AL'},
@@ -107,7 +108,6 @@ const countries = [
   {text: 'Isle of Man', value: 'IM'},
   {text: 'Israel', value: 'IL'},
   {text: 'Italy', value: 'IT'},
-  {text: 'International', value: 'International'},
   {text: 'Jamaica', value: 'JM'},
   {text: 'Japan', value: 'JP'},
   {text: 'Jersey', value: 'JE'},
