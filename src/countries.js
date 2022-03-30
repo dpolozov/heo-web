@@ -107,6 +107,7 @@ const countries = [
   {text: 'Isle of Man', value: 'IM'},
   {text: 'Israel', value: 'IL'},
   {text: 'Italy', value: 'IT'},
+  {text: 'International', value: 'International'},
   {text: 'Jamaica', value: 'JM'},
   {text: 'Japan', value: 'JP'},
   {text: 'Jersey', value: 'JE'},
