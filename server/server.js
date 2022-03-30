@@ -215,7 +215,7 @@ APP.post('/api/campaign/add', (req, res) => {
 
 APP.post('/api/campaign/loadAll', (req, res) => {
     const DB = CLIENT.db(DBNAME);
-    DB.collection("campaigns22").find({active: true}).sort({"lastDonationTime" : -1}).toArray(function(err, result) {
+    DB.collection("campaigns").find({active: true}).sort({"lastDonationTime" : -1}).toArray(function(err, result) {
         if (err) throw err;
         Sentry.captureException(new Error(err));
         res.send(result);
