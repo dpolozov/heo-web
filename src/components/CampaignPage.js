@@ -418,7 +418,7 @@ class CampaignPage extends Component {
                             <Row id='titleRow'>
                                 <p id='title'>{i18nString(this.state.campaign.title, i18n.language)}</p>
                             </Row>
-                            <Row id='countryRow'><h2>{i18nString(this.state.campaign.org, i18n.language)} ({countryMap[this.state.campaign.cn]})</h2></Row>
+                            <Row id='countryRow'><h2>{i18nString(this.state.campaign.org, i18n.language)}</h2></Row>
                             <Row id='progressRow'>
                                 <p id='progressBarLabel'><span id='progressBarLabelStart'>{`${this.state.campaign.raisedAmount}`}</span>{i18n.t('raised')}{this.state.campaign.maxAmount} {i18n.t('goal')}</p>
                                 <ProgressBar id='progressBar' now={this.state.campaign.percentRaised}/>

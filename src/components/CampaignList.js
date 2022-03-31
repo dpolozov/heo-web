@@ -108,7 +108,7 @@ class CampaignList extends Component {
                                             <Row>
                                                 <Card.Body>
                                                     <Card.Title>{i18nString(item.title, i18n.language)}</Card.Title>
-                                                    <Card.Text><span className={"h2"}>{i18nString(item.org, i18n.language)} ({countryMap[item.cn]})</span><br/>
+                                                    <Card.Text><span className={"h2"}>{i18nString(item.org, i18n.language)}</span><br/>
                                                         {`${DescriptionPreview(item.description, i18n.language)}...`}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span id='readMore'><Trans i18nKey='readMore'/></span>
                                                     </Card.Text>
                                                     <p id='progressBarLabel'><span id='progressBarLabelStart'>
