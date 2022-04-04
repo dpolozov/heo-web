@@ -85,7 +85,7 @@ class App extends Component {
                                 <Navbar.Brand href="/">
                                             <img
                                                 src={logo}
-                                                width="50"
+                                                width="100"
                                                 height="50"
                                                 className="d-inline-block align-top"
                                                 alt="HEO logo"
