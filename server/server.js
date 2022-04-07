@@ -322,7 +322,7 @@ APP.post('/api/auth/logout', (req, res) => {
 APP.get('*', async(req,res) =>{
     var title = "HEO App";
     var description = "Crowdfunding on blockchain.";
-    var image = "https://app.heo.finance/static/media/heo-logo.e772bc1b.png";
+    var image = "https://app.heo.finance/static/media/heo-logo.e21e61dc.png";
     var url = "https://app.heo.finance";
     var campaign;
     var splitURL = req.url.split('/');
