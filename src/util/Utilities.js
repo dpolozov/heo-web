@@ -242,8 +242,8 @@ const initWeb3Modal = async(chainId) => {
                             "metamask",
                             "trust",
                             "safepalwallet",
-                            "mathwallet",
-                            "celo"
+                            "valora",
+                            "mathwallet"
                         ]
                     }
                 }
