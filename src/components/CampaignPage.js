@@ -95,6 +95,7 @@ class CampaignPage extends Component {
             ccinfo:{},
             showCCinfoModal: false,
             tryAgainCC: false,
+            fiatPaymentEnabled: false,
         };
         this.handleGetCCInfo = this.handleGetCCInfo.bind(this);
         this.handleCCInfoCancel = this.handleCCInfoCancel.bind(this);
@@ -652,8 +653,8 @@ class CampaignPage extends Component {
                                     />
                                     <InputGroup.Append>
                                         <DropdownButton id='donateButton' title={i18n.t('donate')}>
-                                            <Dropdown.Item key="_fiat" as="button" onClick={() => this.setState({showCCinfoModal: true})}>Visa/MasterCard</Dropdown.Item>
-                                                {this.state.chains.map((item, i) =>
+                                            {this.state.fiatPaymentEnabled && <Dropdown.Item key="_fiat" as="button" onClick={() => this.setState({showCCinfoModal: true})}>Visa/MasterCard</Dropdown.Item> }
+                                            {this.state.chains.map((item, i) =>
                                                     <Dropdown.Item key={item["CHAIN"]} as="button" onClick={() => this.handleDonateClick(item["CHAIN"])}><img src={IMG_MAP[this.state.campaign.coins[item["CHAIN"]].name]} width={16} height={16} style={{marginRight:5}} />{this.state.campaign.coins[item["CHAIN"]].name} ({item["CHAIN_NAME"]})</Dropdown.Item>
                                                 )}
                                             {this.state.campaign.coinbaseCommerceId &&
@@ -725,6 +726,13 @@ class CampaignPage extends Component {
                 chains.push(configChains[ch]);
             }
         }
+        let globals = config.get("GLOBALS");
+        globals.forEach(element => {
+            if(element._id === 'FIATPAYMENT'){
+                this.setState({fiatPaymentEnabled: element.enabled});
+            }
+        });
+
 
         //dedupe coin names for "accepting" section
         let dedupedCoinNames = [];
