@@ -1,14 +1,12 @@
 const { v4: uuidv4 } = require('uuid');
 const fetch = require('node-fetch');
 const { default: axios } = require('axios');
-const { SYSTEM_JS_COLLECTION } = require('mongodb/lib/db');
-const { response } = require('express');
 
 class CircleLib {
     constructor(){
     }
 
-    async handleCircleNotifications(req, res, CIRCLEARN, CIRCLE_API_KEY, validator, CLIENT, DBNAME){
+    async handleCircleNotifications(req, res, CIRCLEARN, CIRCLE_API_KEY, validator, CLIENT, DBNAME, Sentry){
         let body = ''
         req.on('data', (data) => {
         body += data
@@ -29,16 +27,16 @@ class CircleLib {
                     console.error(`\nUnable to confirm the subscription as the topic arn is not expected ${envelope.TopicArn}. Valid topic arn must match ${CIRCLEARN}.`)
                     break
                     }
-                    await axios.post(envelope.SubscribeURL)
-                        .then(console.log('subscription confirmend'))
-                        .catch(err => console.log('subscription not confirmed' + err));
+                    try {
+                        await axios.post(envelope.SubscribeURL)
+                    } catch (err) {Sentry.captureException(new Error(err));}
                     break
                     }
                 case 'Notification': {
                     let messageData;
                     try{
                         messageData = JSON.parse(envelope.Message);
-                        console.log(messageData);
+                        //console.log(messageData);
                     } catch(err) {console.log(err)}
                     if(messageData && messageData.notificationType === 'settlements'){
                         const url = `https://api-sandbox.circle.com/v1/payments?settlementId=${messageData.settlement.id}`;
@@ -49,46 +47,48 @@ class CircleLib {
                                 Authorization: `Bearer ${CIRCLE_API_KEY}`
                             }
                         };
-                        fetch(url, options)
-                        .then(res => res.json())
-                        .then(json => json.data.forEach(async element => {
-                            console.log(element);
-                            let info = {
-                                recordId: element.id, 
-                                circleFees: element.fees.amount, 
-                                amount: element.amount.amount,
-                                currency: element.amount.currency,
-                                heoWallet: element.merchantWalletId,
-                            }      
-                            await this.transferWithinCircle(info, CIRCLE_API_KEY, CLIENT, DBNAME)
-                                .then('wallet transwer succesfull')
-                                .catch(err => console.log(err));
-                            let data = {
-                                paymentStatus: element.status,
-                                lastUpdated: element.updateDate
+
+                        try{
+                            let response = await fetch(url, options);
+                            if(response){
+                                let jsonRes = await response.json();
+                                jsonRes.data.forEach(async element => {
+                                    let info = {
+                                        recordId: element.id, 
+                                        circleFees: element.fees.amount, 
+                                        amount: element.amount.amount,
+                                        currency: element.amount.currency,
+                                        heoWallet: element.merchantWalletId,
+                                    }   
+                                    try{                                      
+                                    await this.transferWithinCircle(info, CIRCLE_API_KEY, CLIENT, DBNAME, Sentry);                                   
+                                    let data = {
+                                        paymentStatus: element.status,
+                                        lastUpdated: element.updateDate
+                                    }
+                                    await this.updatePaymentRecord(element.id, data, CLIENT, DBNAME, Sentry)   
+                                    } catch (err) {console.log(err)}                                     
+                                })
                             }
-                            await this.updatePaymentRecord(element.id, data, CLIENT, DBNAME)
-                                .then('record updated succenfully')
-                                .catch(err => console.log(err));
-                        }))
-                        .catch(err => console.error('error:' + err));
+                        } catch (err) {Sentry.captureException(new Error(err));}
                     } else if (messageData.notificationType === 'payments') {
                         let data = {
                             paymentStatus: messageData.payment.status,
                             lastUpdated: messageData.payment.updateDate,
                             circleFees: messageData.payment.fees.amount
                         }
-                        await this.updatePaymentRecord(messageData.payment.id, data, CLIENT, DBNAME)
-                                .then('record updated succenfully')
-                                .catch(err => console.log(err));
+                        try {
+                            await this.updatePaymentRecord(messageData.payment.id, data, CLIENT, DBNAME, Sentry);
+                        } catch (err) {Sentry.captureException(new Error(err));}
                     } else if(messageData.notificationType === 'transfers'){
                         let data = {
                             transferStatus: messageData.transfer.status
                         }
                         const DB = CLIENT.db(DBNAME);
-                        let paymentRecord = await DB.collection('fiatPaymentRecords').findOne({'transferId': messageData.transfer.id});
+                        const myCollection = await DB.collection('fiatPaymentRecords');
+                        let paymentRecord = await myCollection.findOne({'transferId': messageData.transfer.id});
                         if(paymentRecord){
-                            await this.updatePaymentRecord(paymentRecord._id, data, CLIENT, DBNAME)
+                            await this.updatePaymentRecord(paymentRecord._id, data, CLIENT, DBNAME, Sentry)
                         }else{
                             console.log('could not find payment record with proper transfer id')
                         }
@@ -162,9 +162,7 @@ class CircleLib {
             } else {
                 return null;
             }
-        } catch (err) {
-            console.log(err);
-        }
+        } catch (err) {Sentry.captureException(new Error(err));}
         
     }
 
@@ -207,7 +205,7 @@ class CircleLib {
         return result;
     }
 
-    async transferWithinCircle(info, CIRCLE_API_KEY, CLIENT, DBNAME){
+    async transferWithinCircle(info, CIRCLE_API_KEY, CLIENT, DBNAME, Sentry){
         const DB = CLIENT.db(DBNAME);
         let paymentRecord = await DB.collection('fiatPaymentRecords').findOne({'_id': info.recordId});
         if(!paymentRecord.walletId || paymentRecord.walletId === null){
@@ -217,18 +215,16 @@ class CircleLib {
             if(campaign.walletId) {
                 paymentRecord.walletId = campaign.walletId;
                 let data = {walletId: campaign.walletId};
-                this.updatePaymentRecord(info.recordId, data, CLIENT, DBNAME)
+                this.updatePaymentRecord(info.recordId, data, CLIENT, DBNAME, Sentry)
             } else {
-                await this.createCircleWallet(paymentRecord.campaignId, CIRCLE_API_KEY, (callback) => {
-                    console.log('callback comes back as ' + callback);
-                    paymentRecord.walletId = callback;
-                    let data = {walletId: callback};
-                    this.updatePaymentRecord(info.recordId, data, CLIENT, DBNAME);
-                    DB.collection('campaigns').updateOne({_id: paymentRecord.campaignId}, {$set: data}, (err, result) =>{
-                        if(err) console.log(err)
-                        else console.log('wallet updated in campaign successfully');
-                    });
-                });
+                try{
+                    paymentRecord.walletId = await this.createCircleWallet(paymentRecord.campaignId, CIRCLE_API_KEY);
+                    const myCollection = await DB.collection('campaigns');
+                    let data = {walletId: paymentRecord.walletId};
+                    await myCollection.updateOne({_id: paymentRecord.campaignId}, {$set: data});
+                } catch (err) {
+                    console.log(err);
+                } 
             }
         }
         let amountToTransfer = info.amount - (info.circleFees + paymentRecord.heoFees);   
@@ -249,51 +245,31 @@ class CircleLib {
             })
         };
 
-        await fetch(url, options)
-        .then(res => res.json())
-        .then(json => {
-            let data = {
-                transferId: json.data.id,
-                transferAmount: json.data.amount.amount,
-                transferCurrency: json.data.amount.currency,
-                transferCreateDate: json.data.createDate,
-                transferStatus: json.data.status,
-            }
-            this.updatePaymentRecord(info.recordId, data, CLIENT, DBNAME);
-        })
-        .catch(err => console.error('error:' + err));
-    }
-
-    //create initial payment record in mongodb
-    async createPaymentRecord(data, CLIENT, DBNAME){
-        console.log(data);
-        const DB = CLIENT.db(DBNAME);
         try {
-            DB.collection('fiatPaymentRecords')
-                .insertOne(data, function (err, result) {
-                    if (err) {
-                        console.log(err);
-                    } else {
-                        console.log("1 entry was insterted in payment records collection");
-                    }
-                });
-        } catch (err) {
-            console.log(err);
-        }    
+            let response = await fetch(url, options);
+            if(response){
+                let jsonRes =  await response.json();
+                let data = {
+                    transferId: jsonRes.data.id,
+                    transferAmount: jsonRes.data.amount.amount,
+                    transferCurrency: jsonRes.data.amount.currency,
+                    transferCreateDate: jsonRes.data.createDate,
+                    transferStatus: jsonRes.data.status,
+                }
+                this.updatePaymentRecord(info.recordId, data, CLIENT, DBNAME, Sentry);
+            }
+        } catch (err) {Sentry.captureException(new Error(err));}
     }
 
     //update payment record in mongodb
-    async updatePaymentRecord(recordId, data, CLIENT, DBNAME){
+    async updatePaymentRecord(recordId, data, CLIENT, DBNAME, Sentry){
         const DB = CLIENT.db(DBNAME);
-        await DB.collection('fiatPaymentRecords')
-        .updateOne({'_id': recordId}, {$set: data}, async (err, result) => {
-            if (err) {
-                console.log(err);
-            } else {
-                console.log('payment record updated successfully');
-                console.log(await DB.collection('fiatPaymentRecords').findOne({'_id': recordId}));
-            }
-        });
+        try{
+            const myCollection = await DB.collection('fiatPaymentRecords');
+            await myCollection.updateOne({'_id': recordId}, {$set: data});
+            //console.log(await DB.collection('fiatPaymentRecords').findOne({'_id': recordId}));
+        }
+        catch (err) {Sentry.captureException(new Error(err))}
     }
 }
 

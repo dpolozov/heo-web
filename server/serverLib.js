@@ -1,5 +1,3 @@
-const { v4: uuidv4 } = require('uuid');
-const fetch = require('node-fetch');
 const { default: axios } = require('axios');
 const CircleLib = require('./circleLib');
 var circleLib = new CircleLib();
@@ -46,10 +44,7 @@ class ServerLib {
         }); 
     }
 
-    async handleAddCampaign(req, res, Sentry, DB, CIRCLE_API_KEY, library){
-        console.log('before circle wallet');
-        let newWalletId = await library.createCircleWallet(req.body.mydata.address, CIRCLE_API_KEY,);
-        console.log('after circle wallet');       
+    async handleAddCampaign(req, res, Sentry, DB, newWalletId){      
         const ITEM = {
             _id: req.body.mydata.address.toLowerCase(),
             beneficiaryId: req.body.mydata.beneficiaryId.toLowerCase(),
@@ -75,39 +70,40 @@ class ServerLib {
             active: true
         }
         //console.log(ITEM);
-        console.log('Before DB.collection');
-        DB.collection('campaigns')
-            .insertOne(ITEM, function (err, result) {
-                if (err) {
-                    Sentry.captureException(new Error(err));
-                    res.sendStatus(500);
-                    console.log(err);
-                } else {
-                    res.send('success');
-                    console.log("1 entry was insterted in db");
-                }
-            });
-        console.log('After DB.collection');
+        try {
+            const myCollection = await DB.collection('campaigns');
+            await myCollection.insertOne(ITEM);
+            res.send('success');
+        } catch (err) {
+            console.log(err);
+            Sentry.captureException(new Error(err));
+            res.sendStatus(500);
+        }          
     }
 
     async handleUpdateCampaign(req, res, Sentry, DB){
-        let result = await DB.collection("campaigns").findOne({"_id" : req.body.mydata.address});
+        let result;
+        try {
+            const myCollection = await DB.collection('campaigns');
+            result = await myCollection.findOne({"_id" : req.body.mydata.address});
+        } catch (err) { 
+            console.log(err);
+        }
+
         if(!result || result.ownerId != req.user.address.toLowerCase()) {
             Sentry.captureException(new Error(`Campaign's ownerId (${result.ownerId}) does not match the user (${req.user.address})`));
             res.sendStatus(500);
             console.log(`Campaign's ownerId (${result.ownerId}) does not match the user (${req.user.address})`);
         } else {
-            DB.collection('campaigns')
-                .updateOne({'_id': req.body.mydata.address}, {$set: req.body.mydata.dataToUpdate}, (err, result) => {
-                    if (err) {
-                        Sentry.captureException(new Error(err));
-                        res.sendStatus(500);
-                        console.log(err);
-                    } else {
-                        res.send('success');
-                    }
-                });
-            }
+            try{
+                const myCollection = await DB.collection('campaigns');
+                await myCollection.updateOne({'_id': req.body.mydata.address}, {$set: req.body.mydata.dataToUpdate});
+                res.send('success');
+            } catch (err) { 
+                Sentry.captureException(new Error(err));
+                res.sendStatus(500);
+            }   
+        }
     }
 
     async handleDeactivateCampaign(req, res, Sentry, DB){
@@ -116,56 +112,62 @@ class ServerLib {
             res.sendStatus(500);
             console.log(`Campaign's ownerId (${result.ownerId}) does not match the user (${req.user.address})`);
         } else {
-            DB.collection('campaigns')
-            .updateOne({'_id': req.body.id}, {$set: {active:false}}, (err, result) => {
-                if (err) {
-                    Sentry.captureException(new Error(err));
-                    res.sendStatus(500);
-                    console.log(err);
-                } else {
-                    res.send('success');
-                }
-            });
+            try {
+                const myCollection = await DB.collection('campaigns');
+                await myCollection.updateOne({'_id': req.body.id}, {$set: {active:false}});
+                res.send('success');
+            } catch (err) { 
+                Sentry.captureException(new Error(err));
+                res.sendStatus(500);
+            }   
         }
     }
 
     async handleLoadAllCampaigns(req, res, Sentry, DB){
-        await DB.collection("campaigns").find({active: true}).sort({"lastDonationTime" : -1}).toArray(function(err, result) {
-            if (err) throw err;
-            Sentry.captureException(new Error(err));
+        try{
+            const myCollection = await DB.collection('campaigns');
+            const campaigns = await myCollection.find({active: true});
+            const sortedCampaigns = await campaigns.sort({"lastDonationTime" : -1});
+            const result = await sortedCampaigns.toArray();
             res.send(result);
-        });
+        } catch (err) { 
+            Sentry.captureException(new Error(err));
+            res.sendStatus(500);
+        }   
     }
 
     async handleLoadOneCampaign(req, res, Sentry, DB){
-        let result = await DB.collection("campaigns").findOne({"_id" : req.body.ID});
-        if(result){
+        try {
+            const myCollection = await DB.collection('campaigns');
+            let result = await myCollection.findOne({"_id" : req.body.ID});
             res.send(result);
-        } else {
-            Sentry.captureException(new Error('failed to load campaign'));
-        }
+        } catch (err) {Sentry.captureException(new Error(err));}   
     }
 
     async handleLoadUserCampaigns(req, res, Sentry, DB){
-        await DB.collection("campaigns").find({"ownerId" : {$eq: req.user.address}}).toArray(function(err, result) {
-            if (err) {
-                Sentry.captureException(new Error(err));
-                console.log(err);
-                res.sendStatus(500);
-            } else {
-                res.send(result);
-            }
-        });
+        try{
+            const myCollection = await DB.collection('campaigns');
+            const campaigns = await myCollection.find({"ownerId" : {$eq: req.user.address}});
+            const result = await campaigns.toArray();
+            res.send(result);
+        } catch (err) { 
+            Sentry.captureException(new Error(err));
+            res.sendStatus(500);
+        } 
     }
 
     async handleLoadEnv(res, envCHAIN, Sentry, DB){
         try{
-            let chain_configs = await DB.collection('chain_configs').find().toArray();        
+            let chainCollection = await DB.collection('chain_configs');
+            let chain_configsRaw = await chainCollection.find();
+            let chain_configs = await chain_configsRaw.toArray();      
             var chains = {};
             for (let i=0; i<chain_configs.length; i++) {
                 chains[chain_configs[i]._id] = chain_configs[i];
             }
-            let global_configs = await DB.collection('global_configs').find().toArray();
+            let globalCollection = await DB.collection('global_configs');
+            let global_configsRaw = await globalCollection.find();
+            let global_configs = await global_configsRaw.toArray();
             res.json(
                 {
                     CHAINS: chains,
@@ -187,6 +189,7 @@ class ServerLib {
                 userIP = ips[0];
             } catch (err) {
                 console.log(`failed to parse user IP: ${userIP}`);
+                Sentry.captureException(new Error(err));
             }
         }
 
@@ -221,13 +224,17 @@ class ServerLib {
                             heoFees: '0',
                             paymentStatus: paymentResp.data.data.status                           
                         }
-                        await this.createPaymentRecord(data, CLIENT, DBNAME).then(console.log('payment record made succesfully')).catch(err => console.log(err));
+                        try{
+                            await this.createPaymentRecord(data, CLIENT, DBNAME, Sentry);
+                        } catch (err) {Sentry.captureException(new Error(err));}
                     } else {
                         let data = {
                             lastUpdated: paymentResp.data.data.updateDate,
                             paymentStatus: paymentResp.data.data.status
                         }
-                        await this.updatePaymentRecord(paymentResp.data.data.id, data, CLIENT, DBNAME).then(console.log('payment record update succesfully')).catch(err => console.log(err));
+                        try {
+                            await this.updatePaymentRecord(paymentResp.data.data.id, data, CLIENT, DBNAME, Sentry);
+                        } catch (err) {Sentry.captureException(new Error(err));}
                     }
                     let respData = paymentResp.data.data;
                     let safetyCounter = 0;
@@ -301,95 +308,25 @@ class ServerLib {
     }
 
     //create initial payment record in mongodb
-    async createPaymentRecord(data, CLIENT, DBNAME){
-        console.log(data);
+    async createPaymentRecord(data, CLIENT, DBNAME, Sentry){
+        console.log('creating payment record' + data);
         const DB = CLIENT.db(DBNAME);
         try {
-            DB.collection('fiatPaymentRecords')
-                .insertOne(data, function (err, result) {
-                    if (err) {
-                        console.log(err);
-                    } else {
-                        console.log("1 entry was insterted in payment records collection");
-                    }
-                });
-        } catch (err) {
-            console.log(err);
-        }    
+            const myCollection = await DB.collection('fiatPaymentRecords');
+            await myCollection.insertOne(data);
+        } catch (err) {Sentry.captureException(new Error(err))}    
     }
 
     //update payment record in mongodb
-    async updatePaymentRecord(recordId, data, CLIENT, DBNAME){
+    async updatePaymentRecord(recordId, data, CLIENT, DBNAME, Sentry){
         const DB = CLIENT.db(DBNAME);
-        await DB.collection('fiatPaymentRecords')
-        .updateOne({'_id': recordId}, {$set: data}, async (err, result) => {
-            if (err) {
-                console.log(err);
-            } else {
-                console.log('payment record updated successfully');
-                console.log(await DB.collection('fiatPaymentRecords').findOne({'_id': recordId}));
-            }
-        });
-    }
-    
-    //transfer settled funds
-    async transferWithinCircle(info, CIRCLE_API_KEY, CLIENT, DBNAME){
-        const DB = CLIENT.db(DBNAME);
-        let paymentRecord = await DB.collection('fiatPaymentRecords').findOne({'_id': info.recordId});
-        if(!paymentRecord.walletId || paymentRecord.walletId === null){
-            //check the campaign in mongo for wallet id
-            //this comes up if new wallet was just created but front end state variable was not reloaded.
-            let campaign = await DB.collection("campaigns").findOne({"_id" : paymentRecord.campaignId});
-            if(campaign.walletId) {
-                paymentRecord.walletId = campaign.walletId;
-                let data = {walletId: campaign.walletId};
-                this.updatePaymentRecord(info.recordId, data, CLIENT, DBNAME)
-            } else {
-                await circleLib.createCircleWallet(paymentRecord.campaignId, CIRCLE_API_KEY, (callback) => {
-                    console.log('callback comes back as ' + callback);
-                    paymentRecord.walletId = callback;
-                    let data = {walletId: callback};
-                    this.updatePaymentRecord(info.recordId, data, CLIENT, DBNAME);
-                    DB.collection('campaigns').updateOne({_id: paymentRecord.campaignId}, {$set: data}, (err, result) =>{
-                        if(err) console.log(err)
-                        else console.log('wallet updated in campaign successfully');
-                    });
-                });
-            }
+        try{
+            const myCollection = await DB.collection('fiatPaymentRecords');
+            await myCollection.updateOne({'_id': recordId}, {$set: data});
+            //console.log(await DB.collection('fiatPaymentRecords').findOne({'_id': recordId}));
         }
-        let amountToTransfer = info.amount - (info.circleFees + paymentRecord.heoFees);   
-        let idemKey = uuidv4();
-        const url = 'https://api-sandbox.circle.com/v1/transfers';
-        const options = {
-            method: 'POST',
-            headers: {
-                Accept: 'application/json',
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${CIRCLE_API_KEY}`
-            },
-            body: JSON.stringify({
-                source: {id: info.heoWallet, type: 'wallet'},
-                destination: {id: paymentRecord.walletId, type: 'wallet'},
-                amount: {amount: amountToTransfer, currency: info.currency},
-                idempotencyKey: idemKey
-            })
-        };
-
-        await fetch(url, options)
-        .then(res => res.json())
-        .then(json => {
-            let data = {
-                transferId: json.data.id,
-                transferAmount: json.data.amount.amount,
-                transferCurrency: json.data.amount.currency,
-                transferCreateDate: json.data.createDate,
-                transferStatus: json.data.status,
-            }
-            this.updatePaymentRecord(info.recordId, data, CLIENT, DBNAME);
-        })
-        .catch(err => console.error('error:' + err));
-    }
-    
+        catch (err) {Sentry.captureException(new Error(err))}
+    }   
 
     authenticated(req, res, Sentry){
         if(req.user && req.user.address){

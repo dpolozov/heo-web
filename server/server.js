@@ -92,7 +92,7 @@ APP.head('/api/circlenotifications', (req, res) => {
 
 
 APP.post('/api/circlenotifications', (req, res) => {   
-    circleLib.handleCircleNotifications(req, res, CIRCLEARN, CIRCLE_API_KEY, validator, CLIENT, DBNAME)
+    circleLib.handleCircleNotifications(req, res, CIRCLEARN, CIRCLE_API_KEY, validator, CLIENT, DBNAME, Sentry)
 });
 
 APP.post('/api/uploadimage', (req,res) => {
@@ -106,8 +106,9 @@ APP.post('/api/deleteimage', (req, res) => {
 
 APP.post('/api/campaign/add', async (req, res) => {
     if(serverLib.authenticated(req, res, Sentry)){
+        const walletId = await circleLib.createCircleWallet(req.body.mydata.address, CIRCLE_API_KEY)
         const DB = CLIENT.db(DBNAME);
-        serverLib.handleAddCampaign(req, res, Sentry, DB, CIRCLE_API_KEY, circleLib);
+        serverLib.handleAddCampaign(req, res, Sentry, DB, walletId);
     }
 });
 

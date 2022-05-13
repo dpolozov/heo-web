@@ -2,12 +2,11 @@ const chai = require('chai');
 const sinon = require('sinon');
 const ServerLib = require("../serverLib");
 const FakeCircleLib = require('../fakeCircleLib');
-const { instrumentOutgoingRequests } = require('@sentry/tracing/dist/browser');
 
 const fakeCirleLib = new FakeCircleLib();
 const myServerLib = new ServerLib();
 
-chai.should();
+var expect = require('chai').expect
 
 
 
@@ -61,39 +60,26 @@ describe('Server unit tests', function () {
             });
         });
         */
-        describe('creating new campaign in mongo DB', () => {
-            /*
-            it('should call create wallet function', (done)=>{
-                let fakeReqWithData = {user:{address:"someAddress"},body:{mydata}};
-                var fakeDB = {collection: function() {}};
-                var fakeLib = {createCircleWallet: function() {}}
-                var mock = sinon.mock(fakeLib);
-                mock.expects('createCircleWallet').once();
-                myServerLib.handleAddCampaign(fakeReqWithData, fakeRes, fakeSentry, fakeDB, fakeCircleAPI, fakeLib);
-                mock.verify();
+        describe('creating new campaign in mongo DB', () => {       
+            it('should call DB.collection and return a promise', (done)=>{
+                var insertOneCalled = false;
+                var fakeReqWithData = {user:{address:"someAddress"},body:{mydata}};
+                var fakeRes = {send: function(){}}
+                var fakeDB = {collection: function(){ return {insertOne: function() {}} }};
+                var stub = sinon.stub(fakeDB, 'collection')
+                stub.returns({insertOne: function(){ }})
+                var stub2 = sinon.stub(myCollection, 'insertOne');
+                var newWalletId = '000000001';
+                expect(myServerLib.handleAddCampaign(fakeReqWithData, fakeRes, fakeSentry, fakeDB, newWalletId))
+                    .to.be.a('Promise');
+                expect(insertOneCalled).to.be.equal(true);
                 done();
             });
-            */
-            it('should call DB.collection', async (done) => {
-                let fakeReqWithData = {user:{address:"someAddress"},body:{mydata}};
-                var fakeDB = {collection: function() {}};
-                var fakeLib = {createCircleWallet: function() {return 'dadfadsfa'}}
-                var mock2 = sinon.mock(fakeLib);
-                mock2.expects('createCircleWallet');
-                var mock = sinon.mock(fakeDB);
-                mock.expects('collection').once();
-                myServerLib.handleAddCampaign(fakeReqWithData, fakeRes, fakeSentry, fakeDB, fakeCircleAPI, fakeLib);
-                mock2.verify();
-                mock.verify();
-                done();
-            })
-            
         });
-        
+        /*
         describe('updating campaign in mongoDB', () => {
             it('should call DB.collection', (done) => {
-                //var fakeDB2 = {collection: function() {}};
-                var fakeDB = {collection: function() {}};
+                var fakeDB = {collection: function() {return {findOne: function() {}}}};
                 var mock = sinon.mock(fakeDB);
                 mock.expects('collection').once();
                 myServerLib.handleUpdateCampaign(fakeReq, fakeRes, fakeSentry, fakeDB);
