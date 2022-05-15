@@ -43,6 +43,7 @@ class CreateCampaign extends React.Component {
             title:"",
             maxAmount:10000,
             beneficiaryAddress:"",
+            coinbaseCommerceURL:"",
             description:"",
             raisedAmount:0,
             percentRaised: "0%",
@@ -177,6 +178,7 @@ class CreateCampaign extends React.Component {
             let editorState = getEditorState();
             campaignData.descriptionEditor = {"default": editorState};
             campaignData.descriptionEditor[i18n.language] = editorState;
+            campaignData.coinbaseCommerceURL = this.state.coinbaseCommerceURL;
             let res = await axios.post('/api/campaign/add', {mydata : campaignData},
                 {headers: {"Content-Type": "application/json"}});
             this.setState({showModal:true, goHome: true,
@@ -451,6 +453,12 @@ class CreateCampaign extends React.Component {
                                           className="createFormPlaceHolder"
                                           value={this.state.beneficiaryAddress} placeholder={this.state.beneficiaryAddress}
                                           name='beneficiaryAddress' onChange={this.handleChange} onwheel="this.blur()" />
+                            <Form.Label><Trans i18nKey='coinbaseCommerceURL'/><span
+                                className='optional'>(<Trans i18nKey='optional'/>)</span></Form.Label>
+                            <Form.Control ria-describedby="currencyHelpBlock"
+                                          className="createFormPlaceHolder"
+                                          value={this.state.coinbaseCommerceURL} placeholder={this.state.coinbaseCommerceURL}
+                                          name='coinbaseCommerceURL' onChange={this.handleChange} onwheel="this.blur()" />
                         </Form.Group>
                         <Form.Group>
                             <Form.Label><Trans i18nKey='selectCoverImage'/><span className='redAsterisk'>*</span></Form.Label>

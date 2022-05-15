@@ -429,10 +429,10 @@ class CampaignPage extends Component {
                                         {this.state.coins.map((item, i) =>
                                             <span className='coinRewardInfo'><img src={IMG_MAP[item]} width={20} height={20} style={{marginRight:5, marginLeft:5}} />{item} </span>
                                             )}
-                                        {this.state.campaign.coinbaseCommerceId && <span className='coinRewardInfo'><img src={ethIcon} width={20} height={20} style={{marginRight:5, marginLeft:5}} />ETH </span> }
-                                        {this.state.campaign.coinbaseCommerceId && <span className='coinRewardInfo'><img src={btcLogo} width={20} height={20} style={{marginRight:5, marginLeft:5}} />BTC </span> }
-                                        {this.state.campaign.coinbaseCommerceId && <span className='coinRewardInfo'><img src={daiLogo} width={20} height={20} style={{marginRight:5, marginLeft:5}} />DAI </span> }
-                                        {this.state.campaign.coinbaseCommerceId && <span className='coinRewardInfo'><img src={ltcLogo} width={20} height={20} style={{marginRight:5, marginLeft:5}} />LTC </span> }
+                                        {this.state.campaign.coinbaseCommerceURL && <span className='coinRewardInfo'><img src={ethIcon} width={20} height={20} style={{marginRight:5, marginLeft:5}} />ETH </span> }
+                                        {this.state.campaign.coinbaseCommerceURL && <span className='coinRewardInfo'><img src={btcLogo} width={20} height={20} style={{marginRight:5, marginLeft:5}} />BTC </span> }
+                                        {this.state.campaign.coinbaseCommerceURL && <span className='coinRewardInfo'><img src={daiLogo} width={20} height={20} style={{marginRight:5, marginLeft:5}} />DAI </span> }
+                                        {this.state.campaign.coinbaseCommerceURL && <span className='coinRewardInfo'><img src={ltcLogo} width={20} height={20} style={{marginRight:5, marginLeft:5}} />LTC </span> }
                                     </p>
                                 </div>
                             </Row>
@@ -449,8 +449,8 @@ class CampaignPage extends Component {
                                                 {this.state.chains.map((item, i) =>
                                                     <Dropdown.Item key={item["CHAIN"]} as="button" onClick={() => this.handleDonateClick(item["CHAIN"])}><img src={IMG_MAP[this.state.campaign.coins[item["CHAIN"]].name]} width={16} height={16} style={{marginRight:5}} />{this.state.campaign.coins[item["CHAIN"]].name} ({item["CHAIN_NAME"]})</Dropdown.Item>
                                                 )}
-                                            {this.state.campaign.coinbaseCommerceId &&
-                                                <Dropdown.Item key="DonateCoinbaseCommerce" href={`https://commerce.coinbase.com/checkout/${this.state.campaign.coinbaseCommerceId}`} target="_blank"><img src={coinBaseLogo} width={16} height={16} style={{marginRight:5}} /><Trans i18nKey="otherCoinsCoinbase" /></Dropdown.Item>
+                                            {this.state.campaign.coinbaseCommerceURL &&
+                                                <Dropdown.Item key="DonateCoinbaseCommerce" href={`${this.state.campaign.coinbaseCommerceURL}`} target="_blank"><img src={coinBaseLogo} width={16} height={16} style={{marginRight:5}} /><Trans i18nKey="otherCoinsCoinbase" /></Dropdown.Item>
                                             }
                                         </DropdownButton>
 

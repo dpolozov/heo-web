@@ -189,6 +189,8 @@ APP.post('/api/campaign/add', (req, res) => {
             maxAmount: req.body.mydata.maxAmount,
             descriptionEditor: req.body.mydata.descriptionEditor,
             raisedAmount: 0,
+            raisedOnCoinbase: 0,
+            coinbaseCommerceURL: req.body.coinbaseCommerceURL ? req.body.coinbaseCommerceURL : "",
             creationDate: Date.now(),
             lastDonationTime: 0,
             coins: req.body.mydata.coins,
