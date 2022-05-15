@@ -420,7 +420,7 @@ class CampaignPage extends Component {
                             </Row>
                             <Row id='countryRow'><h2>{i18nString(this.state.campaign.org, i18n.language)}</h2></Row>
                             <Row id='progressRow'>
-                                <p id='progressBarLabel'><span id='progressBarLabelStart'>{`${this.state.campaign.raisedAmount}`}</span>{i18n.t('raised')}{this.state.campaign.maxAmount} {i18n.t('goal')}</p>
+                                <p id='progressBarLabel'><span id='progressBarLabelStart'>&#36;{`${this.state.campaign.raisedAmount}`}</span>{i18n.t('raised')}&#36;{this.state.campaign.maxAmount} {i18n.t('goal')}</p>
                                 <ProgressBar id='progressBar' now={this.state.campaign.percentRaised}/>
                             </Row>
                             <Row id='acceptingRow'>
