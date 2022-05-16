@@ -107,7 +107,8 @@ class ServerLib {
     }
 
     async handleDeactivateCampaign(req, res, Sentry, DB){
-        let result = await DB.collection("campaigns").findOne({"_id" : req.body.id});
+        let myCollection = await DB.collection("campaigns");
+        let result = myCollection.findOne({"_id" : req.body.id});
         if(!result || result.ownerId != req.user.address.toLowerCase()) {
             res.sendStatus(500);
             console.log(`Campaign's ownerId (${result.ownerId}) does not match the user (${req.user.address})`);
@@ -309,7 +310,7 @@ class ServerLib {
 
     //create initial payment record in mongodb
     async createPaymentRecord(data, CLIENT, DBNAME, Sentry){
-        console.log('creating payment record' + data);
+        //console.log('creating payment record' + data);
         const DB = CLIENT.db(DBNAME);
         try {
             const myCollection = await DB.collection('fiatPaymentRecords');

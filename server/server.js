@@ -96,8 +96,7 @@ APP.post('/api/circlenotifications', (req, res) => {
 });
 
 APP.post('/api/uploadimage', (req,res) => {
-    if(serverLib.authenticated(req, res, Sentry)) serverLib.handleUploadImage(req, res, S3, Sentry);
-    
+    if(serverLib.authenticated(req, res, Sentry)) serverLib.handleUploadImage(req, res, S3, Sentry);  
 });
 
 APP.post('/api/deleteimage', (req, res) => {   
@@ -106,7 +105,7 @@ APP.post('/api/deleteimage', (req, res) => {
 
 APP.post('/api/campaign/add', async (req, res) => {
     if(serverLib.authenticated(req, res, Sentry)){
-        const walletId = await circleLib.createCircleWallet(req.body.mydata.address, CIRCLE_API_KEY)
+        const walletId = await circleLib.createCircleWallet(req.body.mydata.address, CIRCLE_API_KEY, Sentry)
         const DB = CLIENT.db(DBNAME);
         serverLib.handleAddCampaign(req, res, Sentry, DB, walletId);
     }

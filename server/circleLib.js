@@ -104,7 +104,7 @@ class CircleLib {
         })
     }
 
-    async createCircleCard(req, CIRCLE_API_URL, CIRCLE_API_KEY, userIP) {
+    async createCircleCard(req, CIRCLE_API_URL, CIRCLE_API_KEY, userIP, Sentry) {
         let cardIdempotencyKey = uuidv4();
         let result;
         try {
@@ -130,13 +130,11 @@ class CircleLib {
                     },
                 }
             });
-        } catch (err) {
-            console.log(err);
-        }
+        } catch (err) { Sentry.captureException(new Error(err));}
         return result;
     }
 
-    async createCircleWallet(campaignId, CIRCLE_API_KEY){
+    async createCircleWallet(campaignId, CIRCLE_API_KEY, Sentry){
         console.log('actual create circle wallet called');
         const walletKey = uuidv4();
         const url = 'https://api-sandbox.circle.com/v1/wallets';
@@ -218,7 +216,7 @@ class CircleLib {
                 this.updatePaymentRecord(info.recordId, data, CLIENT, DBNAME, Sentry)
             } else {
                 try{
-                    paymentRecord.walletId = await this.createCircleWallet(paymentRecord.campaignId, CIRCLE_API_KEY);
+                    paymentRecord.walletId = await this.createCircleWallet(paymentRecord.campaignId, CIRCLE_API_KEY, Sentry);
                     const myCollection = await DB.collection('campaigns');
                     let data = {walletId: paymentRecord.walletId};
                     await myCollection.updateOne({_id: paymentRecord.campaignId}, {$set: data});
