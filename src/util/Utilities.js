@@ -254,7 +254,6 @@ const initWeb3Modal = async(chainId) => {
         }
     });
 }
-
 const getPCIPublicKey = async() => {
     let res = await axios.get('/api/circle/publickey');
     return res.data.data;
