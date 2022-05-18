@@ -39,7 +39,6 @@ const IMG_MAP = {"BUSD": busdIcon,
     "ETH": ethIcon,
     "cUSD": cusdIcon};
 
-
 const PAYMENT_ERROR_MESSAGES = {
     declined: "cardPaymentDeclined",
     payment_stopped_by_issuer: "cardPaymentFailed_payment_stopped_by_issuer",
@@ -100,12 +99,10 @@ class CampaignPage extends Component {
         this.handleGetCCInfo = this.handleGetCCInfo.bind(this);
         this.handleCCInfoCancel = this.handleCCInfoCancel.bind(this);
     }
-
     handleGetCCInfo(info){
         this.setState({ccinfo : info});
         this.handleDonateFiat();
     }
-
     handleCCInfoCancel(){
         this.setState({showCCinfoModal : false});
     }
@@ -283,6 +280,99 @@ class CampaignPage extends Component {
                 });
                 return;
             }
+            let errorFound = false;
+            Object.keys(CC_INFO_FIELDS_ERRORS).every((key)=>{
+                if(err.response.data.paymentStatus.message.includes(key)){
+                    this.setState({modalMessage: CC_INFO_FIELDS_ERRORS[key]});
+                    this.setState(prevState => ({
+                        ccinfo: {
+                            ...prevState.ccinfo,
+                            ccError: CC_INFO_FIELDS_ERRORS[key],
+                            ccErrorType: `${key}Input`
+                        }
+                    }));
+                    errorFound = true;
+                    return false;
+                }
+                return true;
+            })
+            this.setState({
+                showModal: true, modalTitle: 'failed',
+                errorIcon: 'XCircle', modalButtonMessage: 'tryAgain',
+                modalButtonVariant: '#E63C36', waitToClose: false, tryAgainCC: true
+            });
+            if(!errorFound){
+                this.setState(prevState => ({
+                    ccinfo: {
+                        ...prevState.ccinfo,
+                        ccError: CC_INFO_FIELDS_ERRORS['default'],
+                        ccErrorType: 'default'
+                    }
+                }));
+            }
+        }
+    }
+
+    handleDonateFiat = async () => {
+        //TODO: check that this.state.donationAmount is larger than 0
+        let cardKeyData = await getPCIPublicKey();
+        let encryptedCardData = await encryptCardData(cardKeyData, {number:this.state.ccinfo.number, cvv:this.state.ccinfo.cvc});
+        let encryptedSecurityData = await encryptCardData(cardKeyData, {cvv:this.state.ccinfo.cvc});
+        let data = {
+            billingDetails: {
+                city: this.state.ccinfo.city,
+                country: this.state.ccinfo.country,
+                district: this.state.ccinfo.district,
+                line1: this.state.ccinfo.line1,
+                line2: this.state.ccinfo.line2,
+                name: this.state.ccinfo.name,
+                postalCode: this.state.ccinfo.postalCode
+            },
+            keyId: cardKeyData.keyId,
+            encryptedCardData: encryptedCardData,
+            encryptedSecurityData: encryptedSecurityData,
+            expMonth: this.state.ccinfo.expMonth,
+            expYear: this.state.ccinfo.expYear,
+            email: this.state.ccinfo.email,
+            phoneNumber: this.state.ccinfo.phoneNumber,
+            campaignId: this.state.campaignId,
+            amount: this.state.donationAmount,
+            currency: this.state.ccinfo.currency,
+            verification: this.state.ccinfo.verification,
+            campaignId : this.state.campaignId
+        };
+        try {
+            this.setState({
+                showModal: true, modalTitle: 'processingWait',
+                modalMessage: "plzWait",
+                errorIcon: 'HourglassSplit', modalButtonVariant: "gold", waitToClose: true
+            });
+            let resp = await axios.post('/api/donatefiat', data, {headers: {"Content-Type": "application/json"}});
+            if(resp.data.paymentStatus === 'action_required'){
+                this.setState({showModal: false});
+                window.open(resp.data.redirectUrl, '_self');
+            } else if(resp.data.paymentStatus === "success") {
+                this.setState({
+                    showModal: true, modalTitle: 'complete',
+                    modalMessage: 'thankYouDonation',
+                    errorIcon: 'CheckCircle', modalButtonMessage: 'closeBtn',
+                    modalButtonVariant: '#588157', waitToClose: false, tryAgainCC: false, ccinfo: {}
+                });
+            } else {
+                this.setState({
+                    showModal: true, modalTitle: 'failed', modalMessage: PAYMENT_ERROR_MESSAGES[resp.data.paymentStatus],
+                    errorIcon: 'XCircle', modalButtonMessage: 'tryAgain',
+                    modalButtonVariant: '#E63C36', waitToClose: false, tryAgainCC: true
+                });
+                this.setState(prevState => ({
+                    ccinfo: {
+                        ...prevState.ccinfo,
+                        ccError : PAYMENT_ERROR_MESSAGES[resp.data.paymentStatus]
+                    }
+                }));
+            }
+        } catch (err) {
+            console.log(err.response.data);
             let errorFound = false;
             Object.keys(CC_INFO_FIELDS_ERRORS).every((key)=>{
                 if(err.response.data.paymentStatus.message.includes(key)){
@@ -761,6 +851,29 @@ class CampaignPage extends Component {
         });
 
         ReactGA.send({ hitType: "pageview", page: this.props.location.pathname });
+
+        const params = new Proxy(new URLSearchParams(window.location.search), {
+            get: (searchParams, prop) => searchParams.get(prop),
+        });
+
+        if(params.fp){
+            if(params.fp === 's'){
+                this.setState({
+                    showModal: true, modalTitle: 'complete',
+                    modalMessage: 'thankYouDonation',
+                    errorIcon: 'CheckCircle', modalButtonMessage: 'closeBtn',
+                    modalButtonVariant: '#588157', waitToClose: false, tryAgainCC: false, ccinfo: {}
+                });
+            } else if(params.fp === 'f') {
+                this.setState({
+                    showModal: true, modalTitle: 'failed', modalMessage: 'failed3ds',
+                    errorIcon: 'XCircle', modalButtonMessage: 'tryAgain',
+                    modalButtonVariant: '#E63C36', waitToClose: false, tryAgainCC: true,
+                    donationAmount: params.am
+                });
+            }
+        }
+    }
 
         const params = new Proxy(new URLSearchParams(window.location.search), {
             get: (searchParams, prop) => searchParams.get(prop),

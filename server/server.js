@@ -22,6 +22,7 @@ const PORT = process.env.PORT || 5000;
 require('dotenv').config({path : PATH.resolve(process.cwd(), '.env')});
 
 const APP = EXPRESS();
+
 const serverLib = new ServerLib();
 const circleLib = new CircleLib();
 
@@ -90,7 +91,6 @@ APP.head('/api/circlenotifications', (req, res) => {
     res.end(`HEAD request for ${req.url}`);
 })
 
-
 APP.post('/api/circlenotifications', async (req, res) => { 
     const DB = CLIENT.db(DBNAME); 
     let fiatPayment; 
@@ -129,8 +129,7 @@ APP.post('/api/campaign/update', (req, res) => {
     if(serverLib.authenticated(req, res, Sentry)){
         const DB = CLIENT.db(DBNAME);
         serverLib.handleUpdateCampaign(req, res, Sentry, DB);
-    }
-    
+    }    
 });
 
 APP.post('/api/campaign/deactivate', (req, res) => {
@@ -153,6 +152,7 @@ APP.post('/api/campaign/loadOne', (req, res) => {
 APP.post('/api/campaign/loadUserCampaigns', (req, res) => {
     if(serverLib.authenticated(req, res, Sentry)) {
         const DB = CLIENT.db(DBNAME);
+
         serverLib.handleLoadUserCampaigns(req, res, Sentry, DB);
     } 
 });
