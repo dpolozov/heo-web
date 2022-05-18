@@ -274,6 +274,15 @@ class CampaignPage extends Component {
             }
         } catch (err) {
             console.log(err.response.data);
+            if (err.response.status === 503){
+                this.setState({
+                    showModal: true, modalTitle: 'failed',
+                    errorIcon: 'XCircle', modalButtonMessage: 'closeBtn',
+                    modalMessage: err.response.data,
+                    modalButtonVariant: '#E63C36', waitToClose: false, tryAgainCC: false
+                });
+                return;
+            }
             let errorFound = false;
             Object.keys(CC_INFO_FIELDS_ERRORS).every((key)=>{
                 if(err.response.data.paymentStatus.message.includes(key)){

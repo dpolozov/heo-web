@@ -160,6 +160,7 @@
     "checkCCphoneNumber": "please check the phone number",
     "checkCCdefault": "Please check the information you entered",
     "failed3ds": "Failed 3DS verfication",
-    "3dsV": "Use 3DS verification"
+    "3dsV": "Use 3DS verification",
+    "serviceNotAvailable": "Service Temporaritly not Available"
 }
 

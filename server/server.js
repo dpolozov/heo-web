@@ -91,8 +91,16 @@ APP.head('/api/circlenotifications', (req, res) => {
 })
 
 
-APP.post('/api/circlenotifications', (req, res) => {   
-    circleLib.handleCircleNotifications(req, res, CIRCLEARN, CIRCLE_API_KEY, validator, CLIENT, DBNAME, Sentry)
+APP.post('/api/circlenotifications', async (req, res) => { 
+    const DB = CLIENT.db(DBNAME); 
+    let fiatPayment; 
+    try{
+        fiatPayment = await serverLib.handleGetFiatPaymentSettings(DB, Sentry);
+    } catch (err) {Sentry.captureException(new Error(err));}
+
+    if (fiatPayment && fiatPayment === 'circleLib'){
+        circleLib.handleCircleNotifications(req, res, CIRCLEARN, CIRCLE_API_KEY, validator, CLIENT, DBNAME, Sentry);
+    } else {res.status(503).send('serviceNotAvailable');}
 });
 
 APP.post('/api/uploadimage', (req,res) => {
@@ -105,13 +113,19 @@ APP.post('/api/deleteimage', (req, res) => {
 
 APP.post('/api/campaign/add', async (req, res) => {
     if(serverLib.authenticated(req, res, Sentry)){
-        const walletId = await circleLib.createCircleWallet(req.body.mydata.address, CIRCLE_API_KEY, Sentry)
         const DB = CLIENT.db(DBNAME);
+        let walletId, fiatPayment;
+        try{
+            fiatPayment = await serverLib.handleGetFiatPaymentSettings(DB, Sentry);
+            if (fiatPayment && fiatPayment === 'circleLib'){
+                walletId = await circleLib.createCircleWallet(req.body.mydata.address, CIRCLE_API_KEY, Sentry)
+            }
+        } catch (err) {Sentry.captureException(new Error(err));}
         serverLib.handleAddCampaign(req, res, Sentry, DB, walletId);
     }
 });
 
-APP.post('/api/campaign/update', async (req, res) => {
+APP.post('/api/campaign/update', (req, res) => {
     if(serverLib.authenticated(req, res, Sentry)){
         const DB = CLIENT.db(DBNAME);
         serverLib.handleUpdateCampaign(req, res, Sentry, DB);
@@ -119,7 +133,7 @@ APP.post('/api/campaign/update', async (req, res) => {
     
 });
 
-APP.post('/api/campaign/deactivate', async (req, res) => {
+APP.post('/api/campaign/deactivate', (req, res) => {
     if(serverLib.authenticated(req, res, Sentry)) {
         const DB = CLIENT.db(DBNAME);
         serverLib.handleDeactivateCampaign(req, res, Sentry, DB);
@@ -129,22 +143,22 @@ APP.post('/api/campaign/deactivate', async (req, res) => {
 APP.post('/api/campaign/loadAll', (req, res) => {
     const DB = CLIENT.db(DBNAME);
     serverLib.handleLoadAllCampaigns(req, res, Sentry, DB);
-})
+});
 
-APP.post('/api/campaign/loadOne', async (req, res) => {
+APP.post('/api/campaign/loadOne', (req, res) => {
     const DB = CLIENT.db(DBNAME);
     serverLib.handleLoadOneCampaign(req, res, Sentry, DB);
-})
+});
 
 APP.post('/api/campaign/loadUserCampaigns', (req, res) => {
     if(serverLib.authenticated(req, res, Sentry)) {
         const DB = CLIENT.db(DBNAME);
         serverLib.handleLoadUserCampaigns(req, res, Sentry, DB);
     } 
-})
+});
 
-APP.get('/api/env', async (req, res) => {
-    const DB = await CLIENT.db(DBNAME);
+APP.get('/api/env', (req, res) => {
+    const DB = CLIENT.db(DBNAME);
     serverLib.handleLoadEnv(res, process.env.CHAIN, Sentry, DB);
 });
 
@@ -215,9 +229,18 @@ APP.get('/api/circle/publickey', async (req, res) => {
     }
 });
 
-APP.post('/api/donatefiat', (req, res) => {
-    serverLib.handleDonateFiat(req, res, CIRCLE_API_URL, CIRCLE_API_KEY, Sentry, CLIENT, DBNAME);
-})
+APP.post('/api/donatefiat', async (req, res) => {
+    const DB = CLIENT.db(DBNAME);
+    let fiatPayment;
+    try{
+        fiatPayment = await serverLib.handleGetFiatPaymentSettings(DB, Sentry);
+    } catch (err) {Sentry.captureException(new Error(err));}
+
+    if (fiatPayment && fiatPayment == 'circleLib'){
+        serverLib.handleDonateFiat(req, res, CIRCLE_API_URL, CIRCLE_API_KEY, Sentry, CLIENT, DBNAME);
+    } else {res.status(503).send('serviceNotAvailable');}
+    
+});
 
 // Handles any requests that don't match the ones above.
 // All other routing except paths defined above is done by React in the UI
