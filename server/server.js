@@ -94,7 +94,7 @@ APP.head('/api/circlenotifications', (req, res) => {
 APP.post('/api/circlenotifications', async (req, res) => { 
     const DB = CLIENT.db(DBNAME); 
     let fiatPayment; 
-    try{
+    try {
         fiatPayment = await serverLib.handleGetFiatPaymentSettings(DB, Sentry);
     } catch (err) {Sentry.captureException(new Error(err));}
 
@@ -115,9 +115,9 @@ APP.post('/api/campaign/add', async (req, res) => {
     if(serverLib.authenticated(req, res, Sentry)){
         const DB = CLIENT.db(DBNAME);
         let walletId, fiatPayment;
-        try{
+        try {
             fiatPayment = await serverLib.handleGetFiatPaymentSettings(DB, Sentry);
-            if (fiatPayment && fiatPayment === 'circleLib'){
+            if (fiatPayment && fiatPayment === 'circleLib') {
                 walletId = await circleLib.createCircleWallet(req.body.mydata.address, CIRCLE_API_KEY, Sentry)
             }
         } catch (err) {Sentry.captureException(new Error(err));}

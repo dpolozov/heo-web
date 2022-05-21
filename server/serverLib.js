@@ -339,8 +339,8 @@ class ServerLib {
         }
     }
 
-    async handleGetFiatPaymentSettings(DB, Sentry){
-        try{
+    async handleGetFiatPaymentSettings(DB, Sentry) {
+        try {
             let configCollection = await DB.collection('global_configs');
             let fiatSettingsRAW = await configCollection.find({_id : 'FIATPAYMENT'});
             let fiatSettings = await fiatSettingsRAW.toArray();
