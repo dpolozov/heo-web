@@ -338,6 +338,22 @@ class ServerLib {
             return false;
         }
     }
+
+    async handleGetFiatPaymentSettings(DB, Sentry) {
+        try {
+            let configCollection = await DB.collection('global_configs');
+            let fiatSettingsRAW = await configCollection.find({_id : 'FIATPAYMENT'});
+            let fiatSettings = await fiatSettingsRAW.toArray();
+            if(fiatSettings[0].enabled) {
+                if(fiatSettings[0].CIRCLE && !fiatSettings[0].PAYADMIT){
+                    return 'circleLib';
+                } else if (!fiatSettings[0].CIRCLE && fiatSettings[0].PAYADMIT){
+                    return 'payAdmitLib';
+                }
+            }
+            return;
+        } catch (err) {Sentry.captureException(new Error(err))};
+    }
 }
 
 module.exports = ServerLib;
