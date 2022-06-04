@@ -48,7 +48,8 @@ const PAYMENT_ERROR_MESSAGES = {
     card_invalid: "cardPaymentFailed_card_invalid",
     payment_not_funded: "cardPaymentFailed_payment_not_funded",
     payment_not_supported_by_issuer: "cardPaymentFailed_payment_not_supported_by_issuer",
-    card_not_honored: "cardPaymentFailed_card_not_honored"
+    card_not_honored: "cardPaymentFailed_card_not_honored",
+    thankyou: "thankYouDonation"
 };
 
 const CC_INFO_FIELDS_ERRORS = {
@@ -95,6 +96,7 @@ class CampaignPage extends Component {
             showCCinfoModal: false,
             tryAgainCC: false,
             fiatPaymentEnabled: false,
+            fiatPaymentProvider: ''
         };
         this.handleGetCCInfo = this.handleGetCCInfo.bind(this);
         this.handleCCInfoCancel = this.handleCCInfoCancel.bind(this);
@@ -155,8 +157,14 @@ class CampaignPage extends Component {
     handleDonateFiat = async () => {
         //TODO: check that this.state.donationAmount is larger than 0
         let cardKeyData = await getPCIPublicKey();
-        let encryptedCardData = await encryptCardData(cardKeyData, {number:this.state.ccinfo.number, cvv:this.state.ccinfo.cvc});
-        let encryptedSecurityData = await encryptCardData(cardKeyData, {cvv:this.state.ccinfo.cvc});
+        let encryptedCardData, encryptedSecurityData;
+        if(this.state.fiatPaymentProvider === 'circle'){
+            encryptedCardData = await encryptCardData(cardKeyData, {number:this.state.ccinfo.number, cvv:this.state.ccinfo.cvc});
+            encryptedSecurityData = await encryptCardData(cardKeyData, {cvv:this.state.ccinfo.cvc});
+        } else if (this.state.fiatPaymentProvider ==='payadmit'){
+            encryptedCardData = this.state.ccinfo.number;
+            encryptedSecurityData = this.state.ccinfo.cvc;
+        }
         let data = {
             billingDetails: {
                 city: this.state.ccinfo.city,
@@ -212,7 +220,6 @@ class CampaignPage extends Component {
                 }));
             }
         } catch (err) {
-            console.log(err.response.data);
             if (err.response.status === 503){
                 this.setState({
                     showModal: true, modalTitle: 'failed',
@@ -678,9 +685,17 @@ class CampaignPage extends Component {
         globals.forEach(element => {
             if(element._id === 'FIATPAYMENT'){
                 this.setState({fiatPaymentEnabled: element.enabled});
+                if(element.enabled){
+                    if(element.CIRCLE && !element.PAYADMIT){
+                        this.setState({fiatPaymentProvider: 'circle'});
+                    } else if (!element.CIRCLE && element.PAYADMIT){
+                        this.setState({fiatPaymentProvider: 'payadmit'});
+                    }
+                }
             }
+            //console.log(element);
         });
-
+        //console.log(this.state.fiatPaymentProvider)
 
         //dedupe coin names for "accepting" section
         let dedupedCoinNames = [];
@@ -719,6 +734,16 @@ class CampaignPage extends Component {
                     errorIcon: 'XCircle', modalButtonMessage: 'tryAgain',
                     modalButtonVariant: '#E63C36', waitToClose: false, tryAgainCC: true,
                     donationAmount: params.am
+                });
+            } else if(params.fp === 'pa'){
+                let data = {refId : params.ref}
+                let paymentDetails = await axios.post('/api/payadmit/getPaymentRecord', data, {headers: {"Content-Type": "application/json"}});
+                console.log(paymentDetails);
+                this.setState({
+                    showModal: true, modalTitle: paymentDetails.data.title, modalMessage: PAYMENT_ERROR_MESSAGES[paymentDetails.data.errorMessage],
+                    errorIcon: paymentDetails.data.errorIcon, modalButtonMessage: paymentDetails.data.modalButtonMessage,
+                    modalButtonVariant: paymentDetails.data.modalButtonVariant, waitToClose: paymentDetails.data.waitToClose, 
+                    tryAgainCC: paymentDetails.data.tryAgainCC, donationAmount: params.am
                 });
             }
         }

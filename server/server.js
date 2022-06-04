@@ -9,13 +9,13 @@ const jwt = require('express-jwt');
 const jsonwebtoken = require('jsonwebtoken');
 const cookieParser = require('cookie-parser')
 const ethereumutil = require("ethereumjs-util");
-const { v4: uuidv4 } = require('uuid');
 const fs = require("fs");
 const MessageValidator = require('sns-validator')
 const Sentry = require('@sentry/node');
 const Tracing = require("@sentry/tracing");
 const ServerLib = require('./serverLib');
 const CircleLib = require('./circleLib');
+const PayadmitLib = require('./payadmitLib');
 const PORT = process.env.PORT || 5000;
 
 
@@ -25,6 +25,7 @@ const APP = EXPRESS();
 
 const serverLib = new ServerLib();
 const circleLib = new CircleLib();
+const payadmitLib = new PayadmitLib();
 
 Sentry.init({
     dsn: process.env.SENTRY_DSN,
@@ -56,6 +57,8 @@ const CIRCLE_API_URL = process.env.CIRCLE_API_URL;
 const CIRCLE_API_KEY = process.env.CIRCLE_API_KEY;
 const CIRCLEARN = /^arn:aws:sns:.*:908968368384:(sandbox|prod)_platform-notifications-topic$/;
 const validator = new MessageValidator();
+const PAYADMIT_API_KEY = process.env.PAYADMIT_API_KEY;
+const PAYADMIT_API_URL = process.env.PAYADMIT_API_URL;
 
 CLIENT.connect(err => {
     if(err) {
@@ -229,6 +232,33 @@ APP.get('/api/circle/publickey', async (req, res) => {
     }
 });
 
+//webhook for payadmit notifications. URL willhave to be
+//changed in the payadmit shop for production
+APP.post('/api/payadmitnotifications', async (req, res) => {
+    const DB = CLIENT.db(DBNAME);
+    const recordId = req.body.id;
+    let errCode;
+    if(req.body.errorCode) errCode = req.body.errorCode;
+    const data = {
+        paymentStatus: req.body.state,
+        lastUpdated: new Date().toISOString(),
+        errorCode: errCode
+    }
+    try{
+        const myCollection = await DB.collection('fiatPaymentRecords');
+        await myCollection.updateOne({'_id': recordId}, {$set: data});
+        console.log(await DB.collection('fiatPaymentRecords').findOne({'_id': recordId}));
+    }
+    catch (err) {Sentry.captureException(new Error(err));}
+
+    res.sendStatus(200);
+})
+
+APP.post('/api/payadmit/getPaymentRecord', (req, res) => {
+    const DB = CLIENT.db(DBNAME);
+    payadmitLib.getPaymentDetails(req, res, Sentry, DB);  
+})
+
 APP.post('/api/donatefiat', async (req, res) => {
     const DB = CLIENT.db(DBNAME);
     let fiatPayment;
@@ -236,8 +266,10 @@ APP.post('/api/donatefiat', async (req, res) => {
         fiatPayment = await serverLib.handleGetFiatPaymentSettings(DB, Sentry);
     } catch (err) {Sentry.captureException(new Error(err));}
 
-    if (fiatPayment && fiatPayment == 'circleLib'){
-        serverLib.handleDonateFiat(req, res, CIRCLE_API_URL, CIRCLE_API_KEY, Sentry, CLIENT, DBNAME);
+    if (fiatPayment && fiatPayment === 'circleLib'){
+        circleLib.handleDonateFiat(req, res, CIRCLE_API_URL, CIRCLE_API_KEY, Sentry, CLIENT, DBNAME);
+    } else if (fiatPayment && fiatPayment === 'payadmitLib'){
+        payadmitLib.handleDonateFiat(req, res, PAYADMIT_API_URL, PAYADMIT_API_KEY, Sentry, CLIENT, DBNAME);
     } else {res.status(503).send('serviceNotAvailable');}
     
 });
