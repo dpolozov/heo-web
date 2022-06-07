@@ -38,8 +38,8 @@ class TextEditor extends React.Component {
       this.removeLink = this._removeLink.bind(this);
     }
 
-    componentDidMount(){
-      if(STOREDSTATE.length){
+    componentDidMount() {
+      if(STOREDSTATE.length) {
         this.setState({editorState : EditorState.createWithContent(STOREDSTATE, this.createDecorator())});
       } else {
         this.setState({editorState : EditorState.createEmpty(this.createDecorator())});
@@ -50,7 +50,7 @@ class TextEditor extends React.Component {
       e.preventDefault();
       const {editorState} = this.state;
       const selection = editorState.getSelection();
-      if(selection.isCollapsed()){
+      if(selection.isCollapsed()) {
         this.setState({
           popoverMessage: `${i18n.t('addLink')}`,
           showPopoverAddLink:true
@@ -169,7 +169,7 @@ class TextEditor extends React.Component {
       );
     }
 
-  createDecorator(){
+  createDecorator() {
       const decorator = new CompositeDecorator([
           {
             strategy: this.findLinkEntities,
@@ -385,12 +385,12 @@ class TextEditor extends React.Component {
     );
   };
 
-  function getEditorState(){
+  function getEditorState() {
     return DESCRIPTIONRAW;
   }
 
-  function setEditorState(storedState, hasContent){
-    if(hasContent){
+  function setEditorState(storedState, hasContent) {
+    if(hasContent) {
       const contentState = convertFromRaw(storedState);
       STOREDSTATE = contentState;
     } else {
@@ -398,7 +398,7 @@ class TextEditor extends React.Component {
     }
   }
 
-  function editorStateHasChanged(){
+  function editorStateHasChanged() {
     return STATEHASCHANGED;
   }
 

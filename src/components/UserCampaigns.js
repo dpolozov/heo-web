@@ -139,7 +139,7 @@ class UserCampaigns extends Component {
         })
     }
 
-    async closeCampaignPrep(id, imageURL){
+    async closeCampaignPrep(id, imageURL) {
         let chainId = config.get("CHAIN");
         if(!this.state.web3 || !this.state.accounts) {
             await initWeb3(chainId, this);
@@ -170,7 +170,7 @@ class UserCampaigns extends Component {
                 errorIcon: 'CheckCircle', modalButtonMessage: i18n.t('ok'),
                 modalButtonVariant: '#588157', waitToClose: false, showTwoButtons: false,
             })
-        } catch (err){
+        } catch (err) {
             console.log(err);
             this.setState({
                 waitToClose: false, modalMessage: 'technicalDifficulties',
@@ -189,7 +189,7 @@ class UserCampaigns extends Component {
         });
     }
 
-    async deActivateInDB(){
+    async deActivateInDB() {
         let data = {id : this.state.campaignId};
         return axios.post('/api/campaign/deactivate', data, {headers: {"Content-Type": "application/json"}})
         .then(res => {

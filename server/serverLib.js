@@ -1,14 +1,14 @@
 const { default: axios } = require('axios');
 
 class ServerLib {
-    constructor(){
+    constructor() {
     }
 
-    testingClass(){
+    testingClass() {
         console.log('server library class');
     }
 
-    handleUploadImage(req, res, S3, Sentry){
+    handleUploadImage(req, res, S3, Sentry) {
         const PARAMS = {
             Bucket: process.env.SERVER_APP_BUCKET_NAME,
             Key: process.env.SERVER_APP_IMG_DIR_NAME + '/' + req.files.myFile.name,
@@ -25,7 +25,7 @@ class ServerLib {
         });
     }
 
-    handleDeleteImage(req, res, S3, Sentry){
+    handleDeleteImage(req, res, S3, Sentry) {
         const PARAMS = {
             Bucket: process.env.SERVER_APP_BUCKET_NAME,
             Key: process.env.SERVER_APP_IMG_DIR_NAME + '/' + req.body.name,
@@ -40,7 +40,7 @@ class ServerLib {
         }); 
     }
 
-    async handleAddCampaign(req, res, Sentry, DB, newWalletId){      
+    async handleAddCampaign(req, res, Sentry, DB, newWalletId) {      
         const ITEM = {
             _id: req.body.mydata.address.toLowerCase(),
             beneficiaryId: req.body.mydata.beneficiaryId.toLowerCase(),
@@ -75,7 +75,7 @@ class ServerLib {
         }          
     }
 
-    async handleUpdateCampaign(req, res, Sentry, DB){
+    async handleUpdateCampaign(req, res, Sentry, DB) {
         let result;
         try {
             const myCollection = await DB.collection('campaigns');
@@ -100,7 +100,7 @@ class ServerLib {
         }
     }
 
-    async handleDeactivateCampaign(req, res, Sentry, DB){
+    async handleDeactivateCampaign(req, res, Sentry, DB) {
         let myCollection = await DB.collection("campaigns");
         let result = myCollection.findOne({"_id" : req.body.id});
         if(!result || result.ownerId != req.user.address.toLowerCase()) {
@@ -118,7 +118,7 @@ class ServerLib {
         }
     }
 
-    async handleLoadAllCampaigns(req, res, Sentry, DB){
+    async handleLoadAllCampaigns(req, res, Sentry, DB) {
         try{
             const myCollection = await DB.collection('campaigns');
             const campaigns = await myCollection.find({active: true});
@@ -131,7 +131,7 @@ class ServerLib {
         }   
     }
 
-    async handleLoadOneCampaign(req, res, Sentry, DB){
+    async handleLoadOneCampaign(req, res, Sentry, DB) {
         try {
             const myCollection = await DB.collection('campaigns');
             let result = await myCollection.findOne({"_id" : req.body.ID});
@@ -139,7 +139,7 @@ class ServerLib {
         } catch (err) {Sentry.captureException(new Error(err));}   
     }
 
-    async handleLoadUserCampaigns(req, res, Sentry, DB){
+    async handleLoadUserCampaigns(req, res, Sentry, DB) {
         try{
             const myCollection = await DB.collection('campaigns');
             const campaigns = await myCollection.find({"ownerId" : {$eq: req.user.address}});
@@ -151,7 +151,7 @@ class ServerLib {
         } 
     }
 
-    async handleLoadEnv(res, envCHAIN, Sentry, DB){
+    async handleLoadEnv(res, envCHAIN, Sentry, DB) {
         try{
             let chainCollection = await DB.collection('chain_configs');
             let chain_configsRaw = await chainCollection.find();
@@ -170,34 +170,34 @@ class ServerLib {
                     GLOBALS: global_configs,
                 });
 
-        } catch (err){
+        } catch (err) {
             Sentry.captureException(new Error(err));
         }      
     }
 
     //create initial payment record in mongodb
-    async createPaymentRecord(data, CLIENT, DBNAME, Sentry){
+    async createPaymentRecord(data, CLIENT, DBNAME, Sentry) {
         console.log('creating payment record' + data);
         const DB = CLIENT.db(DBNAME);
         try {
-            const myCollection = await DB.collection('fiatPaymentRecords');
+            const myCollection = await DB.collection('fiat_payment_records');
             await myCollection.insertOne(data);
         } catch (err) {Sentry.captureException(new Error(err))}    
     }
 
     //update payment record in mongodb
-    async updatePaymentRecord(recordId, data, CLIENT, DBNAME, Sentry){
+    async updatePaymentRecord(recordId, data, CLIENT, DBNAME, Sentry) {
         const DB = CLIENT.db(DBNAME);
         try{
-            const myCollection = await DB.collection('fiatPaymentRecords');
+            const myCollection = await DB.collection('fiat_payment_records');
             await myCollection.updateOne({'_id': recordId}, {$set: data});
-            //console.log(await DB.collection('fiatPaymentRecords').findOne({'_id': recordId}));
+            //console.log(await DB.collection('fiat_payment_records').findOne({'_id': recordId}));
         }
         catch (err) {Sentry.captureException(new Error(err))}
     }   
 
-    authenticated(req, res, Sentry){
-        if(req.user && req.user.address){
+    authenticated(req, res, Sentry) {
+        if(req.user && req.user.address) {
             return true;
         } else {
             Sentry.captureException(new Error('Failed 401'));
@@ -212,9 +212,9 @@ class ServerLib {
             let fiatSettingsRAW = await configCollection.find({_id : 'FIATPAYMENT'});
             let fiatSettings = await fiatSettingsRAW.toArray();
             if(fiatSettings[0].enabled) {
-                if(fiatSettings[0].CIRCLE && !fiatSettings[0].PAYADMIT){
+                if(fiatSettings[0].CIRCLE && !fiatSettings[0].PAYADMIT) {
                     return 'circleLib';
-                } else if (!fiatSettings[0].CIRCLE && fiatSettings[0].PAYADMIT){
+                } else if (!fiatSettings[0].CIRCLE && fiatSettings[0].PAYADMIT) {
                     return 'payadmitLib';
                 }
             }

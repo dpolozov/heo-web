@@ -2,12 +2,12 @@ const { default: axios } = require('axios');
 const { v4: uuidv4 } = require('uuid');
 
 class PayadmitLib{
-    constructor(){}
+    constructor() {}
 
-    async handleDonateFiat(req, res, PAYADMIT_API_URL, PAYADMIT_API_KEY, Sentry, CLIENT, DBNAME){
+    async handleDonateFiat(req, res, PAYADMIT_API_URL, PAYADMIT_API_KEY, Sentry, CLIENT, DBNAME) {
         const DB = CLIENT.db(DBNAME);
         let phoneNumber = req.body.phoneNumber;
-        if(phoneNumber.charAt(0) === '+'){
+        if(phoneNumber.charAt(0) === '+') {
             phoneNumber = phoneNumber.substring(1);
             phoneNumber = phoneNumber.slice(0, 4) + ' ' + phoneNumber.slice(4);
         }
@@ -60,7 +60,7 @@ class PayadmitLib{
         }
 
         if(paymentResp) {
-            if(paymentResp.data.result.redirectUrl){
+            if(paymentResp.data.result.redirectUrl) {
                 res.status(200).send({paymentStatus: 'action_required', redirectUrl: paymentResp.data.result.redirectUrl});
             }
             const data = {
@@ -77,7 +77,7 @@ class PayadmitLib{
             }
             
             try {
-                const myCollection = await DB.collection('fiatPaymentRecords');
+                const myCollection = await DB.collection('fiat_payment_records');
                 await myCollection.insertOne(data);
             } catch (err) {
                 Sentry.captureException(new Error(err))
@@ -87,16 +87,16 @@ class PayadmitLib{
         }
     }
 
-    async getPaymentDetails(req, res, Sentry, DB){
+    async getPaymentDetails(req, res, Sentry, DB) {
         let record;
         try {
-            const myCollection = await DB.collection('fiatPaymentRecords');
+            const myCollection = await DB.collection('fiat_payment_records');
             record = await myCollection.findOne({"referenceId" : req.body.refId});
         } catch (err) {Sentry.captureException(new Error(err));} 
         console.log(record);
         let errorMessage;
-        if(record){
-            if(record.errorCode){
+        if(record) {
+            if(record.errorCode) {
                 switch (record.errorCode) {
                     case 3.01:
                         errorMessage = 'payment_fraud_detected';
@@ -148,7 +148,7 @@ class PayadmitLib{
             tryAgainCC: true,
             hasErrors: true 
         }
-        if(errorMessage){
+        if(errorMessage) {
             res.send(failure);
         } else {
             res.send(success);

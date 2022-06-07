@@ -38,29 +38,30 @@ class CCData extends Component {
             errorMessage: '',
             threeDs: false,
         }
-        if(Object.keys(this.props.currentCCInfo)){
+        if(Object.keys(this.props.currentCCInfo)) {
             Object.keys(this.props.currentCCInfo).forEach((key) => {
                 this.state.ccinfo[key] = this.props.currentCCInfo[key];
             })
-            if(this.props.currentCCInfo.ccError){
+            if(this.props.currentCCInfo.ccError) {
                 this.state.errorMessage = this.props.currentCCInfo.ccError;
             }
         }
+        console.log(this.state.ccinfo);
     }
 
-    componentDidMount(){
-        if(this.props.currentCCInfo.ccError){
+    componentDidMount() {
+        if(this.props.currentCCInfo.ccError) {
             console.log(this.props.currentCCInfo.ccError);
-            if(this.props.currentCCInfo.ccError === 'cardPaymentFailed_card_invalid'){
+            if(this.props.currentCCInfo.ccError === 'cardPaymentFailed_card_invalid') {
                 this.numberInput.focus();
-            } else if(this.props.currentCCInfo.ccError === 'cardPaymentDeclined'){
+            } else if(this.props.currentCCInfo.ccError === 'cardPaymentDeclined') {
                 this.ccvInput.focus();
-            } else if(this.props.currentCCInfo.ccError === 'Invalid District/State'){
+            } else if(this.props.currentCCInfo.ccError === 'Invalid District/State') {
                 this.districtInput.focus();
-            } else if(this.props.currentCCInfo.ccErrorType === 'default'){
+            } else if(this.props.currentCCInfo.ccErrorType === 'default') {
                 //no specific focus, unknown error
             } else {
-                if(this.props.currentCCInfo.ccErrorType){
+                if(this.props.currentCCInfo.ccErrorType) {
                     this[this.props.currentCCInfo.ccErrorType].focus(); 
                 }               
             }
@@ -69,19 +70,19 @@ class CCData extends Component {
       
     handleInputChange = (e) => {
         var { name, value } = e.target;
-        if(value){
-            switch(name){
+        if(value) {
+            switch(name) {
                 case 'number':
-                    if(e.nativeEvent.inputType === 'insertFromPaste'){
+                    if(e.nativeEvent.inputType === 'insertFromPaste') {
                         value = value.replace(/\s+/g, '');
                         value = [value.slice(0,4), ' ', value.slice(4,8), ' ', value.slice(8,12), ' ', value.slice(12)].join('');
-                    } else if(e.nativeEvent.inputType === 'deleteContentBackward'){
+                    } else if(e.nativeEvent.inputType === 'deleteContentBackward') {
                         break;
                     } else {                       
-                        if((/[0-9]/).test(value.charAt(value.length-1))){
-                            if(value.length === 4 || value.length === 9 || value.length === 14){
+                        if((/[0-9]/).test(value.charAt(value.length-1))) {
+                            if(value.length === 4 || value.length === 9 || value.length === 14) {
                                 value = value + ' ';
-                            } else if (value.length === 20){
+                            } else if (value.length === 20) {
                                 return;
                             }
                         } else {
@@ -105,7 +106,7 @@ class CCData extends Component {
                     }
                     break;
                 case 'country':
-                    if(value === 'US' || value === 'MS' || value === 'CA' || value === 'AU'){
+                    if(value === 'US' || value === 'MS' || value === 'CA' || value === 'AU') {
                         this.setState({knownStates: true})
                     } else {
                         this.setState({knownStates: false})
@@ -117,18 +118,18 @@ class CCData extends Component {
                             district : ''
                         }
                     }));
-                    if(this.state.errorMessage){
+                    if(this.state.errorMessage) {
                         this.setState({errorMessage:''});
                     }
                     //choose verification process
-                    if(COUNTRIES_FOR_3DS.includes(value)){
+                    if(COUNTRIES_FOR_3DS.includes(value)) {
                         this.setState({ threeDs: true });
                     } else {
                         this.setState({ threeDs: false });
                     }
                     break;
                 case 'district':
-                    if(!this.state.ccinfo.country){
+                    if(!this.state.ccinfo.country) {
                         this.setState({error: true, errorMessage: 'countryFirst'});
                         this.countryInput.focus();
                         return;
@@ -151,8 +152,8 @@ class CCData extends Component {
 
     handleSubmit = async (e) => {
         e.preventDefault();
-        if(this.state.ccinfo.phoneNumber, this.state.ccinfo.country){
-            if(!isValidPhoneNumber(this.state.ccinfo.phoneNumber, this.state.ccinfo.country)){
+        if(this.state.ccinfo.phoneNumber, this.state.ccinfo.country) {
+            if(!isValidPhoneNumber(this.state.ccinfo.phoneNumber, this.state.ccinfo.country)) {
                 this.setState({errorMessage : 'validPhone'});
                 this.phoneNumberInput.focus();
                 return;
@@ -248,7 +249,8 @@ class CCData extends Component {
                                     ref={(input) => this.phoneNumberInput = input}
                                 />
                                 <br/>
-                                <label><input type="checkbox" checked={this.state.threeDs} value={this.state.threeDs} name="threeDs" onChange={this.handleInputChange} />  {i18n.t('3dsV')}</label>
+                                {this.state.ccinfo.fiatPaymentProvider === 'circle' &&
+                                <label><input type="checkbox" checked={this.state.threeDs} value={this.state.threeDs} name="threeDs" onChange={this.handleInputChange} />  {i18n.t('3dsV')}</label>}
                                 <br/>
                                 <span className='warning'>{i18n.t(`${this.state.errorMessage}`)}</span>
                                 <br/>

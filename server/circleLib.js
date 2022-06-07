@@ -3,10 +3,10 @@ const fetch = require('node-fetch');
 const { default: axios } = require('axios');
 
 class CircleLib {
-    constructor(){
+    constructor() {
     }
 
-    async handleCircleNotifications(req, res, CIRCLEARN, CIRCLE_API_KEY, validator, CLIENT, DBNAME, Sentry){
+    async handleCircleNotifications(req, res, CIRCLEARN, CIRCLE_API_KEY, validator, CLIENT, DBNAME, Sentry) {
         let body = ''
         req.on('data', (data) => {
         body += data
@@ -38,7 +38,7 @@ class CircleLib {
                         messageData = JSON.parse(envelope.Message);
                         //console.log(messageData);
                     } catch(err) {console.log(err)}
-                    if(messageData && messageData.notificationType === 'settlements'){
+                    if(messageData && messageData.notificationType === 'settlements') {
                         const url = `https://api-sandbox.circle.com/v1/payments?settlementId=${messageData.settlement.id}`;
                         const options = {
                             method: 'GET',
@@ -50,7 +50,7 @@ class CircleLib {
 
                         try{
                             let response = await fetch(url, options);
-                            if(response){
+                            if(response) {
                                 let jsonRes = await response.json();
                                 jsonRes.data.forEach(async element => {
                                     let info = {
@@ -73,7 +73,7 @@ class CircleLib {
                         } catch (err) {Sentry.captureException(new Error(err));}
                     } else if (messageData.notificationType === 'payments') {
                         let feesFromCircle = 0;
-                        if(messageData.payment.fees){
+                        if(messageData.payment.fees) {
                             feesFromCircle = messageData.payment.fees.amount;
                         }
                         let data = {
@@ -84,14 +84,14 @@ class CircleLib {
                         try {
                             await this.updatePaymentRecord(messageData.payment.id, data, CLIENT, DBNAME, Sentry);
                         } catch (err) {Sentry.captureException(new Error(err));}
-                    } else if(messageData.notificationType === 'transfers'){
+                    } else if(messageData.notificationType === 'transfers') {
                         let data = {
                             transferStatus: messageData.transfer.status
                         }
                         const DB = CLIENT.db(DBNAME);
-                        const myCollection = await DB.collection('fiatPaymentRecords');
+                        const myCollection = await DB.collection('fiat_payment_records');
                         let paymentRecord = await myCollection.findOne({'transferId': messageData.transfer.id});
-                        if(paymentRecord){
+                        if(paymentRecord) {
                             await this.updatePaymentRecord(paymentRecord._id, data, CLIENT, DBNAME, Sentry)
                         }else{
                             console.log('could not find payment record with proper transfer id')
@@ -108,7 +108,7 @@ class CircleLib {
         })
     }
 
-    async handleDonateFiat(req, res, CIRCLE_API_URL, CIRCLE_API_KEY, Sentry, CLIENT, DBNAME){
+    async handleDonateFiat(req, res, CIRCLE_API_URL, CIRCLE_API_KEY, Sentry, CLIENT, DBNAME) {
         const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
         let userIP = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
         if(userIP.indexOf(",") > 0) {
@@ -130,7 +130,7 @@ class CircleLib {
 
             if(createCardResp && createCardResp.status >= 200 && createCardResp.data && createCardResp.data.data && createCardResp.data.data.id) {
                 let verificationUrl = req.headers.referer;
-                if(verificationUrl.includes('?')){
+                if(verificationUrl.includes('?')) {
                     verificationUrlArray = verificationUrl.split('?');
                     verificationUrl = verificationUrlArray[0];
                 }
@@ -273,7 +273,7 @@ class CircleLib {
         return result;
     }
 
-    async createCircleWallet(campaignId, CIRCLE_API_KEY, Sentry){
+    async createCircleWallet(campaignId, CIRCLE_API_KEY, Sentry) {
         console.log('actual create circle wallet called');
         const walletKey = uuidv4();
         const url = 'https://api-sandbox.circle.com/v1/wallets';
@@ -293,7 +293,7 @@ class CircleLib {
 
         try {
             let respone = await fetch(url, options);
-            if(respone){
+            if(respone) {
                 let res = await respone.json();
                 return res.data.walletId;
             } else {
@@ -305,7 +305,7 @@ class CircleLib {
         
     }
 
-    async handleCreatePayment(req, CIRCLE_API_URL, CIRCLE_API_KEY, userIP, verificationUrl, createCardResp){
+    async handleCreatePayment(req, CIRCLE_API_URL, CIRCLE_API_KEY, userIP, verificationUrl, createCardResp) {
         let paymentIdempotencyKey = uuidv4();
         let result = {};
         try{
@@ -344,10 +344,10 @@ class CircleLib {
         return result;
     }
 
-    async transferWithinCircle(info, CIRCLE_API_KEY, CLIENT, DBNAME, Sentry){
+    async transferWithinCircle(info, CIRCLE_API_KEY, CLIENT, DBNAME, Sentry) {
         const DB = CLIENT.db(DBNAME);
-        let paymentRecord = await DB.collection('fiatPaymentRecords').findOne({'_id': info.recordId});
-        if(!paymentRecord.walletId || paymentRecord.walletId === null){
+        let paymentRecord = await DB.collection('fiat_payment_records').findOne({'_id': info.recordId});
+        if(!paymentRecord.walletId || paymentRecord.walletId === null) {
             //check the campaign in mongo for wallet id
             //this comes up if new wallet was just created but front end state variable was not reloaded.
             let campaign = await DB.collection("campaigns").findOne({"_id" : paymentRecord.campaignId});
@@ -386,7 +386,7 @@ class CircleLib {
 
         try {
             let response = await fetch(url, options);
-            if(response){
+            if(response) {
                 let jsonRes =  await response.json();
                 let data = {
                     transferId: jsonRes.data.id,
@@ -401,22 +401,22 @@ class CircleLib {
     }
 
     //create initial payment record in mongodb
-    async createPaymentRecord(data, CLIENT, DBNAME, Sentry){
+    async createPaymentRecord(data, CLIENT, DBNAME, Sentry) {
         console.log('creating payment record' + data);
         const DB = CLIENT.db(DBNAME);
         try {
-            const myCollection = await DB.collection('fiatPaymentRecords');
+            const myCollection = await DB.collection('fiat_payment_records');
             await myCollection.insertOne(data);
         } catch (err) {Sentry.captureException(new Error(err))}    
     }
 
     //update payment record in mongodb
-    async updatePaymentRecord(recordId, data, CLIENT, DBNAME, Sentry){
+    async updatePaymentRecord(recordId, data, CLIENT, DBNAME, Sentry) {
         const DB = CLIENT.db(DBNAME);
         try{
-            const myCollection = await DB.collection('fiatPaymentRecords');
+            const myCollection = await DB.collection('fiat_payment_records');
             await myCollection.updateOne({'_id': recordId}, {$set: data});
-            //console.log(await DB.collection('fiatPaymentRecords').findOne({'_id': recordId}));
+            //console.log(await DB.collection('fiat_payment_records').findOne({'_id': recordId}));
         }
         catch (err) {Sentry.captureException(new Error(err))}
     }
