@@ -48,7 +48,8 @@ const PAYMENT_ERROR_MESSAGES = {
     card_invalid: "cardPaymentFailed_card_invalid",
     payment_not_funded: "cardPaymentFailed_payment_not_funded",
     payment_not_supported_by_issuer: "cardPaymentFailed_payment_not_supported_by_issuer",
-    card_not_honored: "cardPaymentFailed_card_not_honored"
+    card_not_honored: "cardPaymentFailed_card_not_honored",
+    thankyou: "thankYouDonation"
 };
 
 const CC_INFO_FIELDS_ERRORS = {
@@ -95,15 +96,16 @@ class CampaignPage extends Component {
             showCCinfoModal: false,
             tryAgainCC: false,
             fiatPaymentEnabled: false,
+            fiatPaymentProvider: ''
         };
         this.handleGetCCInfo = this.handleGetCCInfo.bind(this);
         this.handleCCInfoCancel = this.handleCCInfoCancel.bind(this);
     }
-    handleGetCCInfo(info){
+    handleGetCCInfo(info) {
         this.setState({ccinfo : info});
         this.handleDonateFiat();
     }
-    handleCCInfoCancel(){
+    handleCCInfoCancel() {
         this.setState({showCCinfoModal : false});
     }
 
@@ -154,9 +156,15 @@ class CampaignPage extends Component {
 
     handleDonateFiat = async () => {
         //TODO: check that this.state.donationAmount is larger than 0
-        let cardKeyData = await getPCIPublicKey();
-        let encryptedCardData = await encryptCardData(cardKeyData, {number:this.state.ccinfo.number, cvv:this.state.ccinfo.cvc});
-        let encryptedSecurityData = await encryptCardData(cardKeyData, {cvv:this.state.ccinfo.cvc});
+        let cardKeyData, encryptedCardData, encryptedSecurityData;
+        if(this.state.fiatPaymentProvider === 'circle') {
+            cardKeyData = await getPCIPublicKey();
+            encryptedCardData = await encryptCardData(cardKeyData, {number:this.state.ccinfo.number, cvv:this.state.ccinfo.cvc});
+            encryptedSecurityData = await encryptCardData(cardKeyData, {cvv:this.state.ccinfo.cvc});
+        } else if (this.state.fiatPaymentProvider ==='payadmit') {
+            encryptedCardData = this.state.ccinfo.number;
+            encryptedSecurityData = this.state.ccinfo.cvc;
+        }
         let data = {
             billingDetails: {
                 city: this.state.ccinfo.city,
@@ -188,7 +196,7 @@ class CampaignPage extends Component {
                 errorIcon: 'HourglassSplit', modalButtonVariant: "gold", waitToClose: true
             });
             let resp = await axios.post('/api/donatefiat', data, {headers: {"Content-Type": "application/json"}});
-            if(resp.data.paymentStatus === 'action_required'){
+            if(resp.data.paymentStatus === 'action_required') {
                 this.setState({showModal: false});
                 window.open(resp.data.redirectUrl, '_self');
             } else if(resp.data.paymentStatus === "success") {
@@ -212,8 +220,7 @@ class CampaignPage extends Component {
                 }));
             }
         } catch (err) {
-            console.log(err.response.data);
-            if (err.response.status === 503){
+            if (err.response.status === 503) {
                 this.setState({
                     showModal: true, modalTitle: 'failed',
                     errorIcon: 'XCircle', modalButtonMessage: 'closeBtn',
@@ -224,7 +231,7 @@ class CampaignPage extends Component {
             }
             let errorFound = false;
             Object.keys(CC_INFO_FIELDS_ERRORS).every((key)=>{
-                if(err.response.data.paymentStatus.message.includes(key)){
+                if(err.response.data.paymentStatus.message.includes(key)) {
                     this.setState({modalMessage: CC_INFO_FIELDS_ERRORS[key]});
                     this.setState(prevState => ({
                         ccinfo: {
@@ -243,7 +250,7 @@ class CampaignPage extends Component {
                 errorIcon: 'XCircle', modalButtonMessage: 'tryAgain',
                 modalButtonVariant: '#E63C36', waitToClose: false, tryAgainCC: true
             });
-            if(!errorFound){
+            if(!errorFound) {
                 this.setState(prevState => ({
                     ccinfo: {
                         ...prevState.ccinfo,
@@ -285,7 +292,7 @@ class CampaignPage extends Component {
                 nonInteraction: false
             });
             //check if donating to oneself
-            if(accounts[0].toLowerCase() == this.state.campaign.beneficiaryId.toLowerCase()){
+            if(accounts[0].toLowerCase() == this.state.campaign.beneficiaryId.toLowerCase()) {
                 this.setState({
                     showModal: true, modalTitle: 'notAllowed',
                     modalMessage: 'donateToYourSelf',
@@ -315,7 +322,7 @@ class CampaignPage extends Component {
                     try {
                         campaignInstance.methods.donateNative().send(
                             {from:accounts[0], value:(""+toDonate)}
-                        ).once('transactionHash', function(transactionHash){
+                        ).once('transactionHash', function(transactionHash) {
                             that.setState({modalMessage: "waitingForNetwork"});
                             web3.eth.getTransaction(transactionHash).then(
                                 function(txnObject) {
@@ -339,7 +346,7 @@ class CampaignPage extends Component {
                     try {
                         await campaignInstance.methods.donateNative().send(
                             {from:accounts[0], value:(""+toDonate)}
-                        ).once('transactionHash', function(transactionHash){
+                        ).once('transactionHash', function(transactionHash) {
                             that.setState({modalMessage: "waitingForNetwork"})
                         });
                         await this.updateRaisedAmount(accounts, campaignInstance, web3, 18);
@@ -396,7 +403,7 @@ class CampaignPage extends Component {
                             }
                             coinInstance.methods.approve(campaignAddress, ""+toDonate.toString()).send(
                                 {from:accounts[0]}
-                            ).once('transactionHash', function(transactionHash){
+                            ).once('transactionHash', function(transactionHash) {
                                 that.setState({modalMessage: "waitingForNetwork"});
                                 web3.eth.getTransaction(transactionHash).then(
                                     function(txnObject) {
@@ -408,7 +415,7 @@ class CampaignPage extends Component {
                                         }
                                     }
                                 );
-                            }).on('error', function(error){
+                            }).on('error', function(error) {
                                 that.setState({
                                     showModal: true, modalTitle: 'failed',
                                     errorIcon: 'XCircle', modalButtonMessage: 'closeBtn',
@@ -439,7 +446,7 @@ class CampaignPage extends Component {
                         //toDonate = this.state.donationAmount * Math.pow(10, decimals);
                         let result = await coinInstance.methods.approve(campaignAddress, ""+toDonate).send(
                             {from:accounts[0]}
-                        ).once('transactionHash', function(transactionHash){
+                        ).once('transactionHash', function(transactionHash) {
                             that.setState({modalMessage: "waitingForNetwork"})
                         });
                         console.log('Approved spending');
@@ -456,7 +463,7 @@ class CampaignPage extends Component {
                         });
                         result = await campaignInstance.methods.donateERC20(""+toDonate).send(
                             {from:accounts[0]}
-                        ).once('transactionHash', function(transactionHash){
+                        ).once('transactionHash', function(transactionHash) {
                             console.log(`transaction hash for donateERC20 ${transactionHash}`);
                             that.setState({modalMessage: "waitingForNetwork"})
                         });
@@ -521,7 +528,7 @@ class CampaignPage extends Component {
     }
 
     onModalClose() {
-        if(this.state.tryAgainCC){
+        if(this.state.tryAgainCC) {
             this.setState({showCCinfoModal:true});
         }
     }
@@ -676,11 +683,29 @@ class CampaignPage extends Component {
         }
         let globals = config.get("GLOBALS");
         globals.forEach(element => {
-            if(element._id === 'FIATPAYMENT'){
+            if(element._id === 'FIATPAYMENT') {
                 this.setState({fiatPaymentEnabled: element.enabled});
+                if(element.enabled) {
+                    if(element.CIRCLE && !element.PAYADMIT) {
+                        this.setState(prevState => ({
+                            ccinfo: {
+                                ...prevState.ccinfo,
+                                fiatPaymentProvider : 'circle'
+                            },
+                            fiatPaymentProvider: 'circle'
+                        }));
+                    } else if (!element.CIRCLE && element.PAYADMIT) {
+                        this.setState(prevState => ({
+                            ccinfo: {
+                                ...prevState.ccinfo,
+                                fiatPaymentProvider : 'payadmit'
+                            },
+                            fiatPaymentProvider: 'payadmit'
+                        }));
+                    }
+                }
             }
         });
-
 
         //dedupe coin names for "accepting" section
         let dedupedCoinNames = [];
@@ -705,8 +730,8 @@ class CampaignPage extends Component {
             get: (searchParams, prop) => searchParams.get(prop),
         });
 
-        if(params.fp){
-            if(params.fp === 's'){
+        if(params.fp) {
+            if(params.fp === 's') {
                 this.setState({
                     showModal: true, modalTitle: 'complete',
                     modalMessage: 'thankYouDonation',
@@ -720,12 +745,22 @@ class CampaignPage extends Component {
                     modalButtonVariant: '#E63C36', waitToClose: false, tryAgainCC: true,
                     donationAmount: params.am
                 });
+            } else if(params.fp === 'pa') {
+                let data = {refId : params.ref}
+                let paymentDetails = await axios.post('/api/payadmit/getPaymentRecord', data, {headers: {"Content-Type": "application/json"}});
+                console.log(paymentDetails);
+                this.setState({
+                    showModal: true, modalTitle: paymentDetails.data.title, modalMessage: PAYMENT_ERROR_MESSAGES[paymentDetails.data.errorMessage],
+                    errorIcon: paymentDetails.data.errorIcon, modalButtonMessage: paymentDetails.data.modalButtonMessage,
+                    modalButtonVariant: paymentDetails.data.modalButtonVariant, waitToClose: paymentDetails.data.waitToClose, 
+                    tryAgainCC: paymentDetails.data.tryAgainCC, donationAmount: params.am
+                });
             }
         }
     }
 }
 
-function createDecorator(){
+function createDecorator() {
     const decorator = new CompositeDecorator([
         {
           strategy: findLinkEntities,
@@ -811,7 +846,7 @@ function checkApprovalTransaction(txnObject, decimals, chainId, that) {
         });
         campaignInstance.methods.donateERC20(""+toDonate).send(
             {from:accounts[0]}
-        ).once('transactionHash', function(transactionHash){
+        ).once('transactionHash', function(transactionHash) {
             console.log(`Got donation trnasaction hash ${transactionHash}`);
             ReactGA.event({
                 category: "donation",
@@ -829,7 +864,7 @@ function checkApprovalTransaction(txnObject, decimals, chainId, that) {
                     }
                 }
             );
-        }).on('error', function(error){
+        }).on('error', function(error) {
             ReactGA.event({
                 category: "donation",
                 action: "donation_failed",

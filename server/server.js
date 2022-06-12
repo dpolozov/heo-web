@@ -9,13 +9,13 @@ const jwt = require('express-jwt');
 const jsonwebtoken = require('jsonwebtoken');
 const cookieParser = require('cookie-parser')
 const ethereumutil = require("ethereumjs-util");
-const { v4: uuidv4 } = require('uuid');
 const fs = require("fs");
 const MessageValidator = require('sns-validator')
 const Sentry = require('@sentry/node');
 const Tracing = require("@sentry/tracing");
 const ServerLib = require('./serverLib');
 const CircleLib = require('./circleLib');
+const PayadmitLib = require('./payadmitLib');
 const PORT = process.env.PORT || 5000;
 
 
@@ -25,6 +25,7 @@ const APP = EXPRESS();
 
 const serverLib = new ServerLib();
 const circleLib = new CircleLib();
+const payadmitLib = new PayadmitLib();
 
 Sentry.init({
     dsn: process.env.SENTRY_DSN,
@@ -34,13 +35,17 @@ Sentry.init({
         // enable Express.js middleware tracing
         new Tracing.Integrations.Express({ APP }),
     ],
-    // Set tracesSampleRate to 1.0 to capture 100%
-    // of transactions for performance monitoring.
-    // We recommend adjusting this value in production
+    /**
+     * Set tracesSampleRate to 1.0 to capture 100%
+     * of transactions for performance monitoring.
+     * We recommend adjusting this value in production
+     */
     tracesSampleRate: 0.1,
 });
-// RequestHandler creates a separate execution context using domains, so that every
-// transaction/span/breadcrumb is attached to its own Hub instance
+/**
+ * RequestHandler creates a separate execution context using domains, so that every
+ * transaction/span/breadcrumb is attached to its own Hub instance
+ */
 APP.use(Sentry.Handlers.requestHandler());
 // TracingHandler creates a trace for every incoming request
 APP.use(Sentry.Handlers.tracingHandler());
@@ -56,6 +61,8 @@ const CIRCLE_API_URL = process.env.CIRCLE_API_URL;
 const CIRCLE_API_KEY = process.env.CIRCLE_API_KEY;
 const CIRCLEARN = /^arn:aws:sns:.*:908968368384:(sandbox|prod)_platform-notifications-topic$/;
 const validator = new MessageValidator();
+const PAYADMIT_API_KEY = process.env.PAYADMIT_API_KEY;
+const PAYADMIT_API_URL = process.env.PAYADMIT_API_URL;
 
 CLIENT.connect(err => {
     if(err) {
@@ -98,7 +105,7 @@ APP.post('/api/circlenotifications', async (req, res) => {
         fiatPayment = await serverLib.handleGetFiatPaymentSettings(DB, Sentry);
     } catch (err) {Sentry.captureException(new Error(err));}
 
-    if (fiatPayment && fiatPayment === 'circleLib'){
+    if (fiatPayment && fiatPayment === 'circleLib') {
         circleLib.handleCircleNotifications(req, res, CIRCLEARN, CIRCLE_API_KEY, validator, CLIENT, DBNAME, Sentry);
     } else {res.status(503).send('serviceNotAvailable');}
 });
@@ -112,7 +119,7 @@ APP.post('/api/deleteimage', (req, res) => {
 });
 
 APP.post('/api/campaign/add', async (req, res) => {
-    if(serverLib.authenticated(req, res, Sentry)){
+    if(serverLib.authenticated(req, res, Sentry)) {
         const DB = CLIENT.db(DBNAME);
         let walletId, fiatPayment;
         try {
@@ -126,7 +133,7 @@ APP.post('/api/campaign/add', async (req, res) => {
 });
 
 APP.post('/api/campaign/update', (req, res) => {
-    if(serverLib.authenticated(req, res, Sentry)){
+    if(serverLib.authenticated(req, res, Sentry)) {
         const DB = CLIENT.db(DBNAME);
         serverLib.handleUpdateCampaign(req, res, Sentry, DB);
     }    
@@ -228,6 +235,34 @@ APP.get('/api/circle/publickey', async (req, res) => {
         res.sendStatus(500);
     }
 });
+/**
+ * webhook for payadmit notifications. Url will have to
+ * be changed in the payadmit shop for production
+ */
+APP.post('/api/payadmitnotifications', async (req, res) => {
+    const DB = CLIENT.db(DBNAME);
+    const recordId = req.body.id;
+    let errCode;
+    if(req.body.errorCode) errCode = req.body.errorCode;
+    const data = {
+        paymentStatus: req.body.state,
+        lastUpdated: new Date().toISOString(),
+        errorCode: errCode
+    }
+    try{
+        const myCollection = await DB.collection('fiat_payment_records');
+        await myCollection.updateOne({'_id': recordId}, {$set: data});
+        console.log(await DB.collection('fiat_payment_records').findOne({'_id': recordId}));
+    }
+    catch (err) {Sentry.captureException(new Error(err));}
+
+    res.sendStatus(200);
+})
+
+APP.post('/api/payadmit/getPaymentRecord', (req, res) => {
+    const DB = CLIENT.db(DBNAME);
+    payadmitLib.getPaymentDetails(req, res, Sentry, DB);  
+})
 
 APP.post('/api/donatefiat', async (req, res) => {
     const DB = CLIENT.db(DBNAME);
@@ -236,14 +271,18 @@ APP.post('/api/donatefiat', async (req, res) => {
         fiatPayment = await serverLib.handleGetFiatPaymentSettings(DB, Sentry);
     } catch (err) {Sentry.captureException(new Error(err));}
 
-    if (fiatPayment && fiatPayment == 'circleLib'){
-        serverLib.handleDonateFiat(req, res, CIRCLE_API_URL, CIRCLE_API_KEY, Sentry, CLIENT, DBNAME);
+    if (fiatPayment && fiatPayment === 'circleLib') {
+        circleLib.handleDonateFiat(req, res, CIRCLE_API_URL, CIRCLE_API_KEY, Sentry, CLIENT, DBNAME);
+    } else if (fiatPayment && fiatPayment === 'payadmitLib') {
+        payadmitLib.handleDonateFiat(req, res, PAYADMIT_API_URL, PAYADMIT_API_KEY, Sentry, CLIENT, DBNAME);
     } else {res.status(503).send('serviceNotAvailable');}
     
 });
 
-// Handles any requests that don't match the ones above.
-// All other routing except paths defined above is done by React in the UI
+/** 
+ * Handles any requests that don't match the ones above.
+ * All other routing except paths defined above is done by React in the UI
+ */
 APP.get('*', async(req,res) =>{
     var title = "HEO App";
     var description = "Crowdfunding on blockchain.";
@@ -257,7 +296,7 @@ APP.get('*', async(req,res) =>{
         try {
             const DB = CLIENT.db(DBNAME);
             campaign = await DB.collection("campaigns").findOne({"_id" : campaignId});
-            if(campaign){
+            if(campaign) {
                 title = (campaign.title.default).replace(/"/g,"&quot;");
                 description = (campaign.description.default).replace(/"/g,"&quot;");
                 image = campaign.mainImageURL;
@@ -267,7 +306,7 @@ APP.get('*', async(req,res) =>{
                 title="This campaign is no longer available.";
                 description="";
             }
-        } catch (err){
+        } catch (err) {
             Sentry.captureException(new Error(err));
             console.log(err);
             title="Information Currently Unavailable.";
@@ -276,7 +315,7 @@ APP.get('*', async(req,res) =>{
     }
 
     const filePath = PATH.resolve(__dirname, '..', 'build', '_index.html');
-    fs.readFile(filePath, 'utf8', function (err, data){
+    fs.readFile(filePath, 'utf8', function (err, data) {
         if (err) {
             res.sendStatus(500);
             return console.log(err);
@@ -292,8 +331,10 @@ APP.get('*', async(req,res) =>{
 APP.use(Sentry.Handlers.errorHandler());
 
 APP.use(function onError(err, req, res, next) {
-    // The error id is attached to `res.sentry` to be returned
-    // and optionally displayed to the user for support.
+    /**
+     * The error id is attached to `res.sentry` to be returned
+     * and optionally displayed to the user for support.
+     */
     res.statusCode = 500;
     res.end(res.sentry + "\n");
 });
