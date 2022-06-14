@@ -101,8 +101,8 @@ class CampaignPage extends Component {
         this.handleGetCCInfo = this.handleGetCCInfo.bind(this);
         this.handleCCInfoCancel = this.handleCCInfoCancel.bind(this);
     }
-    handleGetCCInfo(info) {
-        this.setState({ccinfo : info});
+    async handleGetCCInfo(info) {
+        await this.setState({ccinfo : info});
         this.handleDonateFiat();
     }
     handleCCInfoCancel() {
@@ -162,6 +162,7 @@ class CampaignPage extends Component {
             encryptedCardData = await encryptCardData(cardKeyData, {number:this.state.ccinfo.number, cvv:this.state.ccinfo.cvc});
             encryptedSecurityData = await encryptCardData(cardKeyData, {cvv:this.state.ccinfo.cvc});
         } else if (this.state.fiatPaymentProvider ==='payadmit') {
+            cardKeyData = ''
             encryptedCardData = this.state.ccinfo.number;
             encryptedSecurityData = this.state.ccinfo.cvc;
         }
@@ -230,21 +231,24 @@ class CampaignPage extends Component {
                 return;
             }
             let errorFound = false;
-            Object.keys(CC_INFO_FIELDS_ERRORS).every((key)=>{
-                if(err.response.data.paymentStatus.message.includes(key)) {
-                    this.setState({modalMessage: CC_INFO_FIELDS_ERRORS[key]});
-                    this.setState(prevState => ({
-                        ccinfo: {
-                            ...prevState.ccinfo,
-                            ccError: CC_INFO_FIELDS_ERRORS[key],
-                            ccErrorType: `${key}Input`
-                        }
-                    }));
-                    errorFound = true;
-                    return false;
-                }
-                return true;
-            })
+            console.log(err.response)
+            if(err.response.data.paymentStatus){
+                Object.keys(CC_INFO_FIELDS_ERRORS).every((key)=>{
+                    if(err.response.data.paymentStatus.message.includes(key)) {
+                        this.setState({modalMessage: CC_INFO_FIELDS_ERRORS[key]});
+                        this.setState(prevState => ({
+                            ccinfo: {
+                                ...prevState.ccinfo,
+                                ccError: CC_INFO_FIELDS_ERRORS[key],
+                                ccErrorType: `${key}Input`
+                            }
+                        }));
+                        errorFound = true;
+                        return false;
+                    }
+                    return true;
+                })
+            }   
             this.setState({
                 showModal: true, modalTitle: 'failed',
                 errorIcon: 'XCircle', modalButtonMessage: 'tryAgain',
@@ -687,19 +691,11 @@ class CampaignPage extends Component {
                 this.setState({fiatPaymentEnabled: element.enabled});
                 if(element.enabled) {
                     if(element.CIRCLE && !element.PAYADMIT) {
-                        this.setState(prevState => ({
-                            ccinfo: {
-                                ...prevState.ccinfo,
-                                fiatPaymentProvider : 'circle'
-                            },
+                        this.setState(({
                             fiatPaymentProvider: 'circle'
                         }));
                     } else if (!element.CIRCLE && element.PAYADMIT) {
-                        this.setState(prevState => ({
-                            ccinfo: {
-                                ...prevState.ccinfo,
-                                fiatPaymentProvider : 'payadmit'
-                            },
+                        this.setState(({
                             fiatPaymentProvider: 'payadmit'
                         }));
                     }
