@@ -288,9 +288,9 @@ class EditCampaign extends React.Component {
                 return true;
             } catch (err) {
                 console.log(err);
-                if(err.response){
+                if(err.response) {
                     this.setState({currentError : 'technicalDifficulties'});
-                } else if (err.request){
+                } else if (err.request) {
                     this.setState({currentError : 'checkYourConnection'});
                 } else {
                     this.setState({currentError : ''});
@@ -312,7 +312,7 @@ class EditCampaign extends React.Component {
         let imgID = this.state.imgID;
         let qrImgID = this.state.qrImgID;
         const formData = new FormData();
-        if(type === 'main'){ 
+        if(type === 'main') { 
             this.setState({ imageFileName : imgID,});        
             let fileType = this.state.mainImageFile.type.split("/")[1];
             formData.append(
@@ -320,7 +320,7 @@ class EditCampaign extends React.Component {
                 this.state.mainImageFile,
                 `${imgID}.${fileType}`,
             );
-        } else if (type === 'qrCode'){
+        } else if (type === 'qrCode') {
             this.setState({ imageFileName : qrImgID,});        
             let fileType = this.state.qrCodeImageFile.type.split("/")[1];
             formData.append(
@@ -331,16 +331,16 @@ class EditCampaign extends React.Component {
         }
         try {
             let res = await axios.post('/api/uploadimage', formData);
-            if(type === 'main'){
+            if(type === 'main') {
                 this.setState({showModal: false, mainImageURL: res.data});
-            } else if (type === 'qrCode'){
+            } else if (type === 'qrCode') {
                 this.setState({showModal: false, qrCodeImageURL: res.data});
             }
             return res.data;
         } catch (err) {
-            if(err.response){
+            if(err.response) {
                 this.setState({currentError : 'technicalDifficulties'});
-            } else if (err.request){
+            } else if (err.request) {
                 this.setState({currentError : 'checkYourConnection'});
             } else {
                 this.setState({currentError : ''});

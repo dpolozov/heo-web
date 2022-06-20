@@ -302,14 +302,14 @@ class CreateCampaign extends React.Component {
         }
         let fileType;
         const formData = new FormData();
-        if(type === 'main'){
+        if(type === 'main') {
             fileType = this.state.mainImageFile.type.split("/")[1];
             formData.append(
                 "myFile",
                 this.state.mainImageFile,
                 `${imgID}.${fileType}`,
             );
-        } else if(type === 'qrCode'){
+        } else if(type === 'qrCode') {
             fileType = this.state.qrCodeImageFile.type.split("/")[1];
             formData.append(
                 "myFile",
@@ -319,9 +319,9 @@ class CreateCampaign extends React.Component {
         }
         try {
             let res = await axios.post('/api/uploadimage', formData);
-            if(type === 'main'){
+            if(type === 'main') {
                 this.setState({showModal:false, mainImageURL: res.data});
-            } else if(type === 'qrCode'){
+            } else if(type === 'qrCode') {
                 this.setState({showModal:false, qrCodeImageURL: res.data});
             }
             if(res.data) {

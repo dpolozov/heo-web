@@ -66,7 +66,7 @@ class TokenSale extends React.Component {
                     // event listeners and promises.
                     currencyInstance.methods.approve(that.state.saleContractAddress, toPay).send(
                         {from:accounts[0]}
-                    ).once('transactionHash', function(transactionHash){
+                    ).once('transactionHash', function(transactionHash) {
                         that.setState({modalMessage: "waitingForNetwork"});
                         web3.eth.getTransaction(transactionHash).then(
                             function(txnObject) {
@@ -78,7 +78,7 @@ class TokenSale extends React.Component {
                                 }
                             }
                         );
-                    }).on('error', function(error){
+                    }).on('error', function(error) {
                         that.setState({
                             showModal: true, modalTitle: 'failed',
                             errorIcon: 'XCircle', modalButtonMessage: 'closeBtn',
@@ -93,7 +93,7 @@ class TokenSale extends React.Component {
                     console.log(`Using provider ${window.web3Modal.cachedProvider}`);
                     let result = await currencyInstance.methods.approve(that.state.saleContractAddress, toPay).send(
                         {from:accounts[0]}
-                    ).once('transactionHash', function(transactionHash){
+                    ).once('transactionHash', function(transactionHash) {
                         that.setState({modalMessage: "waitingForNetwork"})
                     });
                     console.log('Approved spending');
@@ -104,7 +104,7 @@ class TokenSale extends React.Component {
                     });
                     result = await HEOSale.methods.sell(toPay).send(
                         {from:accounts[0]}
-                    ).once('transactionHash', function(transactionHash){
+                    ).once('transactionHash', function(transactionHash) {
                         console.log(`transaction hash for sell ${transactionHash}`);
                         that.setState({modalMessage: "waitingForNetwork"})
                     });
@@ -300,7 +300,7 @@ function checkApprovalTransaction(txnObject, that) {
         });
         HEOSale.methods.sell(toPay).send(
             {from:accounts[0]}
-        ).once('transactionHash', function(transactionHash){
+        ).once('transactionHash', function(transactionHash) {
             console.log(`Got sell transaction hash ${transactionHash}`);
             web3.eth.getTransaction(transactionHash).then(
                 function(txnObject2) {
@@ -312,7 +312,7 @@ function checkApprovalTransaction(txnObject, that) {
                     }
                 }
             );
-        }).on('error', function(error){
+        }).on('error', function(error) {
             that.setState({
                 showModal: true, modalTitle: 'failed',
                 errorIcon: 'XCircle', modalButtonMessage: 'closeBtn',

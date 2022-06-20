@@ -1,0 +1,108 @@
+
+.ccInfoTitles{
+    font-family: 'Poppins', sans-serif;
+    font-style: normal;
+    font-weight: bold;
+    font-size: 24px;
+    line-height: 32px;
+    /* identical to box height, or 133% */
+    letter-spacing: 0.005em;
+    /* Frequently Used/Text/Primary Text - Grey 900 */
+    color: #0E161C;
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+    margin: 20px 0px;
+}
+
+.countryZip{
+    width:50% !important;
+    display: inline-block !important;
+    font-family: 'Open Sans', sans-serif;
+    font-style: normal;
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 143.32%;
+    letter-spacing: 0.005em;
+    color: #3F5663;
+}
+
+.experationInput{
+    width:35% !important;
+    display: inline-block !important;
+    font-family: 'Open Sans', sans-serif;
+    font-style: normal;
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 143.32%;
+    letter-spacing: 0.005em;
+    color: #3F5663;
+}
+
+.cvcInput{
+    width:30% !important;
+    display: inline-block !important;
+    font-family: 'Open Sans', sans-serif;
+    font-style: normal;
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 143.32%;
+    letter-spacing: 0.005em;
+    color: #3F5663;
+}
+
+.ccInfoFormPlaceHolder{
+    font-family: 'Open Sans', sans-serif;
+    font-style: normal;
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 143.32%;
+    /* identical to box height, or 20px */
+
+    letter-spacing: 0.005em;
+
+    color: #3F5663;
+}
+
+#phoneNumber{
+    width: 100% !important;
+}
+
+#CCdonateBtn{
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    background-color: #588157;;
+    border-color: #588157;;
+    border-radius: 4px !important;
+    padding: 10px 40px;
+    font-family: 'Poppins', sans-serif;
+    font-style: normal;
+    font-weight: bold;
+    font-size: 17px;
+    line-height: 28px;
+    letter-spacing: 0.005em;
+    text-transform: uppercase;
+    color: #FFFFFF;
+}
+
+#CCcancelBtn{
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    margin-left: 1rem;
+    background-color: #E63C36;
+    border-color: #E63C36;
+    border-radius: 4px !important;
+    padding: 10px 40px;
+    font-family: 'Poppins', sans-serif;
+    font-style: normal;
+    font-weight: bold;
+    font-size: 17px;
+    line-height: 28px;
+    letter-spacing: 0.005em;
+    text-transform: uppercase;
+    color: #FFFFFF;
+}
+
+.warning{
+    color: #E63C36;
+}
