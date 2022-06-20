@@ -28,10 +28,10 @@ class CCData extends Component {
                 expYear: '',
                 email: '',
                 phoneNumber: '',
-                currency: '',
+                currency: 'USD',
                 name: '',
                 number: '',
-                verification: ''
+                verification: 'cvv'
             },
             focus: '',
             knownStates: false,
@@ -46,7 +46,6 @@ class CCData extends Component {
                 this.state.errorMessage = this.props.currentCCInfo.ccError;
             }
         }
-        console.log(this.state.ccinfo);
     }
 
     componentDidMount() {
@@ -228,7 +227,7 @@ class CCData extends Component {
                                 <Form.Control type="text" name="city" placeholder={i18n.t('city')} required className='ccInfoFormPlaceHolder'
                                     onChange={this.handleInputChange} value={this.state.ccinfo.city}  ref={(input) => this.cityInput = input}
                                 />
-                                <Form.Control as="select" name='country' required className='countryZip' value='US' onChange={this.handleInputChange}
+                                <Form.Control as="select" name='country' required className='countryZip' value='' onChange={this.handleInputChange}
                                  ref={(input) => this.countryInput = input} autoComplete='country' >
                                     <option value={this.state.ccinfo.country ? this.state.ccinfo.country : ''}>{this.state.ccinfo.country ? this.state.ccinfo.country : i18n.t('country')}</option>
                                     {countries.map((data) => <option value={data.value}>{data.text}</option>)} 
@@ -238,7 +237,7 @@ class CCData extends Component {
                                 />
                                 {this.state.knownStates && <Form.Control as="select" name="district" required className='ccInfoFormPlaceHolder' onChange={this.handleInputChange}
                                     ref={(input)=> this.districtInput = input}> 
-                                    <option value='CA'>{i18n.t('state')}</option>
+                                    <option value=''>{i18n.t('state')}</option>
                                     {states[this.state.ccinfo.country].map((data) => <option value={data.value}>{data.text}</option>)}
                                 </Form.Control>}
                                 {!this.state.knownStates && <Form.Control type="text" name="district" placeholder={i18n.t('state')} required className='ccInfoFormPlaceHolder'
