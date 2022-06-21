@@ -267,9 +267,11 @@ APP.post('/api/payadmit/getPaymentRecord', (req, res) => {
 APP.post('/api/donatefiat', async (req, res) => {
     const DB = CLIENT.db(DBNAME);
     let fiatPayment;
-    try{
+    try {
         fiatPayment = await serverLib.handleGetFiatPaymentSettings(DB, Sentry);
-    } catch (err) {Sentry.captureException(new Error(err));}
+    } catch (err) {
+        Sentry.captureException(new Error(err));
+    }
 
     if (fiatPayment && fiatPayment === 'circleLib') {
         circleLib.handleDonateFiat(req, res, CIRCLE_API_URL, CIRCLE_API_KEY, Sentry, CLIENT, DBNAME);

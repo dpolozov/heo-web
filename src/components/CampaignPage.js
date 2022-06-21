@@ -1,8 +1,8 @@
 import React, {Component} from 'react';
 import config from "react-global-configuration";
 import axios from 'axios';
-import { Container, Row, Col, Card, ProgressBar, Button, DropdownButton, Dropdown, Modal, Image, InputGroup, FormControl } from 'react-bootstrap';
-import { ChevronLeft, Gift, CheckCircle, ExclamationTriangle, HourglassSplit, XCircle} from 'react-bootstrap-icons';
+import { Container, Row, Col, ProgressBar, Button, DropdownButton, Dropdown, Modal, Image, InputGroup, FormControl } from 'react-bootstrap';
+import { ChevronLeft, CheckCircle, ExclamationTriangle, HourglassSplit, XCircle} from 'react-bootstrap-icons';
 import ReactPlayer from 'react-player';
 import { Link } from "react-router-dom";
 import { Trans } from 'react-i18next';
@@ -15,9 +15,7 @@ import {
     getPCIPublicKey
 } from '../util/Utilities';
 import i18n from '../util/i18n';
-import countryMap from '../countryMap';
 import { Editor, EditorState, convertFromRaw, CompositeDecorator } from "draft-js";
-import Web3 from 'web3';
 import '../css/campaignPage.css';
 import '../css/modal.css';
 import ReactGA from "react-ga4";
@@ -183,7 +181,6 @@ class CampaignPage extends Component {
             expYear: this.state.ccinfo.expYear,
             email: this.state.ccinfo.email,
             phoneNumber: this.state.ccinfo.phoneNumber,
-            campaignId: this.state.campaignId,
             amount: this.state.donationAmount,
             currency: this.state.ccinfo.currency,
             verification: this.state.ccinfo.verification,
@@ -248,7 +245,7 @@ class CampaignPage extends Component {
                     }
                     return true;
                 })
-            }   
+            }
             this.setState({
                 showModal: true, modalTitle: 'failed',
                 errorIcon: 'XCircle', modalButtonMessage: 'tryAgain',
@@ -276,19 +273,19 @@ class CampaignPage extends Component {
             await clearWeb3Provider(this);
             await initWeb3Modal(chainId);
             await initWeb3(chainId, this);
-            var web3 = this.state.web3;
-            var accounts = this.state.accounts;
-            var currentProvider = "";
+            let web3 = this.state.web3;
+            let accounts = this.state.accounts;
+            let currentProvider = "";
             if(web3.currentProvider && web3.currentProvider.isMetaMask) {
                 currentProvider = "metamask";
             } else if(web3.currentProvider && web3.currentProvider.isWalletConnect) {
                 currentProvider = "walletconnect";
             }
             HEOCampaign = (await import("../remote/"+ chainId + "/HEOCampaign")).default;
-            var campaignAddress = this.state.campaign.addresses[chainId];
-            var campaignInstance = new web3.eth.Contract(HEOCampaign, campaignAddress);
-            var coinAddress = (await campaignInstance.methods.currency().call()).toLowerCase();
-            var toDonate = web3.utils.toWei(this.state.donationAmount);
+            let campaignAddress = this.state.campaign.addresses[chainId];
+            let campaignInstance = new web3.eth.Contract(HEOCampaign, campaignAddress);
+            let coinAddress = (await campaignInstance.methods.currency().call()).toLowerCase();
+            let toDonate = web3.utils.toWei(this.state.donationAmount);
             ReactGA.event({
                 category: "donation",
                 action: "donate_button_click",
@@ -331,9 +328,9 @@ class CampaignPage extends Component {
                             web3.eth.getTransaction(transactionHash).then(
                                 function(txnObject) {
                                     if(txnObject) {
-                                        checkDonationTransaction(txnObject, decimals, chainId, that);
+                                        checkDonationTransaction(txnObject, 0, chainId, that);
                                     } else {
-                                        checkDonationTransaction({hash:transactionHash}, decimals, chainId, that);
+                                        checkDonationTransaction({hash:transactionHash}, 0, chainId, that);
                                     }
                                 }
                             );
@@ -382,8 +379,8 @@ class CampaignPage extends Component {
                 });
 
                 try {
-                    var decimals = 6;
-                    var toDonate = new web3.utils.BN(""+this.state.donationAmount).mul(new web3.utils.BN("1000000"));
+                    let decimals = 6;
+                    toDonate = new web3.utils.BN(""+this.state.donationAmount).mul(new web3.utils.BN("1000000"));
                     if(currentProvider != "metamask") {
                         ReactGA.event({
                             category: "provider",
@@ -748,7 +745,7 @@ class CampaignPage extends Component {
                 this.setState({
                     showModal: true, modalTitle: paymentDetails.data.title, modalMessage: PAYMENT_ERROR_MESSAGES[paymentDetails.data.errorMessage],
                     errorIcon: paymentDetails.data.errorIcon, modalButtonMessage: paymentDetails.data.modalButtonMessage,
-                    modalButtonVariant: paymentDetails.data.modalButtonVariant, waitToClose: paymentDetails.data.waitToClose, 
+                    modalButtonVariant: paymentDetails.data.modalButtonVariant, waitToClose: paymentDetails.data.waitToClose,
                     tryAgainCC: paymentDetails.data.tryAgainCC, donationAmount: params.am
                 });
             }
@@ -796,7 +793,9 @@ function checkDonationTransaction(txnObject, decimals, chainId, that) {
         let web3 = that.state.web3;
 
         let campaignInstance = new web3.eth.Contract(HEOCampaign, that.state.campaign.addresses[chainId]);
-        that.updateRaisedAmount(accounts, campaignInstance, web3, decimals);
+        if(decimals > 0) {
+            that.updateRaisedAmount(accounts, campaignInstance, web3, decimals);
+        }
         that.setState({
             showModal: true, modalTitle: 'complete',
             modalMessage: 'thankYouDonation',
@@ -828,7 +827,7 @@ function checkApprovalTransaction(txnObject, decimals, chainId, that) {
         let accounts = that.state.accounts;
         let campaignInstance = new web3.eth.Contract(HEOCampaign, that.state.campaign.addresses[chainId]);
         let toDonate = new web3.utils.BN(""+that.state.donationAmount).mul(new web3.utils.BN(new web3.utils.BN("10").pow(new web3.utils.BN(""+decimals))));
-        //let toDonate = that.state.donationAmount * Math.pow(10, decimals);
+
         that.setState({
             showModal: true, modalTitle: 'processingWait',
             modalMessage: "approveDonate",
