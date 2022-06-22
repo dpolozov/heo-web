@@ -288,7 +288,7 @@ APP.get('*', async(req,res) =>{
     var description = "Crowdfunding on blockchain.";
     var image = "https://app.heo.finance/logo512.png";
     var url = "https://app.heo.finance";
-    var campaign, title, description, image;
+    var campaign;
     var splitURL = req.url.split('/');
     var campaignId = splitURL[splitURL.length -1]
 

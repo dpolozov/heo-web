@@ -1,8 +1,8 @@
 import React, {Component} from 'react';
 import config from "react-global-configuration";
 import axios from 'axios';
-import { Container, Row, Col, Card, ProgressBar, Button, DropdownButton, Dropdown, Modal, Image, InputGroup, FormControl } from 'react-bootstrap';
-import { ChevronLeft, Gift, CheckCircle, ExclamationTriangle, HourglassSplit, XCircle} from 'react-bootstrap-icons';
+import { Container, Row, Col, ProgressBar, Button, DropdownButton, Dropdown, Modal, Image, InputGroup, FormControl } from 'react-bootstrap';
+import { ChevronLeft, CheckCircle, ExclamationTriangle, HourglassSplit, XCircle} from 'react-bootstrap-icons';
 import ReactPlayer from 'react-player';
 import { Link } from "react-router-dom";
 import { Trans } from 'react-i18next';
@@ -15,9 +15,7 @@ import {
     getPCIPublicKey
 } from '../util/Utilities';
 import i18n from '../util/i18n';
-import countryMap from '../countryMap';
 import { Editor, EditorState, convertFromRaw, CompositeDecorator } from "draft-js";
-import Web3 from 'web3';
 import '../css/campaignPage.css';
 import '../css/modal.css';
 import ReactGA from "react-ga4";
@@ -183,7 +181,6 @@ class CampaignPage extends Component {
             expYear: this.state.ccinfo.expYear,
             email: this.state.ccinfo.email,
             phoneNumber: this.state.ccinfo.phoneNumber,
-            campaignId: this.state.campaignId,
             amount: this.state.donationAmount,
             currency: this.state.ccinfo.currency,
             verification: this.state.ccinfo.verification,
@@ -248,7 +245,7 @@ class CampaignPage extends Component {
                     }
                     return true;
                 })
-            }   
+            }
             this.setState({
                 showModal: true, modalTitle: 'failed',
                 errorIcon: 'XCircle', modalButtonMessage: 'tryAgain',
@@ -447,7 +444,7 @@ class CampaignPage extends Component {
                         });
                         decimals = await coinInstance.methods.decimals().call();
                         toDonate = new web3.utils.BN(""+that.state.donationAmount).mul(new web3.utils.BN(new web3.utils.BN("10").pow(new web3.utils.BN(""+decimals))));
-                        //toDonate = this.state.donationAmount * Math.pow(10, decimals);
+
                         let result = await coinInstance.methods.approve(campaignAddress, ""+toDonate).send(
                             {from:accounts[0]}
                         ).once('transactionHash', function(transactionHash) {
@@ -748,7 +745,7 @@ class CampaignPage extends Component {
                 this.setState({
                     showModal: true, modalTitle: paymentDetails.data.title, modalMessage: PAYMENT_ERROR_MESSAGES[paymentDetails.data.errorMessage],
                     errorIcon: paymentDetails.data.errorIcon, modalButtonMessage: paymentDetails.data.modalButtonMessage,
-                    modalButtonVariant: paymentDetails.data.modalButtonVariant, waitToClose: paymentDetails.data.waitToClose, 
+                    modalButtonVariant: paymentDetails.data.modalButtonVariant, waitToClose: paymentDetails.data.waitToClose,
                     tryAgainCC: paymentDetails.data.tryAgainCC, donationAmount: params.am
                 });
             }
