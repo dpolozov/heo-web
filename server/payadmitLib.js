@@ -21,26 +21,26 @@ class PayadmitLib{
             amount: req.body.amount,
             currency: req.body.currency,
             card: {
-            cardNumber: req.body.encryptedCardData,
-            cardholderName: req.body.billingDetails.name,
-            cardSecurityCode: req.body.encryptedSecurityData,
-            expiryMonth: req.body.expMonth,
-            expiryYear: req.body.expYear
+                cardNumber: req.body.encryptedCardData,
+                cardholderName: req.body.billingDetails.name,
+                cardSecurityCode: req.body.encryptedSecurityData,
+                expiryMonth: req.body.expMonth,
+                expiryYear: req.body.expYear
             },
             customer: {
-            firstName: req.body.billingDetails.name,
-            lastName: req.body.billingDetails.name,
-            email: req.body.email,
-            phone: phoneNumber,
-            accountName: req.body.campaignId,
+                firstName: req.body.billingDetails.name,
+                lastName: req.body.billingDetails.name,
+                email: req.body.email,
+                phone: phoneNumber,
+                accountName: req.body.campaignId,
             },
             billingAddress: {
-            addressLine1: req.body.billingDetails.line1,
-            addressLine2: req.body.billingDetails.line2,
-            city: req.body.billingDetails.city,
-            countryCode: req.body.billingDetails.country,
-            postalCode: req.body.billingDetails.postalCode,
-            state: req.body.billingDetails.district
+                addressLine1: req.body.billingDetails.line1,
+                addressLine2: req.body.billingDetails.line2,
+                city: req.body.billingDetails.city,
+                countryCode: req.body.billingDetails.country,
+                postalCode: req.body.billingDetails.postalCode,
+                state: req.body.billingDetails.district
             },
             returnUrl: `${url}?fp=pa&am=${req.body.amount}&ref=${reffId}`,
         }
@@ -55,7 +55,7 @@ class PayadmitLib{
                 },
                 data: payload
             });
-        } catch (err) { 
+        } catch (err) {
             Sentry.captureException(new Error(err));
         }
 
@@ -75,13 +75,13 @@ class PayadmitLib{
                 currency: paymentResp.data.result.currency,
                 provider: 'payadmit'
             }
-            
+
             try {
                 const myCollection = await DB.collection('fiat_payment_records');
                 await myCollection.insertOne(data);
             } catch (err) {
                 Sentry.captureException(new Error(err))
-            } 
+            }
         } else {
             res.sendStatus(401);
         }
@@ -92,7 +92,7 @@ class PayadmitLib{
         try {
             const myCollection = await DB.collection('fiat_payment_records');
             record = await myCollection.findOne({"referenceId" : req.body.refId});
-        } catch (err) {Sentry.captureException(new Error(err));} 
+        } catch (err) {Sentry.captureException(new Error(err));}
         console.log(record);
         let errorMessage;
         if(record) {
@@ -125,7 +125,7 @@ class PayadmitLib{
                     default:
                         errorMessage = 'declined';
                 }
-            } 
+            }
         }
         let success = {
             title: 'complete',
@@ -134,7 +134,7 @@ class PayadmitLib{
             modalButtonMessage: 'closeBtn',
             modalButtonVariant: '#588157',
             waitToClose: false,
-            tryAgainCC: false, 
+            tryAgainCC: false,
             ccinfo: {},
             hasErrors: false,
         }
@@ -146,7 +146,7 @@ class PayadmitLib{
             modalButtonVariant: '#E63C36',
             waitToClose: false,
             tryAgainCC: true,
-            hasErrors: true 
+            hasErrors: true
         }
         if(errorMessage) {
             res.send(failure);
