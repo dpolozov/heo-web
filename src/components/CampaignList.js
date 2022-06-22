@@ -1,14 +1,12 @@
 import React, { Component, lazy } from 'react';
-import config from 'react-global-configuration';
 import axios from 'axios';
 import '../css/campaignList.css';
 import '../css/modal.css';
 import { Container, Row, Col, Card, ProgressBar, Button, Modal } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
-import { GetLanguage, i18nString, DescriptionPreview } from '../util/Utilities';
+import { i18nString, DescriptionPreview } from '../util/Utilities';
 import { Trans } from 'react-i18next';
 import i18n from '../util/i18n';
-import countryMap from '../countryMap';
 import ReactGA from "react-ga4";
 
 import bnbIcon from '../images/binance-coin-bnb-logo.png';
@@ -16,10 +14,10 @@ import busdIcon from '../images/binance-usd-busd-logo.png';
 import usdcIcon from '../images/usd-coin-usdc-logo.png';
 import ethIcon from '../images/eth-diamond-purple.png';
 import cusdIcon from '../images/cusd-celo-logo.png';
-import coinBaseLogo from '../images/coinbase-c-logo.png';
 import btcLogo from '../images/bitcoin-logo.png';
 import daiLogo from '../images/dai-logo.png';
 import ltcLogo from '../images/ltc-logo.png'
+import visaMcLogo from '../images/visa-mc-logo.png';
 
 const IMG_MAP = {"BUSD": busdIcon,
     "BNB": bnbIcon,
@@ -120,6 +118,7 @@ class CampaignList extends Component {
                                                 <Col className='buttonCol'>
                                                     <div id='acceptingBtn' className='cardButtons'><p><Trans i18nKey='accepting'/></p>
                                                         <p id='currencyName'>
+                                                            <span className='coinRewardInfo'><img src={visaMcLogo} width={21} height={20} style={{marginRight:5, marginLeft:5}} />USD </span>
                                                             {item.dedupedCoinNames.map((coin, j) =>
                                                                 <span key={item._id + "-" + coin}><img src={IMG_MAP[coin]} width={20} height={20} style={{marginLeft:5, marginRight:5}} />{coin}</span>
                                                             )}

@@ -28,6 +28,8 @@ import cusdIcon from '../images/cusd-celo-logo.png';
 import btcLogo from '../images/bitcoin-logo.png';
 import daiLogo from '../images/dai-logo.png';
 import ltcLogo from '../images/ltc-logo.png'
+import visaMcLogo from '../images/visa-mc-logo.png';
+
 import coinBaseLogo from '../images/coinbase-c-logo.png';
 import CCData from '../components/CCData';
 
@@ -589,6 +591,7 @@ class CampaignPage extends Component {
                             <Row id='acceptingRow'>
                                 <div id='acceptingDiv'>
                                     <p><Trans i18nKey='accepting'/>:
+                                        <span className='coinRewardInfo'><img src={visaMcLogo} witdth={21} height={20} style={{marginRight:5, marginLeft:5}} />USD</span>
                                         {this.state.coins.map((item, i) =>
                                             <span className='coinRewardInfo'><img src={IMG_MAP[item]} width={20} height={20} style={{marginRight:5, marginLeft:5}} />{item} </span>
                                             )}
@@ -609,7 +612,7 @@ class CampaignPage extends Component {
                                     />
                                     <InputGroup.Append>
                                         <DropdownButton id='donateButton' title={i18n.t('donate')}>
-                                            {this.state.fiatPaymentEnabled && <Dropdown.Item key="_fiat" as="button" onClick={() => this.setState({showCCinfoModal: true})}>Visa/MasterCard</Dropdown.Item> }
+                                            {this.state.fiatPaymentEnabled && <Dropdown.Item key="_fiat" as="button" onClick={() => this.setState({showCCinfoModal: true})}><img src={visaMcLogo} width={17} height={16} style={{marginRight:5}} />USD</Dropdown.Item> }
                                             {this.state.chains.map((item, i) =>
                                                     <Dropdown.Item key={item["CHAIN"]} as="button" onClick={() => this.handleDonateClick(item["CHAIN"])}><img src={IMG_MAP[this.state.campaign.coins[item["CHAIN"]].name]} width={16} height={16} style={{marginRight:5}} />{this.state.campaign.coins[item["CHAIN"]].name} ({item["CHAIN_NAME"]})</Dropdown.Item>
                                                 )}
