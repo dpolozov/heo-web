@@ -273,19 +273,19 @@ class CampaignPage extends Component {
             await clearWeb3Provider(this);
             await initWeb3Modal(chainId);
             await initWeb3(chainId, this);
-            var web3 = this.state.web3;
-            var accounts = this.state.accounts;
-            var currentProvider = "";
+            let web3 = this.state.web3;
+            let accounts = this.state.accounts;
+            let currentProvider = "";
             if(web3.currentProvider && web3.currentProvider.isMetaMask) {
                 currentProvider = "metamask";
             } else if(web3.currentProvider && web3.currentProvider.isWalletConnect) {
                 currentProvider = "walletconnect";
             }
             HEOCampaign = (await import("../remote/"+ chainId + "/HEOCampaign")).default;
-            var campaignAddress = this.state.campaign.addresses[chainId];
-            var campaignInstance = new web3.eth.Contract(HEOCampaign, campaignAddress);
-            var coinAddress = (await campaignInstance.methods.currency().call()).toLowerCase();
-            var toDonate = web3.utils.toWei(this.state.donationAmount);
+            let campaignAddress = this.state.campaign.addresses[chainId];
+            let campaignInstance = new web3.eth.Contract(HEOCampaign, campaignAddress);
+            let coinAddress = (await campaignInstance.methods.currency().call()).toLowerCase();
+            let toDonate = web3.utils.toWei(this.state.donationAmount);
             ReactGA.event({
                 category: "donation",
                 action: "donate_button_click",
@@ -328,9 +328,9 @@ class CampaignPage extends Component {
                             web3.eth.getTransaction(transactionHash).then(
                                 function(txnObject) {
                                     if(txnObject) {
-                                        checkDonationTransaction(txnObject, decimals, chainId, that);
+                                        checkDonationTransaction(txnObject, 0, chainId, that);
                                     } else {
-                                        checkDonationTransaction({hash:transactionHash}, decimals, chainId, that);
+                                        checkDonationTransaction({hash:transactionHash}, 0, chainId, that);
                                     }
                                 }
                             );
@@ -379,8 +379,8 @@ class CampaignPage extends Component {
                 });
 
                 try {
-                    var decimals = 6;
-                    var toDonate = new web3.utils.BN(""+this.state.donationAmount).mul(new web3.utils.BN("1000000"));
+                    let decimals = 6;
+                    toDonate = new web3.utils.BN(""+this.state.donationAmount).mul(new web3.utils.BN("1000000"));
                     if(currentProvider != "metamask") {
                         ReactGA.event({
                             category: "provider",
@@ -793,7 +793,9 @@ function checkDonationTransaction(txnObject, decimals, chainId, that) {
         let web3 = that.state.web3;
 
         let campaignInstance = new web3.eth.Contract(HEOCampaign, that.state.campaign.addresses[chainId]);
-        that.updateRaisedAmount(accounts, campaignInstance, web3, decimals);
+        if(decimals > 0) {
+            that.updateRaisedAmount(accounts, campaignInstance, web3, decimals);
+        }
         that.setState({
             showModal: true, modalTitle: 'complete',
             modalMessage: 'thankYouDonation',
@@ -825,7 +827,7 @@ function checkApprovalTransaction(txnObject, decimals, chainId, that) {
         let accounts = that.state.accounts;
         let campaignInstance = new web3.eth.Contract(HEOCampaign, that.state.campaign.addresses[chainId]);
         let toDonate = new web3.utils.BN(""+that.state.donationAmount).mul(new web3.utils.BN(new web3.utils.BN("10").pow(new web3.utils.BN(""+decimals))));
-        //let toDonate = that.state.donationAmount * Math.pow(10, decimals);
+
         that.setState({
             showModal: true, modalTitle: 'processingWait',
             modalMessage: "approveDonate",
