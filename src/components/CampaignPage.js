@@ -591,7 +591,7 @@ class CampaignPage extends Component {
                             <Row id='acceptingRow'>
                                 <div id='acceptingDiv'>
                                     <p><Trans i18nKey='accepting'/>:
-                                        <span className='coinRewardInfo'><img src={visaMcLogo} witdth={21} height={20} style={{marginRight:5, marginLeft:5}} />USD</span>
+                                        {this.state.fiatPaymentEnabled && <span className='coinRewardInfo'><img src={visaMcLogo} witdth={21} height={20} style={{marginRight:5, marginLeft:5}} />USD</span> }
                                         {this.state.coins.map((item, i) =>
                                             <span className='coinRewardInfo'><img src={IMG_MAP[item]} width={20} height={20} style={{marginRight:5, marginLeft:5}} />{item} </span>
                                             )}

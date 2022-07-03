@@ -18,6 +18,7 @@ import btcLogo from '../images/bitcoin-logo.png';
 import daiLogo from '../images/dai-logo.png';
 import ltcLogo from '../images/ltc-logo.png'
 import visaMcLogo from '../images/visa-mc-logo.png';
+import config from "react-global-configuration";
 
 const IMG_MAP = {"BUSD": busdIcon,
     "BNB": bnbIcon,
@@ -35,11 +36,18 @@ class CampaignList extends Component {
             showError:false,
             errorMessage:"",
             lang:'',
+            fiatPaymentEnabled:false
         };
     }
 
     async componentDidMount() {
         ReactGA.send({ hitType: "pageview", page: "/" });
+        let globals = await config.get("GLOBALS");
+        globals.forEach(element => {
+            if(element._id === 'FIATPAYMENT') {
+                this.setState({fiatPaymentEnabled: element.enabled});
+            }
+        });
         this.setState({
             campaigns : (await this.getCampaigns())
         });
@@ -48,6 +56,7 @@ class CampaignList extends Component {
     async getCampaigns() {
         var campaigns = [];
         var errorMessage = 'Failed to load campaigns';
+
         await axios.post('/api/campaign/loadAll')
         .then(res => {
             campaigns = res.data;
@@ -118,7 +127,7 @@ class CampaignList extends Component {
                                                 <Col className='buttonCol'>
                                                     <div id='acceptingBtn' className='cardButtons'><p><Trans i18nKey='accepting'/></p>
                                                         <p id='currencyName'>
-                                                            <span className='coinRewardInfo'><img src={visaMcLogo} width={21} height={20} style={{marginRight:5, marginLeft:5}} />USD </span>
+                                                            {this.state.fiatPaymentEnabled && <span className='coinRewardInfo'><img src={visaMcLogo} width={21} height={20} style={{marginRight:5, marginLeft:5}} />USD </span>}
                                                             {item.dedupedCoinNames.map((coin, j) =>
                                                                 <span key={item._id + "-" + coin}><img src={IMG_MAP[coin]} width={20} height={20} style={{marginLeft:5, marginRight:5}} />{coin}</span>
                                                             )}
