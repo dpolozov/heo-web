@@ -46,6 +46,21 @@ class PayadmitLib{
         }
         let paymentResp;
         try {
+            Sentry.addBreadcrumb({
+                category: "payadmit",
+                message: `Bearer ${PAYADMIT_API_KEY}`,
+                level: "info",
+            });
+            Sentry.addBreadcrumb({
+                category: "payadmit",
+                message: `URL ${PAYADMIT_API_URL}`,
+                level: "info",
+            });
+            Sentry.addBreadcrumb({
+                category: "payload",
+                message: JSON.stringify(payload),
+                level: "info",
+            });
             paymentResp = await axios({
                 method: 'post',
                 baseURL: PAYADMIT_API_URL,
@@ -56,7 +71,13 @@ class PayadmitLib{
                 data: payload
             });
         } catch (err) {
-            Sentry.setContext("payadmit", {key: PAYADMIT_API_KEY, url:PAYADMIT_API_URL, data:payload});
+            Sentry.addBreadcrumb({
+                category: "responsedata",
+                message: JSON.stringify(err.response.data),
+                level: "info",
+            });
+            Sentry.setContext("payload", payload);
+            Sentry.setContext("response", err.response);
             Sentry.captureException(new Error(err));
         }
 
