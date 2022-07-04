@@ -45,13 +45,19 @@ class PayadmitLib{
                 data: payload
             });
         } catch (err) {
-            Sentry.addBreadcrumb({
-                category: "responsedata",
-                message: JSON.stringify(err.response.data),
-                level: "info",
-            });
-            Sentry.setContext("payload", payload);
-            Sentry.setContext("response", err.response);
+            if(err.response) {
+                Sentry.setContext("response", err.response);
+                if(err.response.data) {
+                    Sentry.addBreadcrumb({
+                        category: "responsedata",
+                        message: JSON.stringify(err.response.data),
+                        level: "info",
+                    });
+                }
+            }
+            if(payload) {
+                Sentry.setContext("payload", payload);
+            }
             Sentry.captureException(new Error(err));
         }
 
