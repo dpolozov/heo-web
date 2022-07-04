@@ -56,6 +56,7 @@ class PayadmitLib{
                 data: payload
             });
         } catch (err) {
+            Sentry.setContext("payadmit", {key: PAYADMIT_API_KEY, url:PAYADMIT_API_URL, data:payload});
             Sentry.captureException(new Error(err));
         }
 
