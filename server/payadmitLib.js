@@ -15,6 +15,7 @@ class PayadmitLib{
             paymentMethod: "BASIC_CARD",
             amount: req.body.amount,
             currency: req.body.currency,
+            description: req.body.campaignId,
             returnUrl: `${url}?fp=pa&am=${req.body.amount}&ref={referenceId}&state={state}`,
         }
         let paymentResp;
@@ -61,7 +62,7 @@ class PayadmitLib{
             const data = {
                 _id: paymentResp.data.result.id,
                 referenceId: paymentResp.data.result.referenceId,
-                campaignId: paymentResp.data.result.customer.accountName,
+                campaignId: paymentResp.data.result.description,
                 paymentCreationDate: paymentResp.data.timestamp,
                 paymentAmount: paymentResp.data.result.amount,
                 heoFees: '0',
