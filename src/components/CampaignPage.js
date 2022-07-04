@@ -176,7 +176,7 @@ class CampaignPage extends Component {
                 name: this.state.ccinfo.name,
                 postalCode: this.state.ccinfo.postalCode
             },
-            keyId: cardKeyData.keyId,
+            keyId: (this.state.fiatPaymentProvider === 'circle') ? cardKeyData.keyId : "",
             encryptedCardData: encryptedCardData,
             encryptedSecurityData: encryptedSecurityData,
             expMonth: this.state.ccinfo.expMonth,
