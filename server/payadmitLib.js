@@ -6,11 +6,6 @@ class PayadmitLib{
 
     async handleDonateFiat(req, res, PAYADMIT_API_URL, PAYADMIT_API_KEY, Sentry, CLIENT, DBNAME) {
         const DB = CLIENT.db(DBNAME);
-        let phoneNumber = req.body.phoneNumber;
-        if(phoneNumber.charAt(0) === '+') {
-            phoneNumber = phoneNumber.substring(1);
-            phoneNumber = phoneNumber.slice(0, 4) + ' ' + phoneNumber.slice(4);
-        }
         let url = req.headers.referer;
         if (url.includes('?')) url = url.split('?')[0];
         let reffId = uuidv4();
@@ -20,29 +15,7 @@ class PayadmitLib{
             paymentMethod: "BASIC_CARD",
             amount: req.body.amount,
             currency: req.body.currency,
-            card: {
-                cardNumber: req.body.encryptedCardData,
-                cardholderName: req.body.billingDetails.name,
-                cardSecurityCode: req.body.encryptedSecurityData,
-                expiryMonth: req.body.expMonth,
-                expiryYear: req.body.expYear
-            },
-            customer: {
-                firstName: req.body.billingDetails.name,
-                lastName: req.body.billingDetails.name,
-                email: req.body.email,
-                phone: phoneNumber,
-                accountName: req.body.campaignId,
-            },
-            billingAddress: {
-                addressLine1: req.body.billingDetails.line1,
-                addressLine2: req.body.billingDetails.line2,
-                city: req.body.billingDetails.city,
-                countryCode: req.body.billingDetails.country,
-                postalCode: req.body.billingDetails.postalCode,
-                state: req.body.billingDetails.district
-            },
-            returnUrl: `${url}?fp=pa&am=${req.body.amount}&ref=${reffId}`,
+            returnUrl: `${url}?fp=pa&am=${req.body.amount}&ref={referenceId}&state={state}`,
         }
         let paymentResp;
         try {
