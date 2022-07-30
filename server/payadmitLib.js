@@ -15,6 +15,7 @@ class PayadmitLib{
             paymentMethod: "BASIC_CARD",
             amount: req.body.amount,
             currency: req.body.currency,
+            description: req.body.campaignId,
             returnUrl: `${url}?fp=pa&am=${req.body.amount}&ref={referenceId}&state={state}`,
         }
         let paymentResp;
@@ -44,13 +45,19 @@ class PayadmitLib{
                 data: payload
             });
         } catch (err) {
-            Sentry.addBreadcrumb({
-                category: "responsedata",
-                message: JSON.stringify(err.response.data),
-                level: "info",
-            });
-            Sentry.setContext("payload", payload);
-            Sentry.setContext("response", err.response);
+            if(err.response) {
+                Sentry.setContext("response", err.response);
+                if(err.response.data) {
+                    Sentry.addBreadcrumb({
+                        category: "responsedata",
+                        message: JSON.stringify(err.response.data),
+                        level: "info",
+                    });
+                }
+            }
+            if(payload) {
+                Sentry.setContext("payload", payload);
+            }
             Sentry.captureException(new Error(err));
         }
 
@@ -61,7 +68,7 @@ class PayadmitLib{
             const data = {
                 _id: paymentResp.data.result.id,
                 referenceId: paymentResp.data.result.referenceId,
-                campaignId: paymentResp.data.result.customer.accountName,
+                campaignId: paymentResp.data.result.description,
                 paymentCreationDate: paymentResp.data.timestamp,
                 paymentAmount: paymentResp.data.result.amount,
                 heoFees: '0',
