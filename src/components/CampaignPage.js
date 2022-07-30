@@ -157,38 +157,42 @@ class CampaignPage extends Component {
     handleDonateFiat = async () => {
         //TODO: check that this.state.donationAmount is larger than 0
         let cardKeyData, encryptedCardData, encryptedSecurityData;
+        var data;
         if(this.state.fiatPaymentProvider === 'circle') {
             cardKeyData = await getPCIPublicKey();
             encryptedCardData = await encryptCardData(cardKeyData, {number:this.state.ccinfo.number, cvv:this.state.ccinfo.cvc});
             encryptedSecurityData = await encryptCardData(cardKeyData, {cvv:this.state.ccinfo.cvc});
+            data = {
+                billingDetails: {
+                    city: this.state.ccinfo.city,
+                    country: this.state.ccinfo.country,
+                    district: this.state.ccinfo.district,
+                    line1: this.state.ccinfo.line1,
+                    line2: this.state.ccinfo.line2,
+                    name: this.state.ccinfo.name,
+                    postalCode: this.state.ccinfo.postalCode
+                },
+                keyId: cardKeyData.keyId,
+                encryptedCardData: encryptedCardData,
+                encryptedSecurityData: encryptedSecurityData,
+                expMonth: this.state.ccinfo.expMonth,
+                expYear: this.state.ccinfo.expYear,
+                email: this.state.ccinfo.email,
+                phoneNumber: this.state.ccinfo.phoneNumber,
+                amount: this.state.donationAmount,
+                currency: this.state.ccinfo.currency,
+                verification: this.state.ccinfo.verification,
+                campaignId: this.state.campaignId,
+                walletId: this.state.campaign.walletId
+            };
         } else if (this.state.fiatPaymentProvider ==='payadmit') {
-            cardKeyData = ''
-            encryptedCardData = this.state.ccinfo.number;
-            encryptedSecurityData = this.state.ccinfo.cvc;
+            data = {
+                amount: this.state.donationAmount,
+                currency: "USD",
+                campaignId: this.state.campaignId
+            };
         }
-        let data = {
-            billingDetails: {
-                city: this.state.ccinfo.city,
-                country: this.state.ccinfo.country,
-                district: this.state.ccinfo.district,
-                line1: this.state.ccinfo.line1,
-                line2: this.state.ccinfo.line2,
-                name: this.state.ccinfo.name,
-                postalCode: this.state.ccinfo.postalCode
-            },
-            keyId: cardKeyData.keyId,
-            encryptedCardData: encryptedCardData,
-            encryptedSecurityData: encryptedSecurityData,
-            expMonth: this.state.ccinfo.expMonth,
-            expYear: this.state.ccinfo.expYear,
-            email: this.state.ccinfo.email,
-            phoneNumber: this.state.ccinfo.phoneNumber,
-            amount: this.state.donationAmount,
-            currency: this.state.ccinfo.currency,
-            verification: this.state.ccinfo.verification,
-            campaignId: this.state.campaignId,
-            walletId: this.state.campaign.walletId
-        };
+
         try {
             this.setState({
                 showModal: true, modalTitle: 'processingWait',
@@ -231,22 +235,24 @@ class CampaignPage extends Component {
             }
             let errorFound = false;
             console.log(err.response)
-            if(err.response.data.paymentStatus){
-                Object.keys(CC_INFO_FIELDS_ERRORS).every((key)=>{
-                    if(err.response.data.paymentStatus.message.includes(key)) {
-                        this.setState({modalMessage: CC_INFO_FIELDS_ERRORS[key]});
-                        this.setState(prevState => ({
-                            ccinfo: {
-                                ...prevState.ccinfo,
-                                ccError: CC_INFO_FIELDS_ERRORS[key],
-                                ccErrorType: `${key}Input`
-                            }
-                        }));
-                        errorFound = true;
-                        return false;
-                    }
-                    return true;
-                })
+            if(err.response.data.paymentStatus) {
+                if (this.state.fiatPaymentProvider === 'circle') {
+                    Object.keys(CC_INFO_FIELDS_ERRORS).every((key) => {
+                        if (err.response.data.paymentStatus.message.includes(key)) {
+                            this.setState({modalMessage: CC_INFO_FIELDS_ERRORS[key]});
+                            this.setState(prevState => ({
+                                ccinfo: {
+                                    ...prevState.ccinfo,
+                                    ccError: CC_INFO_FIELDS_ERRORS[key],
+                                    ccErrorType: `${key}Input`
+                                }
+                            }));
+                            errorFound = true;
+                            return false;
+                        }
+                        return true;
+                    })
+                }
             }
             this.setState({
                 showModal: true, modalTitle: 'failed',
@@ -254,13 +260,15 @@ class CampaignPage extends Component {
                 modalButtonVariant: '#E63C36', waitToClose: false, tryAgainCC: true
             });
             if(!errorFound) {
-                this.setState(prevState => ({
-                    ccinfo: {
-                        ...prevState.ccinfo,
-                        ccError: CC_INFO_FIELDS_ERRORS['default'],
-                        ccErrorType: 'default'
-                    }
-                }));
+                if (this.state.fiatPaymentProvider === 'circle') {
+                    this.setState(prevState => ({
+                        ccinfo: {
+                            ...prevState.ccinfo,
+                            ccError: CC_INFO_FIELDS_ERRORS['default'],
+                            ccErrorType: 'default'
+                        }
+                    }));
+                }
             }
         }
     }
@@ -591,7 +599,7 @@ class CampaignPage extends Component {
                             <Row id='acceptingRow'>
                                 <div id='acceptingDiv'>
                                     <p><Trans i18nKey='accepting'/>:
-                                        <span className='coinRewardInfo'><img src={visaMcLogo} witdth={21} height={20} style={{marginRight:5, marginLeft:5}} />USD</span>
+                                        {this.state.fiatPaymentEnabled && <span className='coinRewardInfo'><img src={visaMcLogo} witdth={21} height={20} style={{marginRight:5, marginLeft:5}} />USD</span> }
                                         {this.state.coins.map((item, i) =>
                                             <span className='coinRewardInfo'><img src={IMG_MAP[item]} width={20} height={20} style={{marginRight:5, marginLeft:5}} />{item} </span>
                                             )}
@@ -612,7 +620,18 @@ class CampaignPage extends Component {
                                     />
                                     <InputGroup.Append>
                                         <DropdownButton id='donateButton' title={i18n.t('donate')}>
-                                            {this.state.fiatPaymentEnabled && <Dropdown.Item key="_fiat" as="button" onClick={() => this.setState({showCCinfoModal: true})}><img src={visaMcLogo} width={17} height={16} style={{marginRight:5}} />USD</Dropdown.Item> }
+                                            {this.state.fiatPaymentEnabled && <Dropdown.Item key="_fiat" as="button" onClick={
+                                                () => {
+                                                    if(this.state.fiatPaymentProvider ==='payadmit') {
+                                                        //skip the card info form for PayAdmin and use hosted payment dialog
+                                                        this.setState({showCCinfoModal: false});
+                                                        this.handleDonateFiat();
+                                                    } else {
+                                                        //for Cirle use our payment dialog
+                                                        this.setState({showCCinfoModal: true});
+                                                    }
+                                                }
+                                            }><img src={visaMcLogo} width={17} height={16} style={{marginRight:5}} />USD</Dropdown.Item> }
                                             {this.state.chains.map((item, i) =>
                                                     <Dropdown.Item key={item["CHAIN"]} as="button" onClick={() => this.handleDonateClick(item["CHAIN"])}><img src={IMG_MAP[this.state.campaign.coins[item["CHAIN"]].name]} width={16} height={16} style={{marginRight:5}} />{this.state.campaign.coins[item["CHAIN"]].name} ({item["CHAIN_NAME"]})</Dropdown.Item>
                                                 )}
@@ -741,16 +760,22 @@ class CampaignPage extends Component {
                     modalButtonVariant: '#E63C36', waitToClose: false, tryAgainCC: true,
                     donationAmount: params.am
                 });
-            } else if(params.fp === 'pa') {
-                let data = {refId : params.ref}
-                let paymentDetails = await axios.post('/api/payadmit/getPaymentRecord', data, {headers: {"Content-Type": "application/json"}});
-                console.log(paymentDetails);
-                this.setState({
-                    showModal: true, modalTitle: paymentDetails.data.title, modalMessage: PAYMENT_ERROR_MESSAGES[paymentDetails.data.errorMessage],
-                    errorIcon: paymentDetails.data.errorIcon, modalButtonMessage: paymentDetails.data.modalButtonMessage,
-                    modalButtonVariant: paymentDetails.data.modalButtonVariant, waitToClose: paymentDetails.data.waitToClose,
-                    tryAgainCC: paymentDetails.data.tryAgainCC, donationAmount: params.am
-                });
+            } else if(params.fp === 'pa' && params.state) {
+                if(params.state=='declined' || params.state=='cancelled') {
+                    this.setState({
+                        showModal: true, modalTitle: 'failed', modalMessage: 'cardPaymentDeclined',
+                        errorIcon: 'XCircle', modalButtonMessage: 'tryAgain',
+                        modalButtonVariant: '#E63C36', waitToClose: false, tryAgainCC: false,
+                        donationAmount: params.am,  ccinfo: {}
+                    });
+                } else {
+                    this.setState({
+                        showModal: true, modalTitle: 'complete',
+                        modalMessage: 'thankYouDonation',
+                        errorIcon: 'CheckCircle', modalButtonMessage: 'closeBtn',
+                        modalButtonVariant: '#588157', waitToClose: false, tryAgainCC: false, ccinfo: {}
+                    });
+                }
             }
         }
     }
