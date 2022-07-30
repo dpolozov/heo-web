@@ -195,6 +195,7 @@ class CampaignPage extends Component {
 
         try {
             this.setState({
+                showCCWarningModal:false,
                 showModal: true, modalTitle: 'processingWait',
                 modalMessage: "plzWait",
                 errorIcon: 'HourglassSplit', modalButtonVariant: "gold", waitToClose: true
@@ -206,7 +207,7 @@ class CampaignPage extends Component {
             } else if(resp.data.paymentStatus === "success") {
                 this.setState({
                     showModal: true, modalTitle: 'complete',
-                    modalMessage: 'thankYouDonation',
+                    modalMessage: 'thankYouFiatDonation',
                     errorIcon: 'CheckCircle', modalButtonMessage: 'closeBtn',
                     modalButtonVariant: '#588157', waitToClose: false, tryAgainCC: false, ccinfo: {}
                 });
@@ -578,6 +579,34 @@ class CampaignPage extends Component {
                         }
                     </Modal.Body>
                 </Modal>
+                <Modal show={this.state.showCCWarningModal} onHide={()=>{}} className='myModal' size="lg"
+                       aria-labelledby="contained-modal-title-vcenter" >
+                    <Modal.Body>
+                        <p style={{textAlign: 'left'}}><Trans i18nKey='fiatDonationPrompt' />
+                            <br/>
+                            <Trans i18nKey='fiatDonationLimitationPrompt' />
+                            <ul>
+                                <li><Trans i18nKey='fiatDonationLimitation1' /></li>
+
+                                <li><Trans i18nKey='fiatDonationLimitation2' /></li>
+
+                                    <li><Trans i18nKey='fiatDonationLimitation3' /></li>
+                            </ul>
+                        </p>
+                        <Button variant="danger" id='donateBtn'  onClick={
+                            () => {
+                                if(this.state.fiatPaymentProvider ==='payadmit') {
+                                    //skip the card info form for PayAdmin and use hosted payment dialog
+                                    this.setState({showCCinfoModal: false});
+                                    this.handleDonateFiat();
+                                } else {
+                                    //for Cirle use our payment dialog
+                                    this.setState({showCCinfoModal: true});
+                                }
+                            }
+                        }><Trans i18nKey='donate'/></Button>
+                    </Modal.Body>
+                </Modal>
                 <Container className='backToCampaignsDiv'>
                     <p className='backToCampaigns'><Link className={"backToCampaignsLink"} to="/"><ChevronLeft id='backToCampaignsChevron'/><Trans i18nKey='backToCampaigns'/></Link></p>
                 </Container>
@@ -625,9 +654,10 @@ class CampaignPage extends Component {
                                                     if(this.state.fiatPaymentProvider ==='payadmit') {
                                                         //skip the card info form for PayAdmin and use hosted payment dialog
                                                         this.setState({showCCinfoModal: false});
-                                                        this.handleDonateFiat();
+                                                        this.setState({showCCWarningModal: true});
                                                     } else {
                                                         //for Cirle use our payment dialog
+                                                        this.setState({showCCWarningModal: false});
                                                         this.setState({showCCinfoModal: true});
                                                     }
                                                 }
@@ -749,7 +779,7 @@ class CampaignPage extends Component {
             if(params.fp === 's') {
                 this.setState({
                     showModal: true, modalTitle: 'complete',
-                    modalMessage: 'thankYouDonation',
+                    modalMessage: 'thankYouFiatDonation',
                     errorIcon: 'CheckCircle', modalButtonMessage: 'closeBtn',
                     modalButtonVariant: '#588157', waitToClose: false, tryAgainCC: false, ccinfo: {}
                 });
@@ -771,7 +801,7 @@ class CampaignPage extends Component {
                 } else {
                     this.setState({
                         showModal: true, modalTitle: 'complete',
-                        modalMessage: 'thankYouDonation',
+                        modalMessage: 'thankYouFiatDonation',
                         errorIcon: 'CheckCircle', modalButtonMessage: 'closeBtn',
                         modalButtonVariant: '#588157', waitToClose: false, tryAgainCC: false, ccinfo: {}
                     });
