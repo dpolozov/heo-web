@@ -16,7 +16,24 @@ body {
 }
 
 .backToCampaignsLink {
-    color: #3F5663;
+    margin-right: 18px;
+    padding: 7px 18px 7px 0;
+    background: rgba(255,255,255,.1);
+    border-radius: 15px;
+    box-shadow: 0 4px 4px rgb(0 0 0 / 3%), inset 0 2px 1px rgb(255 255 255 / 80%), inset 0 40px 40px rgb(255 255 255 / 24%), inset 0 -3px 6px rgb(255 255 255 / 24%), inset 0 -6px 18px rgb(255 255 255 / 24%), inset 0 6px 12px rgb(255 255 255 / 40%);
+    backdrop-filter: blur(40px);
+    font-family: 'Open Sans', sans-serif;
+    font-style: normal;
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 20px;
+    display: grid;
+    text-align: center;
+    letter-spacing: 0.05em;
+    color: #e74f3a;
+    white-space: nowrap;
+    transition: all .3s ease-in-out;
+    max-width: fit-content;
 }
 
 .backToCampaignsDiv{
@@ -53,12 +70,15 @@ body {
 }
 
 #mainContainer{
-    border: 1px solid #EDEEF1;
+    background-color: rgba(255,255,255,.1) !important;
+    box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.03), inset 0px 2px 1px rgba(255, 255, 255, 0.8), inset 0px 40px 40px rgba(255, 255, 255, 0.24), inset 0px -3px 6px rgba(255, 255, 255, 0.24), inset 0px -6px 18px rgba(255, 255, 255, 0.24), inset 0px 6px 12px rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(40px);
+    transform: translate3d(0, 0, 0);
+    padding: 38px 38px 0;
+    border-radius: 30px  !important;
+    width: 100%;
     box-sizing: border-box;
-    box-shadow: 0px 2px 4px rgba(238, 239, 242, 0.65);
-    border-radius: 4px;
-    padding: 20px 50px;
-    width: 95%;
+    border: 1px solid #EDEEF1;
 }
 
 #topRow{
@@ -191,10 +211,10 @@ body {
     font-weight: 600;
     font-size: 14px;
     line-height: 143.32%;
-    /* or 20px */   
-    letter-spacing: 0.005em;  
+    /* or 20px */
+    letter-spacing: 0.005em;
     /* Frequently Used/Text/Secondary Text - Grey 700 */
-    color: #3F5663; 
+    color: #3F5663;
 }
 
 @media (max-width: 992px){
@@ -231,20 +251,20 @@ body {
     }
 }
 
-@media (max-width: 470px){   
+@media (max-width: 470px){
     #donateAmount{
         min-width: 70px;
-    } 
+    }
     #videoRowContainer{
         padding-left: 0;
     }
 }
 
-@media (max-width: 391px){ 
+@media (max-width: 391px){
     #donateRow{
         min-width:200px;
         width:100%;
-    } 
+    }
     .mb-3.input-group{
         display:inline-block;
     }

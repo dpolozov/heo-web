@@ -48,3 +48,34 @@ ol, ul {
 .game-info {
     margin-left: 20px;
 }
+
+.gr-violet {
+    background: #b292fe;
+    opacity: .5;
+    -webkit-filter: blur(244px);
+    filter: blur(244px);
+    -webkit-transform: translate3d(0,0,0);
+    transform: translate3d(0,0,0);
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: -1;
+    width: 940px;
+    height: 605px;
+}
+
+.gr-green {
+    width: 905px;
+    height: 400px;
+    background: #2de7ae;
+    opacity: .7;
+    -webkit-filter: blur(244px);
+    filter: blur(244px);
+    -webkit-transform: translate3d(0,0,0);
+    transform: translate3d(0,0,0);
+    top: 300px;
+    left: auto;
+    right: 0;
+    position: absolute;
+    z-index: -1;
+}

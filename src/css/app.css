@@ -1,13 +1,12 @@
 
 #mainNavContainer{
-    border-bottom: 2px solid #EDEEF1;
+    /*border-bottom: 2px solid #EDEEF1;*/
 }
 
 #upperNav {
     height:56px;
-    background-color:#f7f9fa;
+    /*background-color:#f7f9fa;*/
     padding:15px;
-    
 }
 
 #networks {
@@ -41,7 +40,7 @@
 }
 
 .upperNavText.nav-link {
-    color: #3F5663;
+
     padding: 0 10px;
 }
 
@@ -60,8 +59,8 @@
 #mainNav{
     height: 75px;
     margin-top: 56px;
-    background-color: #fff;
-    border-bottom: 1px solid #edeef1;
+    /*background-color: #fff;*/
+
     white-space: nowrap;
 }
 
@@ -72,28 +71,42 @@
     font-weight: 600;
     font-size: 14px;
     line-height: 20px;
+    color: #e74f3a;
 /* identical to box height, or 143% */
-    color: #0E161C;
     text-align: center;
     letter-spacing: 0.05em;
-    border-bottom: 2px solid #fff;
+    /*border-bottom: 2px solid #fff;*/
 }
 
 .mainNavText:hover {
-    color: #0E161C;
+   /* color: #0E161C;*/
 }
 
 .mainNavText.nav-link{
-    padding: 1.8rem 1rem !important;
+    margin-right: 18px;
+    padding: 7px 18px 7px 0;
+    background: rgba(255,255,255,.1);
+    border-radius: 15px;
+    box-shadow: 0 4px 4px rgb(0 0 0 / 3%), inset 0 2px 1px rgb(255 255 255 / 80%), inset 0 40px 40px rgb(255 255 255 / 24%), inset 0 -3px 6px rgb(255 255 255 / 24%), inset 0 -6px 18px rgb(255 255 255 / 24%), inset 0 6px 12px rgb(255 255 255 / 40%);
+    backdrop-filter: blur(40px);
     font-family: 'Open Sans', sans-serif;
     font-style: normal;
     font-weight: 600;
     font-size: 14px;
     line-height: 20px;
-/* identical to box height, or 143% */
-    color: #0E161C !important;
+    display: grid;
     text-align: center;
     letter-spacing: 0.05em;
+    color: #e74f3a;
+    white-space: nowrap;
+    transition: all .3s ease-in-out;
+}
+.red-buttons {
+    color: #e74f3a;
+}
+
+.nav-link{
+    color: #e74f3a !important;
 }
 
 #mainNavSearch {
@@ -112,7 +125,6 @@
     /* identical to box height, or 154% */
     letter-spacing: 0.05em;
     /* Frequently Used/Text/Secondary Text - Grey 700 */
-    color: #3F5663;
 }
 
 #searchIcon{
@@ -135,7 +147,8 @@
 }
 
 .mainNavText:hover{
-    border-bottom: 2px solid #3f5663;
+    background: #fff;
+    border-color: #fff;
 }
 
 @media (max-width: 770px){
