@@ -16,9 +16,6 @@ import { compress } from 'shrink-string';
 import '../css/createCampaign.css';
 import '../css/modal.css';
 
-import Web3Modal from 'web3modal';
-import Web3 from 'web3';
-import WalletConnectProvider from '@walletconnect/web3-provider';
 import ReactGA from "react-ga4";
 ReactGA.initialize("G-C657WZY5VT");
 

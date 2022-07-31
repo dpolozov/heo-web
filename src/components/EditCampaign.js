@@ -10,12 +10,10 @@ import { ChevronLeft, CheckCircle, ExclamationTriangle, HourglassSplit, XCircle 
 import { Link } from 'react-router-dom';
 import { compress, decompress } from 'shrink-string';
 import TextEditor, { setEditorState, getEditorState, editorStateHasChanged } from '../components/TextEditor';
-import { LogIn, initWeb3, checkAuth, initWeb3Modal } from '../util/Utilities';
+import { initWeb3, checkAuth, initWeb3Modal } from '../util/Utilities';
 import '../css/createCampaign.css';
 import '../css/modal.css';
-import Web3Modal from 'web3modal';
 import Web3 from 'web3';
-import WalletConnectProvider from '@walletconnect/web3-provider';
 import ReactGA from "react-ga4";
 import bnbIcon from '../images/binance-coin-bnb-logo.png';
 import busdIcon from '../images/binance-usd-busd-logo.png';
@@ -312,8 +310,8 @@ class EditCampaign extends React.Component {
         let imgID = this.state.imgID;
         let qrImgID = this.state.qrImgID;
         const formData = new FormData();
-        if(type === 'main') { 
-            this.setState({ imageFileName : imgID,});        
+        if(type === 'main') {
+            this.setState({ imageFileName : imgID,});
             let fileType = this.state.mainImageFile.type.split("/")[1];
             formData.append(
                 "myFile",
@@ -321,7 +319,7 @@ class EditCampaign extends React.Component {
                 `${imgID}.${fileType}`,
             );
         } else if (type === 'qrCode') {
-            this.setState({ imageFileName : qrImgID,});        
+            this.setState({ imageFileName : qrImgID,});
             let fileType = this.state.qrCodeImageFile.type.split("/")[1];
             formData.append(
                 "myFile",

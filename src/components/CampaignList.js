@@ -1,4 +1,4 @@
-import React, { Component, lazy } from 'react';
+import React, { Component } from 'react';
 import axios from 'axios';
 import '../css/campaignList.css';
 import '../css/modal.css';

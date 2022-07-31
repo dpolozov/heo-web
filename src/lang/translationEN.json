@@ -168,6 +168,8 @@
     "fiatDonationLimitationPrompt": "Please be aware that the following limitations exist for donations made with credit and debit cards:",
     "fiatDonationLimitation1": "The minimum donation amount is $10",
     "fiatDonationLimitation2": "We cannot accept cards issued by banks from the following countries: Afghanistan, Algeria, American Samoa, Armenia, Azerbaijan, Barbados, Belarus, Cambodia, Central African Republic, China, Congo, Democratic Republic of Congo, Cuba, Cyprus, Ecuador, Guam, Guatemala, Guinea-Bissau, Iceland, Indonesia, Iran, Iraq, Kazakhstan, Korea, Democratic People's Republic of Korea, Kyrgyzstan, Lebanon, Libya, Mali, Moldova, Montenegro, Nicaragua, Philippines, Russian Federation, Saudi Arabia, Singapore, Somalia, South Sudan, Sudan, Syrian Arab Republic, Taiwan, Tajikistan, Tuvalu, Ukraine, Uzbekistan, Venezuela, Yemen, Zimbabwe",
-    "fiatDonationLimitation3": "According to the rules set by the payment processing bank, your IP address has to be located in the same country as the bank that issued your card"
+    "fiatDonationLimitation3": "According to the rules set by the payment processing bank, your IP address has to be located in the same country as the bank that issued your card",
+    "showMoreTextExpand": "Show more...",
+    "showLessTextCollapse": "Show less..."
 }
 

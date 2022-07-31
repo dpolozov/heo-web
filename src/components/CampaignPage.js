@@ -3,6 +3,7 @@ import config from "react-global-configuration";
 import axios from 'axios';
 import { Container, Row, Col, ProgressBar, Button, DropdownButton, Dropdown, Modal, Image, InputGroup, FormControl } from 'react-bootstrap';
 import { ChevronLeft, CheckCircle, ExclamationTriangle, HourglassSplit, XCircle} from 'react-bootstrap-icons';
+import ReactTextCollapse from 'react-text-collapse';
 import ReactPlayer from 'react-player';
 import { Link } from "react-router-dom";
 import { Trans } from 'react-i18next';
@@ -69,6 +70,13 @@ const CC_INFO_FIELDS_ERRORS = {
     default: 'checkCCdefault'
 }
 
+const TEXT_COLLAPSE_OPTIONS = {
+    collapse: true, // default state when component rendered
+    expandText:i18n.t('showLessTextCollapse'), // text to show when collapsed
+    collapseText: i18n.t('showMoreTextExpand'), // text to show when expanded
+    minHeight: 180,
+    maxHeight: 350,
+}
 ReactGA.initialize("G-C657WZY5VT");
 var HEOCampaign, ERC20Coin;
 
@@ -582,6 +590,7 @@ class CampaignPage extends Component {
                 <Modal show={this.state.showCCWarningModal} onHide={()=>{}} className='myModal' size="lg"
                        aria-labelledby="contained-modal-title-vcenter" >
                     <Modal.Body>
+                        <ReactTextCollapse options={TEXT_COLLAPSE_OPTIONS} >
                         <p style={{textAlign: 'left'}}><Trans i18nKey='fiatDonationPrompt' />
                             <br/>
                             <Trans i18nKey='fiatDonationLimitationPrompt' />
@@ -593,6 +602,7 @@ class CampaignPage extends Component {
                                     <li><Trans i18nKey='fiatDonationLimitation3' /></li>
                             </ul>
                         </p>
+                        </ReactTextCollapse>
                         <Button variant="danger" id='donateBtn'  onClick={
                             () => {
                                 if(this.state.fiatPaymentProvider ==='payadmit') {
@@ -608,7 +618,7 @@ class CampaignPage extends Component {
                     </Modal.Body>
                 </Modal>
                 <Container className='backToCampaignsDiv'>
-                    <p className='backToCampaigns'><Link className={"backToCampaignsLink"} to="/"><ChevronLeft id='backToCampaignsChevron'/><Trans i18nKey='backToCampaigns'/></Link></p>
+                    <Link className={"backToCampaignsLink"} to="/"><span><ChevronLeft id='backToCampaignsChevron'/><Trans i18nKey='backToCampaigns'/></span></Link>
                 </Container>
                 <Container id='mainContainer'>
                     {this.state.showCCinfoModal && <CCData handleCCInfoCancel = {this.handleCCInfoCancel} handleGetCCInfo = {this.handleGetCCInfo} currentCCInfo = {this.state.ccinfo}/>}

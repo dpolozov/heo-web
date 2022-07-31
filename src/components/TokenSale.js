@@ -1,22 +1,18 @@
 import React, { useState } from 'react';
 import config from "react-global-configuration";
-import { Container, Form, Row, Col, Card, ProgressBar, Button, Modal, Image, InputGroup, FormControl } from 'react-bootstrap';
-import { ChevronLeft, Gift, CheckCircle, ExclamationTriangle, HourglassSplit, XCircle} from 'react-bootstrap-icons';
+import { Container, Form, Row, Col, Button, Modal } from 'react-bootstrap';
+import { CheckCircle, ExclamationTriangle, HourglassSplit, XCircle} from 'react-bootstrap-icons';
 import { Trans } from 'react-i18next';
-import i18n from '../util/i18n';
-import {UserContext} from './UserContext';
-import i18next from 'i18next';
-import { LogIn, initWeb3, initWeb3Modal, clearWeb3Provider } from '../util/Utilities';
+
+import { initWeb3, initWeb3Modal, clearWeb3Provider } from '../util/Utilities';
 import bnbIcon from '../images/binance-coin-bnb-logo.png';
 import busdIcon from '../images/binance-usd-busd-logo.png';
 import heoIcon from '../images/heo-logo.png';
-import Web3Modal from 'web3modal';
-import Web3 from 'web3';
-import WalletConnectProvider from '@walletconnect/web3-provider';
+
 import '../css/tokensale.css';
 import '../css/modal.css';
 
-var ERC20Coin, HEOGlobalParameters, HEOPriceOracle, HEOSale, currencyInstance;
+var ERC20Coin, HEOPriceOracle, HEOSale, currencyInstance;
 const IMG_MAP = {BUSD: busdIcon, BNB: bnbIcon, HEO: heoIcon};
 
 class TokenSale extends React.Component {

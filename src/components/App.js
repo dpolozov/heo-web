@@ -11,18 +11,15 @@ import logo from '../images/heo-logo.png';
 import Home from "./Home";
 import '../css/app.css';
 import '../css/modal.css';
-import { BrowserRouter as Router, Switch, Route, Link, withRouter } from "react-router-dom";
+import { Switch, Route, Link, withRouter } from "react-router-dom";
 import { Nav, Navbar, Container, Button, Modal } from 'react-bootstrap';
-import { ChevronLeft, CheckCircle, ExclamationTriangle, HourglassSplit, XCircle } from 'react-bootstrap-icons';
+import { CheckCircle, ExclamationTriangle, HourglassSplit, XCircle } from 'react-bootstrap-icons';
 import { Trans } from 'react-i18next';
-import { GetLanguage, LogIn, initWeb3, initWeb3Modal, clearWeb3Provider } from '../util/Utilities';
-import axios from 'axios';
-import config from 'react-global-configuration';
+import { GetLanguage } from '../util/Utilities';
+
 import i18n from '../util/i18n';
 import {UserContext} from './UserContext';
-import Web3Modal from 'web3modal';
-import Web3 from 'web3';
-import WalletConnectProvider from '@walletconnect/web3-provider';
+
 import ReactGA from "react-ga4";
 
 ReactGA.initialize("G-C657WZY5VT");
@@ -64,23 +61,8 @@ class App extends Component {
             <UserContext.Provider value={this.state}>
             <Suspense fallback="...is loading">
                 <main>
-                    <div>
-                        <Navbar id="upperNav" fixed="top">
-                            <Container>
-                                <Navbar.Brand href="/" id='upperNavSlogan'><Trans i18nKey='slogan'/></Navbar.Brand>
-                                <Navbar.Toggle />
-                                <Navbar.Collapse className="justify-content-end">
-                                    <select value={this.state.language} id="languages" onChange={(e)=>this.setLanguage(e.target.value)}>
-                                        <option value='en'>{i18n.t('english')}</option>
-                                        <option value='ru'>{i18n.t('russian')}</option>
-                                    </select>
-                                    <Nav.Link target="_blank" as='a' href={lang == "ru" ? "https://docs.heo.finance/v/russian/" : "https://docs.heo.finance/"} className='upperNavText' id='helpBtn'><Trans i18nKey='help'/></Nav.Link>
-                                </Navbar.Collapse>
-                            </Container>
-                        </Navbar>
-                    </div>
                     <div id="mainNavContainer">
-                        <Navbar collapseOnSelect expand="lg" id="mainNav" fixed="top">
+                        <Navbar collapseOnSelect expand="lg" id="mainNav">
                             <Container>
                                 <Navbar.Brand href="/">
                                             <img
@@ -93,7 +75,7 @@ class App extends Component {
                                 </Navbar.Brand>
                                 <Navbar.Toggle aria-controls="basic-navbar-nav" />
                                 <Navbar.Collapse id="basic-navbar-nav">
-                                    <Nav className="mr-auto" bg="light">
+                                    <Nav className="mr-auto">
                                         <Nav.Link as={Link} eventKey="1" className='mainNavText' to="/"><Trans i18nKey='browse'/></Nav.Link>
                                         <Nav.Link as={Link} eventKey="2" className='mainNavText' to={{pathname:"/new",
                                             state:{
@@ -109,6 +91,13 @@ class App extends Component {
                                         </Nav.Link>
                                         <Nav.Link eventKey="4" className='mainNavText' as='a' target='_blank' href='https://heo.finance'><Trans i18nKey='about'/></Nav.Link>
                                     </Nav>
+                                </Navbar.Collapse>
+                                <Navbar.Collapse className="justify-content-end">
+                                    <select value={this.state.language} id="languages" onChange={(e)=>this.setLanguage(e.target.value)}>
+                                        <option value='en'>{i18n.t('english')}</option>
+                                        <option value='ru'>{i18n.t('russian')}</option>
+                                    </select>
+                                    <Nav.Link target="_blank" as='a' href={lang == "ru" ? "https://docs.heo.finance/v/russian/" : "https://docs.heo.finance/"} className='upperNavText' id='helpBtn'><Trans i18nKey='help'/></Nav.Link>
                                 </Navbar.Collapse>
                             </Container>
                         </Navbar>
