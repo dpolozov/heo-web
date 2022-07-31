@@ -144,6 +144,7 @@
 }
 .navbar-collapse.collapse.show{
     background-color: white;
+    z-index: 1000000;
 }
 
 .mainNavText:hover{
