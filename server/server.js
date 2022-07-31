@@ -247,7 +247,9 @@ APP.post('/api/payadmitnotifications', async (req, res) => {
     const data = {
         paymentStatus: req.body.state,
         lastUpdated: new Date().toISOString(),
-        errorCode: errCode
+        errorCode: errCode,
+        currency: req.body.currency,
+        paymentAmount: req.body.amount
     }
     try{
         const myCollection = await DB.collection('fiat_payment_records');
