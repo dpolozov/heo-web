@@ -11,18 +11,15 @@ import logo from '../images/heo-logo.png';
 import Home from "./Home";
 import '../css/app.css';
 import '../css/modal.css';
-import { BrowserRouter as Router, Switch, Route, Link, withRouter } from "react-router-dom";
+import { Switch, Route, Link, withRouter } from "react-router-dom";
 import { Nav, Navbar, Container, Button, Modal } from 'react-bootstrap';
-import { ChevronLeft, CheckCircle, ExclamationTriangle, HourglassSplit, XCircle } from 'react-bootstrap-icons';
+import { CheckCircle, ExclamationTriangle, HourglassSplit, XCircle } from 'react-bootstrap-icons';
 import { Trans } from 'react-i18next';
-import { GetLanguage, LogIn, initWeb3, initWeb3Modal, clearWeb3Provider } from '../util/Utilities';
-import axios from 'axios';
-import config from 'react-global-configuration';
+import { GetLanguage } from '../util/Utilities';
+
 import i18n from '../util/i18n';
 import {UserContext} from './UserContext';
-import Web3Modal from 'web3modal';
-import Web3 from 'web3';
-import WalletConnectProvider from '@walletconnect/web3-provider';
+
 import ReactGA from "react-ga4";
 
 ReactGA.initialize("G-C657WZY5VT");
