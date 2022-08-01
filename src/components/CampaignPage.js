@@ -138,8 +138,12 @@ class CampaignPage extends Component {
                 modalMessage,
             })
         })
-        if(campaign.raisedAmount || campaign.raisedOnCoinbase) {
-            campaign.raisedAmount = Math.round((campaign.raisedAmount + campaign.raisedOnCoinbase) * 100)/100;
+        let raisedAmount = campaign.raisedAmount ? parseFloat(campaign.raisedAmount) : 0;
+        let fiatDonations = campaign.fiatDonations ? parseFloat(campaign.fiatDonations) : 0;
+        let raisedOnCoinbase = campaign.raisedOnCoinbase ? parseFloat(campaign.raisedOnCoinbase) : 0;
+
+        if(raisedAmount || fiatDonations || raisedOnCoinbase) {
+            campaign["raisedAmount"] = Math.round((raisedAmount + fiatDonations + raisedOnCoinbase) * 100)/100;
         }
         return campaign;
     }
