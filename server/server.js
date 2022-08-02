@@ -246,10 +246,12 @@ APP.post('/api/payadmitnotifications', async (req, res) => {
     if(req.body.errorCode) errCode = req.body.errorCode;
     const data = {
         paymentStatus: req.body.state,
-        lastUpdated: new Date().toISOString(),
-        errorCode: errCode
+        lastUpdated: new Date(),
+        errorCode: errCode,
+        currency: req.body.currency,
+        paymentAmount: req.body.amount
     }
-    try{
+    try {
         const myCollection = await DB.collection('fiat_payment_records');
         await myCollection.updateOne({'_id': recordId}, {$set: data});
         console.log(await DB.collection('fiat_payment_records').findOne({'_id': recordId}));

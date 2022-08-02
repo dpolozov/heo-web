@@ -67,14 +67,12 @@ class PayadmitLib{
             }
             const data = {
                 _id: paymentResp.data.result.id,
-                referenceId: paymentResp.data.result.referenceId,
-                campaignId: paymentResp.data.result.description,
-                paymentCreationDate: paymentResp.data.timestamp,
-                paymentAmount: paymentResp.data.result.amount,
+                referenceId: reffId,
+                campaignId: req.body.campaignId,
+                paymentCreationDate: new Date().toISOString(),
                 heoFees: '0',
-                paymentStatus: paymentResp.data.result.state,
+                paymentStatus: 'CHECKOUT',
                 payadmitFees: '0',
-                currency: paymentResp.data.result.currency,
                 provider: 'payadmit'
             }
 
