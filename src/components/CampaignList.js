@@ -134,14 +134,16 @@ class CampaignList extends Component {
                                                 <Col className='buttonCol'>
                                                     <div id='acceptingBtn' className='cardButtons'><p><Trans i18nKey='accepting'/></p>
                                                         <p id='currencyName'>
-                                                            {this.state.fiatPaymentEnabled && <span className='coinRewardInfo'><img src={visaMcLogo} width={21} height={20} style={{marginRight:5, marginLeft:5}} />USD </span>}
+                                                            {this.state.fiatPaymentEnabled && <span className='coinRewardInfo'><img src={visaMcLogo} width={21} height={20} style={{marginRight:5, marginLeft:5}} /> </span>}
                                                             {item.dedupedCoinNames.map((coin, j) =>
-                                                                <span key={item._id + "-" + coin}><img src={IMG_MAP[coin]} width={20} height={20} style={{marginLeft:5, marginRight:5}} />{coin}</span>
+                                                                <span key={item._id + "-" + coin}><img src={IMG_MAP[coin]} width={20} height={20} style={{marginLeft:5, marginRight:5}} /> </span>
                                                             )}
+                                                            
                                                             {item.coinbaseCommerceId && <span className='coinRewardInfo'><img src={ethIcon} width={20} height={20} style={{marginRight:5, marginLeft:5}} />ETH </span> }
                                                             {item.coinbaseCommerceId && <span className='coinRewardInfo'><img src={btcLogo} width={20} height={20} style={{marginRight:5, marginLeft:5}} />BTC </span> }
                                                             {item.coinbaseCommerceId && <span className='coinRewardInfo'><img src={daiLogo} width={20} height={20} style={{marginRight:5, marginLeft:5}} />DAI </span> }
                                                             {item.coinbaseCommerceId && <span className='coinRewardInfo'><img src={ltcLogo} width={20} height={20} style={{marginRight:5, marginLeft:5}} />LTC </span> }
+                                                            
                                                         </p>
                                                     </div></Col>
                                                 <Col className='buttonCol'><Button variant="danger" id='donateBtn' block><Trans i18nKey='donate'/></Button></Col>
