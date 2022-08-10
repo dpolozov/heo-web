@@ -30,13 +30,14 @@ import btcLogo from '../images/bitcoin-logo.png';
 import daiLogo from '../images/dai-logo.png';
 import ltcLogo from '../images/ltc-logo.png'
 import visaMcLogo from '../images/visa-mc-logo.png';
+import usdtLogo from '../images/usdt-logo.png';
 
-import coinBaseLogo from '../images/coinbase-c-logo.png';
 import CCData from '../components/CCData';
 
 const IMG_MAP = {"BUSD": busdIcon,
     "BNB": bnbIcon,
     "USDC": usdcIcon,
+    "USDT": usdtLogo,
     "ETH": ethIcon,
     "cUSD": cusdIcon};
 
@@ -649,6 +650,8 @@ class CampaignPage extends Component {
                                         {this.state.campaign.coinbaseCommerceURL && <span className='coinRewardInfo'><img src={ethIcon} width={20} height={20} style={{marginRight:5, marginLeft:5}} /> </span> }
                                         {this.state.campaign.coinbaseCommerceURL && <span className='coinRewardInfo'><img src={btcLogo} width={20} height={20} style={{marginRight:5, marginLeft:5}} /> </span> }
                                         {this.state.campaign.coinbaseCommerceURL && <span className='coinRewardInfo'><img src={daiLogo} width={20} height={20} style={{marginRight:5, marginLeft:5}} /> </span> }
+                                        {this.state.campaign.coinbaseCommerceURL && <span className='coinRewardInfo'><img src={usdcIcon} width={20} height={20} style={{marginRight:5, marginLeft:5}} /> </span> }
+                                        {this.state.campaign.coinbaseCommerceURL && <span className='coinRewardInfo'><img src={usdtLogo} width={20} height={20} style={{marginRight:5, marginLeft:5}} /> </span> }
                                         {this.state.campaign.coinbaseCommerceURL && <span className='coinRewardInfo'><img src={ltcLogo} width={20} height={20} style={{marginRight:5, marginLeft:5}} /> </span> }
                                     </p>
                                 </div>
@@ -679,10 +682,12 @@ class CampaignPage extends Component {
                                             {this.state.chains.map((item, i) =>
                                                     <Dropdown.Item key={item["CHAIN"]} as="button" onClick={() => this.handleDonateClick(item["CHAIN"])}><img src={IMG_MAP[this.state.campaign.coins[item["CHAIN"]].name]} width={16} height={16} style={{marginRight:5}} />{this.state.campaign.coins[item["CHAIN"]].name} ({item["CHAIN_NAME"]})</Dropdown.Item>
                                                 )}
-                                            {this.state.campaign.coinbaseCommerceURL && <Dropdown.Item className='coinRewardInfo' href={`${this.state.campaign.coinbaseCommerceURL}`} target="_blank"><img src={ethIcon} width={20} height={20} style={{marginRight:5, marginLeft:5}} />ETH </Dropdown.Item> }
-                                            {this.state.campaign.coinbaseCommerceURL && <Dropdown.Item className='coinRewardInfo' href={`${this.state.campaign.coinbaseCommerceURL}`} target="_blank"><img src={btcLogo} width={20} height={20} style={{marginRight:5, marginLeft:5}} />BTC </Dropdown.Item> }
-                                            {this.state.campaign.coinbaseCommerceURL && <Dropdown.Item className='coinRewardInfo' href={`${this.state.campaign.coinbaseCommerceURL}`} target="_blank"><img src={daiLogo} width={20} height={20} style={{marginRight:5, marginLeft:5}} />DAI </Dropdown.Item> }
-                                            {this.state.campaign.coinbaseCommerceURL && <Dropdown.Item className='coinRewardInfo' href={`${this.state.campaign.coinbaseCommerceURL}`} target="_blank"><img src={ltcLogo} width={20} height={20} style={{marginRight:5, marginLeft:5}} />LTC </Dropdown.Item> }
+                                            {this.state.campaign.coinbaseCommerceURL && <Dropdown.Item className='coinRewardInfo' href={`${this.state.campaign.coinbaseCommerceURL}`} target="_blank"><img src={ethIcon} width={20} height={20} style={{marginRight:5, marginLeft:5}} />ETH</Dropdown.Item> }
+                                            {this.state.campaign.coinbaseCommerceURL && <Dropdown.Item className='coinRewardInfo' href={`${this.state.campaign.coinbaseCommerceURL}`} target="_blank"><img src={btcLogo} width={20} height={20} style={{marginRight:5, marginLeft:5}} />BTC</Dropdown.Item> }
+                                            {this.state.campaign.coinbaseCommerceURL && <Dropdown.Item className='coinRewardInfo' href={`${this.state.campaign.coinbaseCommerceURL}`} target="_blank"><img src={daiLogo} width={20} height={20} style={{marginRight:5, marginLeft:5}} />DAI (ERC20)</Dropdown.Item> }
+                                            {this.state.campaign.coinbaseCommerceURL && <Dropdown.Item className='coinRewardInfo' href={`${this.state.campaign.coinbaseCommerceURL}`} target="_blank"><img src={usdcIcon} width={20} height={20} style={{marginRight:5, marginLeft:5}} />USDC (ERC20)</Dropdown.Item> }
+                                            {this.state.campaign.coinbaseCommerceURL && <Dropdown.Item className='coinRewardInfo' href={`${this.state.campaign.coinbaseCommerceURL}`} target="_blank"><img src={usdtLogo} width={20} height={20} style={{marginRight:5, marginLeft:5}} />USDT (ERC20)</Dropdown.Item> }
+                                            {this.state.campaign.coinbaseCommerceURL && <Dropdown.Item className='coinRewardInfo' href={`${this.state.campaign.coinbaseCommerceURL}`} target="_blank"><img src={ltcLogo} width={20} height={20} style={{marginRight:5, marginLeft:5}} />LTC</Dropdown.Item> }
                                         </DropdownButton>
 
                                     </InputGroup.Append>

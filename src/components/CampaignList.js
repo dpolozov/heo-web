@@ -18,11 +18,14 @@ import btcLogo from '../images/bitcoin-logo.png';
 import daiLogo from '../images/dai-logo.png';
 import ltcLogo from '../images/ltc-logo.png'
 import visaMcLogo from '../images/visa-mc-logo.png';
+import usdtLogo from '../images/usdt-logo.png';
+
 import config from "react-global-configuration";
 
 const IMG_MAP = {"BUSD": busdIcon,
     "BNB": bnbIcon,
     "USDC": usdcIcon,
+    "USDT": usdtLogo,
     "ETH": ethIcon,
     "cUSD": cusdIcon};
 
@@ -142,6 +145,8 @@ class CampaignList extends Component {
                                                             {item.coinbaseCommerceURL && <span className='coinRewardInfo'><img src={ethIcon} width={20} height={20} style={{marginRight:5, marginLeft:5}} /> </span> }
                                                             {item.coinbaseCommerceURL && <span className='coinRewardInfo'><img src={btcLogo} width={20} height={20} style={{marginRight:5, marginLeft:5}} /> </span> }
                                                             {item.coinbaseCommerceURL && <span className='coinRewardInfo'><img src={daiLogo} width={20} height={20} style={{marginRight:5, marginLeft:5}} /> </span> }
+                                                            {item.coinbaseCommerceURL && <span className='coinRewardInfo'><img src={usdcIcon} width={20} height={20} style={{marginRight:5, marginLeft:5}} /> </span> }
+                                                            {item.coinbaseCommerceURL && <span className='coinRewardInfo'><img src={usdtLogo} width={20} height={20} style={{marginRight:5, marginLeft:5}} /> </span> }
                                                             {item.coinbaseCommerceURL && <span className='coinRewardInfo'><img src={ltcLogo} width={20} height={20} style={{marginRight:5, marginLeft:5}} /> </span> }
 
                                                         </p>
