@@ -575,7 +575,8 @@ class EditCampaign extends React.Component {
             chains: chains,
             chainId: chainId,
             addresses: dbCampaignObj.addresses,
-            coins: dbCampaignObj.coins
+            coins: dbCampaignObj.coins,
+            coinbaseCommerceURL: dbCampaignObj.coinbaseCommerceURL
         });
         console.log(`Set title to`);
         console.log(this.state.ogTitle);
