@@ -679,9 +679,10 @@ class CampaignPage extends Component {
                                             {this.state.chains.map((item, i) =>
                                                     <Dropdown.Item key={item["CHAIN"]} as="button" onClick={() => this.handleDonateClick(item["CHAIN"])}><img src={IMG_MAP[this.state.campaign.coins[item["CHAIN"]].name]} width={16} height={16} style={{marginRight:5}} />{this.state.campaign.coins[item["CHAIN"]].name} ({item["CHAIN_NAME"]})</Dropdown.Item>
                                                 )}
-                                            {this.state.campaign.coinbaseCommerceURL &&
-                                                <Dropdown.Item key="DonateCoinbaseCommerce" href={`${this.state.campaign.coinbaseCommerceURL}`} target="_blank"><img src={coinBaseLogo} width={16} height={16} style={{marginRight:5}} /><Trans i18nKey="otherCoinsCoinbase" /></Dropdown.Item>
-                                            }
+                                            {this.state.campaign.coinbaseCommerceURL && <Dropdown.Item className='coinRewardInfo' href={`${this.state.campaign.coinbaseCommerceURL}`} target="_blank"><img src={ethIcon} width={20} height={20} style={{marginRight:5, marginLeft:5}} />ETH </Dropdown.Item> }
+                                            {this.state.campaign.coinbaseCommerceURL && <Dropdown.Item className='coinRewardInfo' href={`${this.state.campaign.coinbaseCommerceURL}`} target="_blank"><img src={btcLogo} width={20} height={20} style={{marginRight:5, marginLeft:5}} />BTC </Dropdown.Item> }
+                                            {this.state.campaign.coinbaseCommerceURL && <Dropdown.Item className='coinRewardInfo' href={`${this.state.campaign.coinbaseCommerceURL}`} target="_blank"><img src={daiLogo} width={20} height={20} style={{marginRight:5, marginLeft:5}} />DAI </Dropdown.Item> }
+                                            {this.state.campaign.coinbaseCommerceURL && <Dropdown.Item className='coinRewardInfo' href={`${this.state.campaign.coinbaseCommerceURL}`} target="_blank"><img src={ltcLogo} width={20} height={20} style={{marginRight:5, marginLeft:5}} />LTC </Dropdown.Item> }
                                         </DropdownButton>
 
                                     </InputGroup.Append>
