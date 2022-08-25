@@ -106,6 +106,7 @@ class CampaignPage extends Component {
             tryAgainCC: false,
             fiatPaymentEnabled: false,
             fiatPaymentProvider: ''
+
         };
         this.handleGetCCInfo = this.handleGetCCInfo.bind(this);
         this.handleCCInfoCancel = this.handleCCInfoCancel.bind(this);
@@ -142,6 +143,8 @@ class CampaignPage extends Component {
         let raisedAmount = campaign.raisedAmount ? parseFloat(campaign.raisedAmount) : 0;
         let fiatDonations = campaign.fiatDonations ? parseFloat(campaign.fiatDonations) : 0;
         let raisedOnCoinbase = campaign.raisedOnCoinbase ? parseFloat(campaign.raisedOnCoinbase) : 0;
+        
+
 
         if(raisedAmount || fiatDonations || raisedOnCoinbase) {
             campaign["raisedAmount"] = Math.round((raisedAmount + fiatDonations + raisedOnCoinbase) * 100)/100;
@@ -757,7 +760,9 @@ class CampaignPage extends Component {
         let globals = config.get("GLOBALS");
         globals.forEach(element => {
             if(element._id === 'FIATPAYMENT') {
-                this.setState({fiatPaymentEnabled: element.enabled});
+                if(campaign.fiatPayments)
+                  this.setState({fiatPaymentEnabled: element.enabled});
+                else this.setState({fiatPaymentEnabled: false});   
                 if(element.enabled) {
                     if(element.CIRCLE && !element.PAYADMIT) {
                         this.setState(({

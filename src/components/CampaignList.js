@@ -137,7 +137,7 @@ class CampaignList extends Component {
                                                 <Col className='buttonCol'>
                                                     <div id='acceptingBtn' className='cardButtons'><p><Trans i18nKey='accepting'/></p>
                                                         <p id='currencyName'>
-                                                            {this.state.fiatPaymentEnabled && <span className='coinRewardInfo'><img src={visaMcLogo} width={21} height={20} style={{marginRight:5, marginLeft:5}} /> </span>}
+                                                            {this.state.fiatPaymentEnabled && item.fiatPayments && <span className='coinRewardInfo'><img src={visaMcLogo} width={21} height={20} style={{marginRight:5, marginLeft:5}} /> </span>}
                                                             {item.dedupedCoinNames.map((coin, j) =>
                                                                 <span key={item._id + "-" + coin}><img src={IMG_MAP[coin]} width={20} height={20} style={{marginLeft:5, marginRight:5}} /> </span>
                                                             )}
