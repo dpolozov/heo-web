@@ -78,7 +78,7 @@ const TEXT_COLLAPSE_OPTIONS = {
     maxHeight: 350,
 }
 ReactGA.initialize("G-C657WZY5VT");
-var HEOCampaign, ERC20Coin, FiatPayments;
+var HEOCampaign, ERC20Coin;
 
 class CampaignPage extends Component {
     constructor(props) {
@@ -142,7 +142,7 @@ class CampaignPage extends Component {
         let raisedAmount = campaign.raisedAmount ? parseFloat(campaign.raisedAmount) : 0;
         let fiatDonations = campaign.fiatDonations ? parseFloat(campaign.fiatDonations) : 0;
         let raisedOnCoinbase = campaign.raisedOnCoinbase ? parseFloat(campaign.raisedOnCoinbase) : 0;
-        FiatPayments = campaign.fiatPayments;
+        
 
 
         if(raisedAmount || fiatDonations || raisedOnCoinbase) {
@@ -754,7 +754,7 @@ class CampaignPage extends Component {
         let globals = config.get("GLOBALS");
         globals.forEach(element => {
             if(element._id === 'FIATPAYMENT') {
-                if( FiatPayments)
+                if(campaign.fiatPayments)
                   this.setState({fiatPaymentEnabled: element.enabled});
                 else this.setState({fiatPaymentEnabled: false});   
                 if(element.enabled) {
