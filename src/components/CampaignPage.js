@@ -85,7 +85,7 @@ class CampaignPage extends Component {
         super(props);
         this.state = {
             editorState: EditorState.createEmpty(),
-            donationAmount:"10",
+            donationAmount:"",
             campaign:{},
             campaignId: "",
             waitToClose:false,
@@ -726,6 +726,7 @@ class CampaignPage extends Component {
             this.props.history.push("/404");
             return;
         }
+        this.state.donationAmount = campaign.minDonatValue;
         campaign.percentRaised = 100 * (campaign.raisedAmount)/campaign.maxAmount;
         var contentState = {};
         if(campaign.descriptionEditor[i18n.language]) {
