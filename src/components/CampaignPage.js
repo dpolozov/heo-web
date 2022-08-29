@@ -85,7 +85,7 @@ class CampaignPage extends Component {
         super(props);
         this.state = {
             editorState: EditorState.createEmpty(),
-            donationAmount:"10",
+            donationAmount:"",
             campaign:{},
             campaignId: "",
             waitToClose:false,
@@ -118,7 +118,11 @@ class CampaignPage extends Component {
         this.setState({showCCinfoModal : false});
     }
 
-    handleDonationAmount = (e) => {this.setState({donationAmount: e.target.value})};
+    handleDonationAmount = (e) => {
+        if (e.target.value < this.state.campaign.minDonatValue)
+        e.target.value = this.state.campaign.minDonatValue;
+        this.setState({donationAmount: e.target.value});
+    };
 
     async getCampaign(address) {
         var campaign = {};
@@ -574,6 +578,7 @@ class CampaignPage extends Component {
                         <p className='modalMessage'>
                             <Trans i18nKey={this.state.modalMessage}
                                    values={{donationAmount: this.state.donationAmount, currencyName: this.state.campaign.currencyName }} />
+
                         </p>
                         {!this.state.waitToClose &&
                         <Button className='myModalButton'
@@ -721,6 +726,7 @@ class CampaignPage extends Component {
             this.props.history.push("/404");
             return;
         }
+        this.state.donationAmount = campaign.minDonatValue;
         campaign.percentRaised = 100 * (campaign.raisedAmount)/campaign.maxAmount;
         var contentState = {};
         if(campaign.descriptionEditor[i18n.language]) {
