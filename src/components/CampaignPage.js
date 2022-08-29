@@ -86,7 +86,7 @@ class CampaignPage extends Component {
         super(props);
         this.state = {
             editorState: EditorState.createEmpty(),
-            donationAmount:"10",
+            donationAmount:"",
             campaign:{},
             campaignId: "",
             waitToClose:false,
@@ -119,7 +119,9 @@ class CampaignPage extends Component {
         this.setState({showCCinfoModal : false});
     }
 
-    handleDonationAmount = (e) => {this.setState({donationAmount: e.target.value})};
+    handleDonationAmount = (e) => {
+        this.setState({donationAmount: e.target.value});
+    };
 
     async getCampaign(address) {
         var campaign = {};
@@ -143,7 +145,7 @@ class CampaignPage extends Component {
         let raisedAmount = campaign.raisedAmount ? parseFloat(campaign.raisedAmount) : 0;
         let fiatDonations = campaign.fiatDonations ? parseFloat(campaign.fiatDonations) : 0;
         let raisedOnCoinbase = campaign.raisedOnCoinbase ? parseFloat(campaign.raisedOnCoinbase) : 0;
-        
+
 
 
         if(raisedAmount || fiatDonations || raisedOnCoinbase) {
@@ -575,6 +577,7 @@ class CampaignPage extends Component {
                         <p className='modalMessage'>
                             <Trans i18nKey={this.state.modalMessage}
                                    values={{donationAmount: this.state.donationAmount, currencyName: this.state.campaign.currencyName }} />
+
                         </p>
                         {!this.state.waitToClose &&
                         <Button className='myModalButton'
@@ -727,6 +730,7 @@ class CampaignPage extends Component {
             this.props.history.push("/404");
             return;
         }
+        this.state.donationAmount = campaign.defaultDonationAmount ? campaign.defaultDonationAmount : "10";
         campaign.percentRaised = 100 * (campaign.raisedAmount)/campaign.maxAmount;
         var contentState = {};
         if(campaign.descriptionEditor[i18n.language]) {
@@ -762,7 +766,7 @@ class CampaignPage extends Component {
             if(element._id === 'FIATPAYMENT') {
                 if(campaign.fiatPayments)
                   this.setState({fiatPaymentEnabled: element.enabled});
-                else this.setState({fiatPaymentEnabled: false});   
+                else this.setState({fiatPaymentEnabled: false});
                 if(element.enabled) {
                     if(element.CIRCLE && !element.PAYADMIT) {
                         this.setState(({
