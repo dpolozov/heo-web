@@ -119,8 +119,6 @@ class CampaignPage extends Component {
     }
 
     handleDonationAmount = (e) => {
-        if (e.target.value < this.state.campaign.minDonatValue)
-        e.target.value = this.state.campaign.minDonatValue;
         this.setState({donationAmount: e.target.value});
     };
 
@@ -146,7 +144,7 @@ class CampaignPage extends Component {
         let raisedAmount = campaign.raisedAmount ? parseFloat(campaign.raisedAmount) : 0;
         let fiatDonations = campaign.fiatDonations ? parseFloat(campaign.fiatDonations) : 0;
         let raisedOnCoinbase = campaign.raisedOnCoinbase ? parseFloat(campaign.raisedOnCoinbase) : 0;
-        
+
 
 
         if(raisedAmount || fiatDonations || raisedOnCoinbase) {
@@ -726,7 +724,7 @@ class CampaignPage extends Component {
             this.props.history.push("/404");
             return;
         }
-        this.state.donationAmount = campaign.minDonatValue;
+        this.state.donationAmount = campaign.defaultDonationAmount;
         campaign.percentRaised = 100 * (campaign.raisedAmount)/campaign.maxAmount;
         var contentState = {};
         if(campaign.descriptionEditor[i18n.language]) {
@@ -762,7 +760,7 @@ class CampaignPage extends Component {
             if(element._id === 'FIATPAYMENT') {
                 if(campaign.fiatPayments)
                   this.setState({fiatPaymentEnabled: element.enabled});
-                else this.setState({fiatPaymentEnabled: false});   
+                else this.setState({fiatPaymentEnabled: false});
                 if(element.enabled) {
                     if(element.CIRCLE && !element.PAYADMIT) {
                         this.setState(({
