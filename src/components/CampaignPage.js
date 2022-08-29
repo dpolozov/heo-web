@@ -724,7 +724,7 @@ class CampaignPage extends Component {
             this.props.history.push("/404");
             return;
         }
-        this.state.donationAmount = campaign.defaultDonationAmount;
+        this.state.donationAmount = campaign.defaultDonationAmount ? campaign.defaultDonationAmount : "10";
         campaign.percentRaised = 100 * (campaign.raisedAmount)/campaign.maxAmount;
         var contentState = {};
         if(campaign.descriptionEditor[i18n.language]) {
