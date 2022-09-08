@@ -57,8 +57,6 @@ class ServerLib {
             description: req.body.mydata.description,
             defaultDonationAmount: req.body.mydata.defaultDonationAmount,
             fiatPayments: req.body.mydata.fiatPayments,
-            defaultDonationAmount: req.body.mydata.defaultDonationAmount,
-            fiatPayments: req.body.mydata.fiatPayments,
             currencyName: req.body.mydata.currencyName,
             maxAmount: req.body.mydata.maxAmount,
             descriptionEditor: req.body.mydata.descriptionEditor,
@@ -68,7 +66,7 @@ class ServerLib {
             lastDonationTime: 0,
             coins: req.body.mydata.coins,
             addresses: req.body.mydata.addresses,
-            active: true 
+            active: true
         }
         try {
             const myCollection = await DB.collection('campaigns');
