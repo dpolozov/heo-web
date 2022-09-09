@@ -403,17 +403,17 @@ class EditCampaign extends React.Component {
                             <Form.Control required type="number" className="createFormPlaceHolder"
                                           value={this.state.maxAmount} placeholder={this.state.maxAmount}
                                           name='maxAmount' onChange={this.handleChange}/>
+                            <Form.Label><Trans i18nKey='defDonationAmount'/><span
+                                className='redAsterisk'></span></Form.Label>
+                            <Form.Control required type="number" className="createFormPlaceHolder"
+                                          value={this.state.defDonationAmount} placeholder={this.state.defDonationAmount}
+                                          name='defDonationAmount' onChange={this.handleChange} onwheel="this.blur()" />
                             <Form.Label><Trans i18nKey='coinbaseCommerceURL'/><span
                                 className='optional'>(<Trans i18nKey='optional'/>)</span></Form.Label>
                             <Form.Control ria-describedby="currencyHelpBlock"
                                           className="createFormPlaceHolder"
                                           value={this.state.coinbaseCommerceURL} placeholder={this.state.coinbaseCommerceURL}
                                           name='coinbaseCommerceURL' onChange={this.handleChange} onwheel="this.blur()" />
-                            <Form.Label><Trans i18nKey='defDonationAmount'/><span
-                                className='redAsterisk'></span></Form.Label>
-                            <Form.Control required type="number" className="createFormPlaceHolder"
-                                          value={this.state.defDonationAmount} placeholder={this.state.defDonationAmount}
-                                          name='defDonationAmount' onChange={this.handleChange} onwheel="this.blur()" />
                         </Form.Group>
                         <hr/>
                         <Form.Group>
