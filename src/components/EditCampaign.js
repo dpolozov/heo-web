@@ -220,6 +220,7 @@ class EditCampaign extends React.Component {
             let data = {
                 mainImageURL: this.state.mainImageURL,
                 qrCodeImageURL: this.state.qrCodeImageURL,
+                coinbaseCommerceURL: this.state.coinbaseCommerceURL,
                 fn: this.state.fn,
                 ln: this.state.ln,
                 cn: this.state.cn,
@@ -406,7 +407,13 @@ class EditCampaign extends React.Component {
                                 className='redAsterisk'></span></Form.Label>
                             <Form.Control required type="number" className="createFormPlaceHolder"
                                           value={this.state.defDonationAmount} placeholder={this.state.defDonationAmount}
-                                          name='defDonationAmount' onChange={this.handleChange} onwheel="this.blur()" />               
+                                          name='defDonationAmount' onChange={this.handleChange} onwheel="this.blur()" />
+                            <Form.Label><Trans i18nKey='coinbaseCommerceURL'/><span
+                                className='optional'>(<Trans i18nKey='optional'/>)</span></Form.Label>
+                            <Form.Control ria-describedby="currencyHelpBlock"
+                                          className="createFormPlaceHolder"
+                                          value={this.state.coinbaseCommerceURL} placeholder={this.state.coinbaseCommerceURL}
+                                          name='coinbaseCommerceURL' onChange={this.handleChange} onwheel="this.blur()" />
                         </Form.Group>
                         <hr/>
                         <Form.Group>
@@ -577,6 +584,7 @@ class EditCampaign extends React.Component {
             chainId: chainId,
             addresses: dbCampaignObj.addresses,
             coins: dbCampaignObj.coins,
+            coinbaseCommerceURL: dbCampaignObj.coinbaseCommerceURL,
             defDonationAmount: dbCampaignObj.defaultDonationAmount
         });
         console.log(`Set title to`);
