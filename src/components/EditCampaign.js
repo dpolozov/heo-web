@@ -68,11 +68,12 @@ class EditCampaign extends React.Component {
             chains:{},
             chainId:"",
             addresses: {},
-            coins: {}
+            coins: {},
+            defDonationAmount: 0
         };
     }
 
-    onSubmit = (e) => {
+   onSubmit = (e) => {
         e.preventDefault();
         console.log("refresh prevented");
     };
@@ -223,7 +224,8 @@ class EditCampaign extends React.Component {
                 fn: this.state.fn,
                 ln: this.state.ln,
                 cn: this.state.cn,
-                vl: this.state.vl
+                vl: this.state.vl,
+                defaultDonationAmount: this.state.defDonationAmount
             };
             data.description = this.state.ogDescription;
             data.description[i18n.language] = data.description["default"] = this.state.description;
@@ -279,6 +281,7 @@ class EditCampaign extends React.Component {
             }
 
             data.maxAmount = this.state.maxAmount;
+            //data.defaultDonationAmount = this.state.defDonationAmount
             let dataForDB = {address: this.state.campaignId, dataToUpdate: data};
 
             try {
@@ -406,6 +409,11 @@ class EditCampaign extends React.Component {
                                           className="createFormPlaceHolder"
                                           value={this.state.coinbaseCommerceURL} placeholder={this.state.coinbaseCommerceURL}
                                           name='coinbaseCommerceURL' onChange={this.handleChange} onwheel="this.blur()" />
+                            <Form.Label><Trans i18nKey='defDonationAmount'/><span
+                                className='redAsterisk'></span></Form.Label>
+                            <Form.Control required type="number" className="createFormPlaceHolder"
+                                          value={this.state.defDonationAmount} placeholder={this.state.defDonationAmount}
+                                          name='defDonationAmount' onChange={this.handleChange} onwheel="this.blur()" />
                         </Form.Group>
                         <hr/>
                         <Form.Group>
@@ -576,7 +584,8 @@ class EditCampaign extends React.Component {
             chainId: chainId,
             addresses: dbCampaignObj.addresses,
             coins: dbCampaignObj.coins,
-            coinbaseCommerceURL: dbCampaignObj.coinbaseCommerceURL
+            coinbaseCommerceURL: dbCampaignObj.coinbaseCommerceURL,
+            defDonationAmount: dbCampaignObj.defaultDonationAmount
         });
         console.log(`Set title to`);
         console.log(this.state.ogTitle);
