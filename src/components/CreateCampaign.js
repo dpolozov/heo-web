@@ -54,7 +54,9 @@ class CreateCampaign extends React.Component {
             editorContent: {},
             chains:{},
             chainConfig:{},
-            chainId:""
+            chainId:"",
+            defDonationAmount: 10,
+            fiatPayments: true
         };
 
     };
@@ -172,10 +174,13 @@ class CreateCampaign extends React.Component {
             campaignData.org = {"default": this.state.org};
             campaignData.org[i18n.language] = this.state.org;
             campaignData.cn = this.state.cn;
+            campaignData.fiatPayments = true;
             let editorState = getEditorState();
             campaignData.descriptionEditor = {"default": editorState};
             campaignData.descriptionEditor[i18n.language] = editorState;
             campaignData.coinbaseCommerceURL = this.state.coinbaseCommerceURL;
+            campaignData.defaultDonationAmount = parseInt(this.state.defDonationAmount,10);
+            campaignData.fiatPayments = this.state.fiatPayments;
             let res = await axios.post('/api/campaign/add', {mydata : campaignData},
                 {headers: {"Content-Type": "application/json"}});
             this.setState({showModal:true, goHome: true,
@@ -217,7 +222,7 @@ class CreateCampaign extends React.Component {
                 org: orgObj,
                 cn: this.state.cn,
                 vl: this.state.vl,
-                descriptionEditor : editorObj,
+                descriptionEditor : editorObj
             })
         );
         try {
@@ -456,6 +461,14 @@ class CreateCampaign extends React.Component {
                                           className="createFormPlaceHolder"
                                           value={this.state.coinbaseCommerceURL} placeholder={this.state.coinbaseCommerceURL}
                                           name='coinbaseCommerceURL' onChange={this.handleChange} onwheel="this.blur()" />
+
+                            <Form.Label><Trans i18nKey='defDonationAmount'/><span
+                                className='redAsterisk'></span></Form.Label>
+                            <Form.Control required type="number" className="createFormPlaceHolder"
+                                          value={this.state.defDonationAmount} placeholder={this.state.defDonationAmount}
+                                          name='defDonationAmount' onChange={this.handleChange} onwheel="this.blur()" />    
+
+                            
                         </Form.Group>
                         <Form.Group>
                             <Form.Label><Trans i18nKey='selectCoverImage'/><span className='redAsterisk'>*</span></Form.Label>
