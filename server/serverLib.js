@@ -38,10 +38,10 @@ class ServerLib {
             } else {
                 res.send('complete');
             }
-        }); 
+        });
     }
 
-    async handleAddCampaign(req, res, Sentry, DB, newWalletId) {      
+    async handleAddCampaign(req, res, Sentry, DB, newWalletId) {
         const ITEM = {
             _id: req.body.mydata.address.toLowerCase(),
             beneficiaryId: req.body.mydata.beneficiaryId.toLowerCase(),
@@ -56,6 +56,7 @@ class ServerLib {
             org: req.body.mydata.org,
             description: req.body.mydata.description,
             defaultDonationAmount: req.body.mydata.defaultDonationAmount,
+            coinbaseCommerceURL: req.body.mydata.coinbaseCommerceURL,
             fiatPayments: req.body.mydata.fiatPayments,
             currencyName: req.body.mydata.currencyName,
             maxAmount: req.body.mydata.maxAmount,
@@ -75,7 +76,7 @@ class ServerLib {
         } catch (err) {
             Sentry.captureException(new Error(err));
             res.sendStatus(500);
-        }          
+        }
     }
 
     async handleUpdateCampaign(req, res, Sentry, DB) {
@@ -83,7 +84,7 @@ class ServerLib {
         try {
             const myCollection = await DB.collection('campaigns');
             result = await myCollection.findOne({"_id" : req.body.mydata.address});
-        } catch (err) { 
+        } catch (err) {
             Sentry.captureException(new Error(error));
         }
 
@@ -96,10 +97,10 @@ class ServerLib {
                 const myCollection = await DB.collection('campaigns');
                 await myCollection.updateOne({'_id': req.body.mydata.address}, {$set: req.body.mydata.dataToUpdate});
                 res.send('success');
-            } catch (err) { 
+            } catch (err) {
                 Sentry.captureException(new Error(err));
                 res.sendStatus(500);
-            }   
+            }
         }
     }
 
@@ -114,10 +115,10 @@ class ServerLib {
                 const myCollection = await DB.collection('campaigns');
                 await myCollection.updateOne({'_id': req.body.id}, {$set: {active:false}});
                 res.send('success');
-            } catch (err) { 
+            } catch (err) {
                 Sentry.captureException(new Error(err));
                 res.sendStatus(500);
-            }   
+            }
         }
     }
 
@@ -128,10 +129,10 @@ class ServerLib {
             const sortedCampaigns = await campaigns.sort({"lastDonationTime" : -1});
             const result = await sortedCampaigns.toArray();
             res.send(result);
-        } catch (err) { 
+        } catch (err) {
             Sentry.captureException(new Error(err));
             res.sendStatus(500);
-        }   
+        }
     }
 
     async handleLoadOneCampaign(req, res, Sentry, DB) {
@@ -139,7 +140,7 @@ class ServerLib {
             const myCollection = await DB.collection('campaigns');
             let result = await myCollection.findOne({"_id" : req.body.ID});
             res.send(result);
-        } catch (err) {Sentry.captureException(new Error(err));}   
+        } catch (err) {Sentry.captureException(new Error(err));}
     }
 
     async handleLoadUserCampaigns(req, res, Sentry, DB) {
@@ -148,17 +149,17 @@ class ServerLib {
             const campaigns = await myCollection.find({"ownerId" : {$eq: req.user.address}});
             const result = await campaigns.toArray();
             res.send(result);
-        } catch (err) { 
+        } catch (err) {
             Sentry.captureException(new Error(err));
             res.sendStatus(500);
-        } 
+        }
     }
 
     async handleLoadEnv(res, envCHAIN, Sentry, DB) {
         try{
             let chainCollection = await DB.collection('chain_configs');
             let chain_configsRaw = await chainCollection.find();
-            let chain_configs = await chain_configsRaw.toArray();      
+            let chain_configs = await chain_configsRaw.toArray();
             var chains = {};
             for (let i=0; i<chain_configs.length; i++) {
                 chains[chain_configs[i]._id] = chain_configs[i];
@@ -175,7 +176,7 @@ class ServerLib {
 
         } catch (err) {
             Sentry.captureException(new Error(err));
-        }      
+        }
     }
 
     //create initial payment record in mongodb
@@ -185,7 +186,7 @@ class ServerLib {
         try {
             const myCollection = await DB.collection('fiat_payment_records');
             await myCollection.insertOne(data);
-        } catch (err) {Sentry.captureException(new Error(err))}    
+        } catch (err) {Sentry.captureException(new Error(err))}
     }
 
     //update payment record in mongodb
@@ -197,7 +198,7 @@ class ServerLib {
             //console.log(await DB.collection('fiat_payment_records').findOne({'_id': recordId}));
         }
         catch (err) {Sentry.captureException(new Error(err))}
-    }   
+    }
 
     authenticated(req, res, Sentry) {
         if(req.user && req.user.address) {
