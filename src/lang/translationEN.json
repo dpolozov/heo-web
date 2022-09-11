@@ -171,6 +171,7 @@
     "fiatDonationLimitation3": "According to the rules set by the payment processing bank, your IP address has to be located in the same country as the bank that issued your card",
     "showMoreTextExpand": "Show more...",
     "showLessTextCollapse": "Show less...",
-    "defDonationAmount": "Default donation amount"
+    "defDonationAmount": "Default donation amount",
+    "fiatPayments": "Use bank cards for donations"
 }
 

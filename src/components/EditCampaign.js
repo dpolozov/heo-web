@@ -1,6 +1,6 @@
 import React from 'react';
 import countries from '../countries';
-import {Container, Form, Col, Button, DropdownButton, Dropdown, Image, Modal} from 'react-bootstrap';
+import {Container, Form, Col, Button, DropdownButton, Dropdown, Image, Modal, Row} from 'react-bootstrap';
 import ReactPlayer from 'react-player';
 import config from "react-global-configuration";
 import axios from 'axios';
@@ -69,7 +69,8 @@ class EditCampaign extends React.Component {
             chainId:"",
             addresses: {},
             coins: {},
-            defDonationAmount: 0
+            defDonationAmount: 0,
+            fiatPayments: true
         };
     }
 
@@ -85,6 +86,10 @@ class EditCampaign extends React.Component {
     handleChange = (e) => {
         const name = e.target.name
         const value = e.target.value;
+        const checked = e.target.checked;
+        if (name == 'fiatPayments')
+        this.setState({fiatPayments: checked});
+        else
         this.setState({ [name] : value, updateMeta : true });
     }
 
@@ -225,7 +230,8 @@ class EditCampaign extends React.Component {
                 ln: this.state.ln,
                 cn: this.state.cn,
                 vl: this.state.vl,
-                defaultDonationAmount: this.state.defDonationAmount
+                defaultDonationAmount: this.state.defDonationAmount,
+                fiatPayments: this.state.fiatPayments
             };
             data.description = this.state.ogDescription;
             data.description[i18n.language] = data.description["default"] = this.state.description;
@@ -408,6 +414,17 @@ class EditCampaign extends React.Component {
                             <Form.Control required type="number" className="createFormPlaceHolder"
                                           value={this.state.defDonationAmount} placeholder={this.state.defDonationAmount}
                                           name='defDonationAmount' onChange={this.handleChange} onwheel="this.blur()" />
+                            <Row>
+                            <Col xs="auto">                 
+                            <Form.Label><Trans i18nKey='fiatPayments'/><span
+                                className='redAsterisk'></span></Form.Label>
+                            </Col> 
+                            <Col xs={4}>     
+                            <Form.Control required type="checkbox" className="createFormPlaceHolder" checked={this.state.fiatPayments}
+                                        value={this.state.fiatPayments} placeholder={this.state.fiatPayments} 
+                                        name='fiatPayments' onChange={this.handleChange} onwheel="this.blur()"/>
+                            </Col>             
+                            </Row>            
                             <Form.Label><Trans i18nKey='coinbaseCommerceURL'/><span
                                 className='optional'>(<Trans i18nKey='optional'/>)</span></Form.Label>
                             <Form.Control ria-describedby="currencyHelpBlock"
@@ -585,7 +602,8 @@ class EditCampaign extends React.Component {
             addresses: dbCampaignObj.addresses,
             coins: dbCampaignObj.coins,
             coinbaseCommerceURL: dbCampaignObj.coinbaseCommerceURL,
-            defDonationAmount: dbCampaignObj.defaultDonationAmount
+            defDonationAmount: dbCampaignObj.defaultDonationAmount,
+            fiatPayments: dbCampaignObj.fiatPayments
         });
         console.log(`Set title to`);
         console.log(this.state.ogTitle);

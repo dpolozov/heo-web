@@ -1,6 +1,6 @@
 import React from 'react';
 import countries from '../countries';
-import {Container, Form, Col, Button, Image, Modal} from 'react-bootstrap';
+import {Container, Form, Col, Button, Image, Modal, Row} from 'react-bootstrap';
 import ReactPlayer from 'react-player';
 import config from "react-global-configuration";
 import { Link, withRouter } from "react-router-dom";
@@ -71,6 +71,9 @@ class CreateCampaign extends React.Component {
     };
 
     handleChange = e => {
+        if(e.target.name == 'fiatPayments')
+        this.setState({fiatPayments: e.target.checked});
+        else
         this.setState({ [e.target.name]: e.target.value });
     };
 
@@ -467,7 +470,17 @@ class CreateCampaign extends React.Component {
                             <Form.Control required type="number" className="createFormPlaceHolder"
                                           value={this.state.defDonationAmount} placeholder={this.state.defDonationAmount}
                                           name='defDonationAmount' onChange={this.handleChange} onwheel="this.blur()" />    
-
+                            <Row>
+                            <Col xs="auto">                 
+                            <Form.Label><Trans i18nKey='fiatPayments'/><span
+                                className='redAsterisk'></span></Form.Label>
+                            </Col> 
+                            <Col xs={4}>     
+                            <Form.Control required type="checkbox" className="createFormPlaceHolder" checked={this.state.fiatPayments}
+                                        value={this.state.fiatPayments} placeholder={this.state.fiatPayments} 
+                                        name='fiatPayments' onChange={this.handleChange} onwheel="this.blur()"/>
+                            </Col>             
+                            </Row>
                             
                         </Form.Group>
                         <Form.Group>
