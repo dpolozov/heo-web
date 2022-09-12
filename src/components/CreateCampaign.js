@@ -475,8 +475,8 @@ class CreateCampaign extends React.Component {
                             <Form.Label><Trans i18nKey='fiatPayments'/><span
                                 className='redAsterisk'></span></Form.Label>
                             </Col> 
-                            <Col xs={4}>     
-                            <Form.Control required type="checkbox" className="createFormPlaceHolder" checked={this.state.fiatPayments}
+                            <Col xs lg="1">     
+                            <Form.Check type="checkbox" checked={this.state.fiatPayments}
                                         value={this.state.fiatPayments} placeholder={this.state.fiatPayments} 
                                         name='fiatPayments' onChange={this.handleChange} onwheel="this.blur()"/>
                             </Col>             
