@@ -54,6 +54,7 @@ class ServerLib {
             fn: req.body.mydata.fn,
             ln: req.body.mydata.ln,
             org: req.body.mydata.org,
+            key: req.body.mydata.key,
             description: req.body.mydata.description,
             defaultDonationAmount: req.body.mydata.defaultDonationAmount,
             coinbaseCommerceURL: req.body.mydata.coinbaseCommerceURL,
@@ -104,6 +105,42 @@ class ServerLib {
         }
     }
 
+    async handleUpdatAllCampaign(req, res, Sentry, DB) {
+        try{
+            var myCollection = await DB.collection('campaigns');
+            const campaigns = await myCollection.find({active: true});
+            var campaigns_sort = await campaigns.toArray();
+        } catch (err) {
+            Sentry.captureException(new Error(err));
+            res.sendStatus(500);
+        }
+        for (let i = 0; i < campaigns_sort.length; i++){
+            let help_org = '';
+            help_org = campaigns_sort[i].org["default"];
+            if(typeof help_org == "undefined")
+              help_org = campaigns_sort[i].org; 
+            if(typeof help_org == "undefined")
+              help_org = campaigns_sort[i].title["default"]; 
+            if(typeof help_org == "undefined")
+              help_org = campaigns_sort[i].title;  
+            if(typeof help_org == "undefined")
+              help_org = 'org1';  
+            let code = '';
+            console.log("help_org");
+            console.log(help_org);
+            help_org = help_org.toLowerCase();
+            for (let j = 0; j < help_org.length; j++){
+              if (help_org[j] == ' ') code += '-';
+              if (/^[A-Za-z0-9]*$/.test(help_org[j]) == true) code += help_org[j];
+            }
+            for (let k = 0; k < campaigns_sort.length; k++){
+              if(code == campaigns_sort[k].key) code = code +'1';   k
+            }
+            campaigns_sort[i].key = code;
+            await myCollection.updateOne({'_id': campaigns_sort[i]._id}, {$set: campaigns_sort[i]});
+        }    
+    }
+
     async handleDeactivateCampaign(req, res, Sentry, DB) {
         let myCollection = await DB.collection("campaigns");
         let result = myCollection.findOne({"_id" : req.body.id});
@@ -133,6 +170,14 @@ class ServerLib {
             Sentry.captureException(new Error(err));
             res.sendStatus(500);
         }
+    }
+
+    async handleGetId(req, res, Sentry, DB) {
+        try {
+            const myCollection = await DB.collection('campaigns');
+            let result = await myCollection.findOne({"key" : req.body.KEY});
+            res.send(result._id);
+        } catch (err) {Sentry.captureException(new Error(err));}
     }
 
     async handleLoadOneCampaign(req, res, Sentry, DB) {

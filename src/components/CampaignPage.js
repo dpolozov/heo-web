@@ -717,8 +717,26 @@ class CampaignPage extends Component {
 
     async componentDidMount() {
         window.scrollTo(0,0);
+        var modalMessage = 'failedToLoadCampaign';
         let toks = this.props.location.pathname.split("/");
-        let campaignId = toks[toks.length -1];
+        let key = toks[toks.length -1];
+        let data = {KEY : key};
+        var campaignId;
+        await axios.post('/api/campaign/getid', data, {headers: {"Content-Type": "application/json"}})
+            .then(res => {
+                campaignId = res.data;
+            }).catch(err => {
+                if (err.response) {
+                    modalMessage = 'technicalDifficulties'}
+                else if(err.request) {
+                    modalMessage = 'checkYourConnection'
+                }
+                console.log(err);
+                this.setState({
+                    showError: true,
+                    modalMessage,
+                })
+            })
         let campaign = (await this.getCampaign(campaignId));
         if(!campaign) {
             this.props.history.push("/404");

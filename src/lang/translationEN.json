@@ -37,7 +37,9 @@
     "backToMyCampaigns": "Back To My Campaigns",
     "fn": "First name",
     "ln": "Last name",
+    "onEn": "Organization name in English",
     "on": "Organization name",
+    "organizationEn": "Organization in English",
     "organization": "Organization",
     "selectConuntry": "Select your country",
     "selectCoin": "Select crypto-currency",
@@ -98,6 +100,7 @@
     "removeLink": "Please select word(s) to remove link",
     "requiredFieldsTitle": "Required field",
     "orgRequired": "Please enter the name of your organization into Organization field",
+    "orgRequiredEn": "Please enter the name of your organization in English",
     "cnRequired": "Please select your organization's country",
     "titleRequired": "Please enter a title for your campaign",
     "shortDescRequired": "Please provide a short description/tag line for your campaign",
@@ -172,6 +175,7 @@
     "showMoreTextExpand": "Show more...",
     "showLessTextCollapse": "Show less...",
     "defDonationAmount": "Default donation amount",
-    "fiatPayments": "Use bank cards for donations"
+    "fiatPayments": "Use bank cards for donations",
+    "editDBButton": "Edit Database"
 }
 

@@ -45,6 +45,7 @@ class EditCampaign extends React.Component {
             modalButtonVariant: "",
             fn:"",
             ln:"",
+            orgEn:"",
             org:"",
             ogOrg:{},
             cn:"",
@@ -512,9 +513,29 @@ class EditCampaign extends React.Component {
     }
 
     async componentDidMount() {
+        var id;
+        var modalMessage = 'failedToLoadCampaign';
         let toks = this.props.location.pathname.split("/");
         ReactGA.send({ hitType: "pageview", page: this.props.location.pathname });
-        let id = toks[toks.length -1];
+        let key = toks[toks.length -1];
+        let data = {KEY : key};
+        await axios.post('/api/campaign/getid', data, {headers: {"Content-Type": "application/json"}})
+            .then(res => {
+                id = res.data;
+            }).catch(err => {
+                if (err.response) {
+                    modalMessage = 'technicalDifficulties'}
+                else if(err.request) {
+                    modalMessage = 'checkYourConnection'
+                }
+                console.log(err);
+                this.setState({
+                    showError: true,
+                    modalMessage,
+                })
+            })
+         
+
         let dbCampaignObj = await this.getCampaignFromDB(id);
         let chains = config.get("CHAINS");
         let chainId = config.get("CHAIN");
@@ -525,6 +546,8 @@ class EditCampaign extends React.Component {
         }
         let web3 = new Web3(chainConfig["WEB3_RPC_NODE_URL"]);
         let HEOCampaign = (await import("../remote/"+ chainId + "/HEOCampaign")).default;
+        console.log(`chainId`);
+        console.log(chainId);
         CAMPAIGNINSTANCE = new web3.eth.Contract(HEOCampaign, address);
         console.log(`Campaign instance`);
         console.log(CAMPAIGNINSTANCE);
@@ -589,6 +612,7 @@ class EditCampaign extends React.Component {
             imgID: metaData.imgID,
             qrImgID: metaData.qrImgID,
             org: orgObj[i18n.language],
+            orgEn:orgObj["default"], 
             ogOrg: orgObj,
             title: titleObj[i18n.language],
             ogTitle: titleObj,
