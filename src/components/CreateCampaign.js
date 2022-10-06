@@ -73,16 +73,16 @@ class CreateCampaign extends React.Component {
     };
 
     handleChange = e => {
-        if(e.target.name == 'orgEn'){
+        if(e.target.name === 'orgEn'){
           let help_value = '';  
           for(let i = 0; i < e.target.value.length; i++){
-           if ((/^[A-Za-z0-9]*$/.test(e.target.value[i]) == true)||(e.target.value[i] == ' '))
+           if ((/^[A-Za-z0-9]*$/.test(e.target.value[i]) === true)||(e.target.value[i] == ' '))
             help_value += e.target.value[i];
           }
           e.target.value = help_value
           this.setState({ [e.target.name]: e.target.value });
         }
-        else if(e.target.name == 'fiatPayments')
+        else if(e.target.name === 'fiatPayments')
          this.setState({fiatPayments: e.target.checked});
         else
         this.setState({ [e.target.name]: e.target.value });
@@ -161,7 +161,7 @@ class CreateCampaign extends React.Component {
                 qrImgUrl = await this.uploadImageS3('qrCode', qrImgID);
             }
             if(imgUrl) {
-                if(window.web3Modal.cachedProvider != "binancechainwallet") {
+                if(window.web3Modal.cachedProvider !== "binancechainwallet") {
                     let campaignData = await this.createCampaign(imgUrl, qrImgUrl);
                     if (campaignData) {
                         await this.addCampaignToDb(campaignData);

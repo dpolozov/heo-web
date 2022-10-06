@@ -88,7 +88,7 @@ class EditCampaign extends React.Component {
         const name = e.target.name
         const value = e.target.value;
         const checked = e.target.checked;
-        if (name == 'fiatPayments')
+        if (name === 'fiatPayments')
         this.setState({fiatPayments: checked});
         else
         this.setState({ [name] : value, updateMeta : true });

@@ -139,11 +139,6 @@ APP.post('/api/campaign/update', (req, res) => {
     }
 });
 
-APP.post('/api/campaign/updateAll', (req, res) => {
-    const DB = CLIENT.db(DBNAME);
-    serverLib.handleUpdatAllCampaign(req, res, Sentry, DB);
-});
-
 APP.post('/api/campaign/deactivate', (req, res) => {
     if(serverLib.authenticated(req, res, Sentry)) {
         const DB = CLIENT.db(DBNAME);
