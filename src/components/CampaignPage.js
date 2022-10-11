@@ -297,13 +297,6 @@ class CampaignPage extends Component {
 
     handleDonateClick = async (chainId) => {
         //TODO: check that this.state.donationAmount is larger than 
-        let data = {KEY : chainId};
-        await axios.post('/api/campaign/getid', data, {headers: {"Content-Type": "application/json"}})
-            .then(res => {
-                chainId = res.data;
-            }).catch(err => {
-               console.log(err);
-            })
         try {
             await clearWeb3Provider(this);
             await initWeb3Modal(chainId);

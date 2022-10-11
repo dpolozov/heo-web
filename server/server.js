@@ -79,6 +79,15 @@ const S3 = new AWS.S3({
     secretAccessKey: process.env.SERVER_APP_ACCESS_KEY
 });
 
+getId = async(DB, key) =>{
+    try {
+        const myCollection = await DB.collection('campaigns');
+        let result = await myCollection.findOne({"key" : key});
+        if (result) return (result._id);
+        else return (key);
+    } catch (err) {Sentry.captureException(new Error(err));}
+}
+
 APP.use(cookieParser());
 APP.use(jwt({ secret: process.env.JWT_SECRET, credentialsRequired:false, getToken: req => req.cookies.authToken, algorithms: ['HS256'] }));
 APP.use(jwtErrorCatch);
@@ -304,6 +313,7 @@ APP.get('*', async(req,res) =>{
     if(splitURL.length > 2) {
         try {
             const DB = CLIENT.db(DBNAME);
+            campaignId = await getId(DB, campaignId);
             campaign = await DB.collection("campaigns").findOne({"_id" : campaignId});
             if(campaign) {
                 title = (campaign.title.default).replace(/"/g,"&quot;");
