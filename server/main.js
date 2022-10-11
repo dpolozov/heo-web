@@ -8,7 +8,6 @@ const CLIENT = new MongoClient(URL);
 CLIENT.connect(err => {
   if(err) {
       console.log(err);
-      Sentry.captureException(new Error(err));
   }
   console.log('connected succesfully to server');
 });
