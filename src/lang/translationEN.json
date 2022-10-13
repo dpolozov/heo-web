@@ -37,7 +37,9 @@
     "backToMyCampaigns": "Back To My Campaigns",
     "fn": "First name",
     "ln": "Last name",
+    "onEn": "Organization name in English",
     "on": "Organization name",
+    "organizationEn": "Organization in English",
     "organization": "Organization",
     "selectConuntry": "Select your country",
     "selectCoin": "Select crypto-currency",
@@ -98,6 +100,7 @@
     "removeLink": "Please select word(s) to remove link",
     "requiredFieldsTitle": "Required field",
     "orgRequired": "Please enter the name of your organization into Organization field",
+    "orgRequiredEn": "Please enter the name of your organization in English",
     "cnRequired": "Please select your organization's country",
     "titleRequired": "Please enter a title for your campaign",
     "shortDescRequired": "Please provide a short description/tag line for your campaign",
@@ -171,6 +174,8 @@
     "fiatDonationLimitation3": "According to the rules set by the payment processing bank, your IP address has to be located in the same country as the bank that issued your card",
     "showMoreTextExpand": "Show more...",
     "showLessTextCollapse": "Show less...",
-    "defDonationAmount": "Default donation amount"
+    "defDonationAmount": "Default donation amount",
+    "fiatPayments": "Use bank cards for donations",
+    "editDBButton": "Edit Database"
 }
 

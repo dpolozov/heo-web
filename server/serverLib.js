@@ -54,6 +54,7 @@ class ServerLib {
             fn: req.body.mydata.fn,
             ln: req.body.mydata.ln,
             org: req.body.mydata.org,
+            key: req.body.mydata.key,
             description: req.body.mydata.description,
             defaultDonationAmount: req.body.mydata.defaultDonationAmount,
             coinbaseCommerceURL: req.body.mydata.coinbaseCommerceURL,
@@ -133,6 +134,15 @@ class ServerLib {
             Sentry.captureException(new Error(err));
             res.sendStatus(500);
         }
+    }
+
+    async handleGetId(req, res, Sentry, DB) {
+        try {
+            const myCollection = await DB.collection('campaigns');
+            let result = await myCollection.findOne({"key" : req.body.KEY});
+            if (result) res.send(result._id);
+            else res.send(req.body.KEY);
+        } catch (err) {Sentry.captureException(new Error(err));}
     }
 
     async handleLoadOneCampaign(req, res, Sentry, DB) {

@@ -1,6 +1,6 @@
 import React from 'react';
 import countries from '../countries';
-import {Container, Form, Col, Button, DropdownButton, Dropdown, Image, Modal} from 'react-bootstrap';
+import {Container, Form, Col, Button, DropdownButton, Dropdown, Image, Modal, Row} from 'react-bootstrap';
 import ReactPlayer from 'react-player';
 import config from "react-global-configuration";
 import axios from 'axios';
@@ -45,6 +45,7 @@ class EditCampaign extends React.Component {
             modalButtonVariant: "",
             fn:"",
             ln:"",
+            orgEn:"",
             org:"",
             ogOrg:{},
             cn:"",
@@ -69,7 +70,8 @@ class EditCampaign extends React.Component {
             chainId:"",
             addresses: {},
             coins: {},
-            defDonationAmount: 0
+            defDonationAmount: 0,
+            fiatPayments: true
         };
     }
 
@@ -85,6 +87,10 @@ class EditCampaign extends React.Component {
     handleChange = (e) => {
         const name = e.target.name
         const value = e.target.value;
+        const checked = e.target.checked;
+        if (name === 'fiatPayments')
+        this.setState({fiatPayments: checked});
+        else
         this.setState({ [name] : value, updateMeta : true });
     }
 
@@ -225,7 +231,8 @@ class EditCampaign extends React.Component {
                 ln: this.state.ln,
                 cn: this.state.cn,
                 vl: this.state.vl,
-                defaultDonationAmount: this.state.defDonationAmount
+                defaultDonationAmount: this.state.defDonationAmount,
+                fiatPayments: this.state.fiatPayments
             };
             data.description = this.state.ogDescription;
             data.description[i18n.language] = data.description["default"] = this.state.description;
@@ -408,6 +415,17 @@ class EditCampaign extends React.Component {
                             <Form.Control required type="number" className="createFormPlaceHolder"
                                           value={this.state.defDonationAmount} placeholder={this.state.defDonationAmount}
                                           name='defDonationAmount' onChange={this.handleChange} onwheel="this.blur()" />
+                            <Row>
+                            <Col xs="auto">                 
+                            <Form.Label><Trans i18nKey='fiatPayments'/><span
+                                className='redAsterisk'></span></Form.Label>
+                            </Col> 
+                            <Col xs lg="1">     
+                            <Form.Check type="checkbox" checked={this.state.fiatPayments} 
+                                        value={this.state.fiatPayments} placeholder={this.state.fiatPayments} 
+                                        name='fiatPayments' onChange={this.handleChange} onwheel="this.blur()"/>
+                            </Col>             
+                            </Row>            
                             <Form.Label><Trans i18nKey='coinbaseCommerceURL'/><span
                                 className='optional'>(<Trans i18nKey='optional'/>)</span></Form.Label>
                             <Form.Control ria-describedby="currencyHelpBlock"
@@ -495,9 +513,29 @@ class EditCampaign extends React.Component {
     }
 
     async componentDidMount() {
+        var id;
+        var modalMessage = 'failedToLoadCampaign';
         let toks = this.props.location.pathname.split("/");
         ReactGA.send({ hitType: "pageview", page: this.props.location.pathname });
-        let id = toks[toks.length -1];
+        let key = toks[toks.length -1];
+        let data = {KEY : key};
+        await axios.post('/api/campaign/getid', data, {headers: {"Content-Type": "application/json"}})
+            .then(res => {
+                id = res.data;
+            }).catch(err => {
+                if (err.response) {
+                    modalMessage = 'technicalDifficulties'}
+                else if(err.request) {
+                    modalMessage = 'checkYourConnection'
+                }
+                console.log(err);
+                this.setState({
+                    showError: true,
+                    modalMessage,
+                })
+            })
+         
+
         let dbCampaignObj = await this.getCampaignFromDB(id);
         let chains = config.get("CHAINS");
         let chainId = config.get("CHAIN");
@@ -508,6 +546,8 @@ class EditCampaign extends React.Component {
         }
         let web3 = new Web3(chainConfig["WEB3_RPC_NODE_URL"]);
         let HEOCampaign = (await import("../remote/"+ chainId + "/HEOCampaign")).default;
+        console.log(`chainId`);
+        console.log(chainId);
         CAMPAIGNINSTANCE = new web3.eth.Contract(HEOCampaign, address);
         console.log(`Campaign instance`);
         console.log(CAMPAIGNINSTANCE);
@@ -572,6 +612,7 @@ class EditCampaign extends React.Component {
             imgID: metaData.imgID,
             qrImgID: metaData.qrImgID,
             org: orgObj[i18n.language],
+            orgEn:orgObj["default"], 
             ogOrg: orgObj,
             title: titleObj[i18n.language],
             ogTitle: titleObj,
@@ -585,7 +626,8 @@ class EditCampaign extends React.Component {
             addresses: dbCampaignObj.addresses,
             coins: dbCampaignObj.coins,
             coinbaseCommerceURL: dbCampaignObj.coinbaseCommerceURL,
-            defDonationAmount: dbCampaignObj.defaultDonationAmount
+            defDonationAmount: dbCampaignObj.defaultDonationAmount,
+            fiatPayments: dbCampaignObj.fiatPayments
         });
         console.log(`Set title to`);
         console.log(this.state.ogTitle);

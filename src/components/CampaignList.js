@@ -112,7 +112,7 @@ class CampaignList extends Component {
                     <Container>
                         {this.state.campaigns.map((item, i) =>
                             <Row style={{marginBottom: '20px'}} key={i}>
-                                <Link to={'/campaign/' + item._id} id='cardLink' key={i}>
+                                <Link to={'/campaign/' + item.key} id='cardLink' key={i}>
                                 <Card>
                                     <Row>
                                         <Col sm='3' id='picColumn'>
