@@ -27,7 +27,6 @@ ReactGA.initialize("G-C657WZY5VT");
 class App extends Component {
     constructor(props) {
         super(props);
-
         this.state = {
             language: 'en',
             showError: false,
@@ -55,10 +54,6 @@ class App extends Component {
             nonInteraction: false
         });
     }
-
-    async EditDBGlobal(){
-     await axios.post('/api/campaign/updateAll');
-    } 
 
     render() {
         let lang = GetLanguage();
@@ -104,11 +99,6 @@ class App extends Component {
                                     </select>
                                     <Nav.Link target="_blank" as='a' href={lang == "ru" ? "https://docs.heo.finance/v/russian/" : "https://docs.heo.finance/"} className='upperNavText' id='helpBtn'><Trans i18nKey='help'/></Nav.Link>
                                 </Navbar.Collapse>
-                                <Button className='myModalButton'
-                                  style={{backgroundColor : this.state.modalButtonVariant, borderColor : this.state.modalButtonVariant}}
-                                   onClick={ () => {this.EditDBGlobal()}}>
-                                   <Trans i18nKey= 'editDBButton' />
-                                </Button>
                             </Container>
                         </Navbar>
                     </div>
