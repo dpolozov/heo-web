@@ -107,7 +107,7 @@ class ServerLib {
 
     async handleDeactivateCampaign(req, res, Sentry, DB) {
         let myCollection = await DB.collection("campaigns");
-        let result = myCollection.findOne({"_id" : req.body.id});
+        let result = await myCollection.findOne({"_id" : req.body.id});
         if(!result || result.ownerId != req.user.address.toLowerCase()) {
             res.sendStatus(500);
             console.log(`Campaign's ownerId (${result.ownerId}) does not match the user (${req.user.address})`);
@@ -156,7 +156,7 @@ class ServerLib {
     async handleLoadUserCampaigns(req, res, Sentry, DB) {
         try{
             const myCollection = await DB.collection('campaigns');
-            const campaigns = await myCollection.find({"ownerId" : {$eq: req.user.address}});
+            const campaigns = await myCollection.find({"ownerId" : {$eq: req.user.address}, active: true});
             const result = await campaigns.toArray();
             res.send(result);
         } catch (err) {
@@ -210,7 +210,7 @@ class ServerLib {
         catch (err) {Sentry.captureException(new Error(err))}
     }
 
-    authenticated(req, res, Sentry) {
+    async authenticated(req, res, Sentry) {
         if(req.user && req.user.address) {
             return true;
         } else {
