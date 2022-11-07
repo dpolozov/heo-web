@@ -55,7 +55,7 @@ class UserCampaigns extends Component {
                         showModal: false,
                         goHome: false
                     });
-                    this.loadCampaigns();
+                  this.loadCampaigns();
                 } else {
                     //user is not in the white list
                     this.setState({
@@ -97,10 +97,10 @@ class UserCampaigns extends Component {
         await initWeb3Modal(chainId, this);
         // is the user logged in?
         if(!this.state.isLoggedIn) {
-            await checkAuth(chainId, this);
+           await checkAuth(chainId, this);
         }
         if(this.state.isLoggedIn) {
-            await this.checkWL(chainId);
+           await this.checkWL(chainId);
         } else {
             //need to log in first
             this.setState({
@@ -248,7 +248,7 @@ class UserCampaigns extends Component {
                                                     }
                                                     await LogIn(this.state.accounts[0], this.state.web3, this);
                                                     if(this.state.isLoggedIn) {
-                                                        toggleLoggedIn(true);
+                                                        //toggleLoggedIn(true);
                                                         await this.checkWL(chainId);
                                                     }
                                                 } catch (err) {
