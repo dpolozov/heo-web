@@ -27,7 +27,6 @@ ReactGA.initialize("G-C657WZY5VT");
 class App extends Component {
     constructor(props) {
         super(props);
-
         this.state = {
             language: 'en',
             showError: false,
