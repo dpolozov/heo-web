@@ -55,6 +55,7 @@ class CampaignList extends Component {
     /* this is a test comment */
     async getCampaigns() {
         var campaigns = [];
+        var donates = []
         var errorMessage = 'Failed to load campaigns';
 
         await axios.post('/api/campaign/loadAll')
@@ -72,15 +73,33 @@ class CampaignList extends Component {
                 errorMessage,
             })
         })
+        //
+        await axios.post('/api/campaign/getalldanatesforlist')
+        .then(res => {
+            donates = res.data;
+        }).catch(err => {
+            if (err.response) {
+                errorMessage = 'Failed to load campaigns. We are having technical difficulties'}
+            else if(err.request) {
+                errorMessage = 'Failed to load campaings. Please check your internet connection'
+            }
+            console.log(err);
+            this.setState({
+                showError: true,
+                errorMessage,
+            })
+        })
+        console.log(donates);
         campaigns.forEach( campaign => {
+            const found = donates.find(element => element._id == campaign._id); 
+            if (found == undefined) campaign.raisedAmount = 0;
+            else campaign.raisedAmount = found.totalQuantity;
             let raisedAmount = campaign.raisedAmount ? parseFloat(campaign.raisedAmount) : 0;
             let fiatDonations = campaign.fiatDonations ? parseFloat(campaign.fiatDonations) : 0;
             let raisedOnCoinbase = campaign.raisedOnCoinbase ? parseFloat(campaign.raisedOnCoinbase) : 0;
-
             if(raisedAmount || fiatDonations || raisedOnCoinbase) {
                 campaign["raisedAmount"] = Math.round((raisedAmount + fiatDonations + raisedOnCoinbase) * 100)/100;
             }
-
             //dedupe coin names for "accepting" section
             let dedupedCoinNames = [];
             for(var chain in campaign.coins) {

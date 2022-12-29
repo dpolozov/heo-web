@@ -16,6 +16,8 @@ const Tracing = require("@sentry/tracing");
 const ServerLib = require('./serverLib');
 const CircleLib = require('./circleLib');
 const PayadmitLib = require('./payadmitLib');
+const { pipeline } = require('stream');
+const { group } = require('console');
 const PORT = process.env.PORT || 5000;
 
 
@@ -141,6 +143,14 @@ APP.post('/api/campaign/add', async (req, res) => {
     }
 });
 
+APP.post('/api/donate/adddanate', async (req, res) => {
+    //if(serverLib.authenticated(req, res, Sentry)) {
+       const DB = CLIENT.db(DBNAME);
+       serverLib.handleAddDanate(req, res, Sentry, DB);
+    //}
+    
+});
+
 APP.post('/api/campaign/update', (req, res) => {
     if(serverLib.authenticated(req, res, Sentry)) {
         const DB = CLIENT.db(DBNAME);
@@ -163,6 +173,16 @@ APP.post('/api/campaign/loadAll', (req, res) => {
 APP.post('/api/campaign/getid', (req, res) => {
     const DB = CLIENT.db(DBNAME);
     serverLib.handleGetId(req, res, Sentry, DB);
+});
+
+APP.post('/api/campaign/getalldanates', (req, res) => {
+    const DB = CLIENT.db(DBNAME);
+    serverLib.handleGetAllDonateForCampaign(req, res, Sentry, DB);
+});
+
+APP.post('/api/campaign/getalldanatesforlist', (req, res) => {
+    const DB = CLIENT.db(DBNAME);
+    serverLib.handleGetAllDonateForList(req, res, Sentry, DB);
 });
 
 APP.post('/api/campaign/loadOne', (req, res) => {
@@ -217,7 +237,12 @@ APP.post('/api/auth/jwt', async(req, res) => {
 });
 
 APP.get('/api/auth/status', (req, res) => {
-    if(serverLib.authenticated(req, res, Sentry)) res.send({addr:req.user.address});
+    if(req.user && req.user.address) {
+        res.send({addr:req.user.address});
+    } else {
+        Sentry.captureException(new Error('failed addr vs usr addr'));
+        res.sendStatus(401);
+    }
 });
 
 APP.post('/api/auth/logout', (req, res) => {

@@ -6,12 +6,11 @@ import { Container, Row, Col, Card, ProgressBar, Button, Modal } from 'react-boo
 import { ChevronLeft, CheckCircle, ExclamationTriangle, HourglassSplit, XCircle } from 'react-bootstrap-icons';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
-import { i18nString, DescriptionPreview, LogIn, initWeb3, checkAuth, initWeb3Modal } from '../util/Utilities';
+import { i18nString, DescriptionPreview, LogIn, initWeb3, clearWeb3Provider, checkAuth, initWeb3Modal } from '../util/Utilities';
 import { Trans } from 'react-i18next';
 import i18n from '../util/i18n';
 import {UserContext} from './UserContext';
 import i18next from 'i18next';
-
 import Web3Modal from 'web3modal';
 import Web3 from 'web3';
 import WalletConnectProvider from '@walletconnect/web3-provider';
@@ -89,6 +88,10 @@ class UserCampaigns extends Component {
                 modalMessage: 'blockChainConnectFailed'
             });
         }
+    }
+
+    withdrawDonations = async() => {
+      //
     }
 
     async componentDidMount() {
@@ -296,6 +299,7 @@ class UserCampaigns extends Component {
                                             </Link>
                                             <Row id='buttonsRow'>
                                                 <Col className='buttonCol'><Button variant="danger" id='donateBtn' block onClick={() => this.closeCampaignPrep(item._id, item.mainImageURL)}><Trans i18nKey='closeCmpnBtn'/></Button></Col>
+                                                <Col className='buttonCol'><Link to={'/withdrawDonations/' + item.key} id='cardLink'><Button id='editBtn' block><Trans i18nKey='withdrawDonations'/></Button></Link></Col>              
                                                 <Col className='buttonCol'><Link to={'/editCampaign/' + item.key} id='cardLink'><Button id='editBtn' block><Trans i18nKey='editCmpnBtn'/></Button></Link></Col>
                                             </Row>
                                         </Col>

@@ -1,5 +1,6 @@
 const { registerRequestInstrumentation } = require('@sentry/tracing');
 const { default: axios } = require('axios');
+const { ObjectId } = require('mongodb');
 
 class ServerLib {
     constructor() {
@@ -40,6 +41,26 @@ class ServerLib {
             }
         });
     }
+
+    async handleAddDanate(req, res, Sentry, DB){
+        const ITEM = {
+            campaignID: req.body.mydata.campaignID.toLowerCase(),
+            donatorID: req.body.mydata.donatorID.toLowerCase(),
+            raisedAmount: req.body.mydata.raisedAmount,
+            transactionHash: req.body.mydata.transactionHash,
+            chainId: req.body.mydata.chainId,
+            coinAddress: req.body.mydata.coinAddress,
+            donateDate: Date.now()
+        }
+        try {
+            const myCollection = await DB.collection('donations');
+            await myCollection.insertOne(ITEM);
+            res.send('success');
+        } catch (err) {
+            Sentry.captureException(new Error(err));
+            res.sendStatus(500);
+        }
+    } 
 
     async handleAddCampaign(req, res, Sentry, DB, newWalletId) {
         const ITEM = {
@@ -125,10 +146,15 @@ class ServerLib {
 
     async handleLoadAllCampaigns(req, res, Sentry, DB) {
         try{
-            const myCollection = await DB.collection('campaigns');
-            const campaigns = await myCollection.find({active: true});
-            const sortedCampaigns = await campaigns.sort({"lastDonationTime" : -1});
-            const result = await sortedCampaigns.toArray();
+            const pipeline = [
+               {
+                  $match: {active: true }
+                },
+                {
+                  $sort: {lastDonationTime : -1}
+                }
+            ];
+            const result = await DB.collection('campaigns').aggregate(pipeline).toArray();
             res.send(result);
         } catch (err) {
             Sentry.captureException(new Error(err));
@@ -136,6 +162,33 @@ class ServerLib {
         }
     }
 
+    async handleGetAllDonateForCampaign(req, res, Sentry, DB){
+        try {
+            const pipeline = [
+                { $match: {campaignID: req.body.mydata.campaignID } },
+                {$group: { _id: null, totalQuantity: { $sum: "$raisedAmount" } }}  
+            ];
+            let result = await DB.collection('donations').aggregate(pipeline).toArray();
+            res.send(result);  
+       } catch (err) {
+        Sentry.captureException(new Error(err));
+        res.sendn("error");
+       }  
+    }
+
+    async handleGetAllDonateForList(req, res, Sentry, DB){
+        try {
+            const pipeline = [
+                {$group: { _id: '$campaignID', totalQuantity: {$sum: "$raisedAmount"}}}  
+            ];
+            let result = await DB.collection('donations').aggregate(pipeline).toArray();
+            res.send(result);  
+       } catch (err) {
+        Sentry.captureException(new Error(err));
+        res.sendn("error");
+       }  
+    }
+  
     async handleGetId(req, res, Sentry, DB) {
         try {
             const myCollection = await DB.collection('campaigns');
@@ -158,6 +211,7 @@ class ServerLib {
             const myCollection = await DB.collection('campaigns');
             const campaigns = await myCollection.find({"ownerId" : {$eq: req.user.address}, active: true});
             const result = await campaigns.toArray();
+
             res.send(result);
         } catch (err) {
             Sentry.captureException(new Error(err));
@@ -205,7 +259,6 @@ class ServerLib {
         try{
             const myCollection = await DB.collection('fiat_payment_records');
             await myCollection.updateOne({'_id': recordId}, {$set: data});
-            //console.log(await DB.collection('fiat_payment_records').findOne({'_id': recordId}));
         }
         catch (err) {Sentry.captureException(new Error(err))}
     }
