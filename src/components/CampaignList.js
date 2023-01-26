@@ -74,7 +74,7 @@ class CampaignList extends Component {
             })
         })
         //
-        await axios.post('/api/campaign/getalldanatesforlist')
+        await axios.post('/api/campaign/getalldonationsforlist')
         .then(res => {
             donates = res.data;
         }).catch(err => {

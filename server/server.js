@@ -16,8 +16,6 @@ const Tracing = require("@sentry/tracing");
 const ServerLib = require('./serverLib');
 const CircleLib = require('./circleLib');
 const PayadmitLib = require('./payadmitLib');
-const { pipeline } = require('stream');
-const { group } = require('console');
 const PORT = process.env.PORT || 5000;
 
 
@@ -175,12 +173,22 @@ APP.post('/api/campaign/getid', (req, res) => {
     serverLib.handleGetId(req, res, Sentry, DB);
 });
 
-APP.post('/api/campaign/getalldanates', (req, res) => {
+APP.post('/api/campaign/getalldonations', (req, res) => {
     const DB = CLIENT.db(DBNAME);
     serverLib.handleGetAllDonateForCampaign(req, res, Sentry, DB);
 });
 
-APP.post('/api/campaign/getalldanatesforlist', (req, res) => {
+APP.post('/api/getcoinslist', (req, res) => {
+    const DB = CLIENT.db(DBNAME);
+    serverLib.handleGetCoinsList(req, res, Sentry, DB);
+});
+
+APP.post('/api/getchainslist', (req, res) => {
+    const DB = CLIENT.db(DBNAME);
+    serverLib.handleGetChainsList(req, res, Sentry, DB);
+});
+
+APP.post('/api/campaign/getalldonationsforlist', (req, res) => {
     const DB = CLIENT.db(DBNAME);
     serverLib.handleGetAllDonateForList(req, res, Sentry, DB);
 });

@@ -99,12 +99,14 @@ class CampaignPage extends Component {
             modalButtonVariant: "",
             chainId:"",
             chains:[],
+            chains_coins:{},
             coins:[],
             ccinfo:{},
             showCCinfoModal: false,
             tryAgainCC: false,
             fiatPaymentEnabled: false,
-            fiatPaymentProvider: ''
+            fiatPaymentProvider: '',
+            cur_chain: -1
         };
         this.handleGetCCInfo = this.handleGetCCInfo.bind(this);
         this.handleCCInfoCancel = this.handleCCInfoCancel.bind(this);
@@ -120,6 +122,17 @@ class CampaignPage extends Component {
     handleDonationAmount = (e) => {
         this.setState({donationAmount: e.target.value});
     };
+
+    getCurChaincCoins= (value) =>{
+     for (let i = 0; i < this.state.chains_coins.length; i++){
+        if (this.state.chains_coins._id == value){
+            this.setState({cur_chain: i});
+            return(i); 
+        } 
+     }  
+     this.setState({cur_chain: -1});
+     return(-1);
+    }
 
     async getCampaign(address) {
         var campaign = {};
@@ -152,7 +165,7 @@ class CampaignPage extends Component {
     updateRaisedAmount = async () => {
         var modalMessage;
         let data = {campaignID: this.state.campaignId};
-        await axios.post('/api/campaign/getalldanates', {mydata: data}, {headers: {"Content-Type": "application/json"}})
+        await axios.post('/api/campaign/getalldonations', {mydata: data}, {headers: {"Content-Type": "application/json"}})
             .then(res => {
                 this.setState({raisedAmount: res.data[0].totalQuantity}); 
             }).catch(err => {
@@ -305,7 +318,7 @@ class CampaignPage extends Component {
                           raisedAmount: value,
                           transactionHash: transactionHash,
                           chainId: chainId,
-                          coinAddress: coinAddress
+                          coinAddress: coinAddress,
                         };
         let result = await axios.post('/api/donate/adddanate', {mydata: donateData}, {headers: {"Content-Type": "application/json"}});
         console.log(result);
@@ -319,7 +332,7 @@ class CampaignPage extends Component {
         await this.updateRaisedAmount();
     }  
 
-    handleDonateClick = async (chainId) => {
+    handleDonateClick = async (chainId, coinAddress) => {
         //TODO: check that this.state.donationAmount is larger than 
         try {
             await clearWeb3Provider(this);
@@ -337,9 +350,8 @@ class CampaignPage extends Component {
             ERC20Coin = (await import("../remote/"+ chainId + "/ERC20")).default;
             let campaignAddress = this.state.campaign.addresses[chainId];
             let campaignInstance = new web3.eth.Contract(HEOCampaign, campaignAddress);
-            let coinAddress = (await campaignInstance.methods.currency().call()).toLowerCase();
-            let toDonate = web3.utils.toWei(this.state.donationAmount);
-            let userCoinInstance = new web3.eth.Contract(ERC20Coin, coinAddress);
+            //let coinAddress = (await campaignInstance.methods.currency().call()).toLowerCase();
+            let toDonate = web3.utils.toWei(""+this.state.donationAmount);
             var coinInstance = new web3.eth.Contract(ERC20Coin, coinAddress);
             ReactGA.event({
                 category: "donation",
@@ -691,17 +703,21 @@ class CampaignPage extends Component {
                                     </p>
                                 </div>
                             </Row>
+                            <Row id='titleRow'>
+                              <Col xs="auto">
+                                <p id='titleDonation'>{i18n.t('donationsize')}</p>
+                              </Col>
+                              <Col>    
+                                <FormControl
+                                id='donateAmount'
+                                value={this.state.donationAmount}
+                                onChange={this.handleDonationAmount}
+                                type="number"
+                                />
+                               </Col>     
+                            </Row>
                             <Row id='donateRow'>
-                                <InputGroup className="mb-3">
-                                    <FormControl
-                                        id='donateAmount'
-                                        value={this.state.donationAmount}
-                                        onChange={this.handleDonationAmount}
-                                        type="number"
-                                    />
-                                    <InputGroup.Append>
-                                        <DropdownButton id='donateButton' title={i18n.t('donate')}>
-                                            {this.state.fiatPaymentEnabled && <Dropdown.Item key="_fiat" as="button" onClick={
+                                        {this.state.fiatPaymentEnabled && <Col><Button key="_fiat" onClick={
                                                 () => {
                                                     if(this.state.fiatPaymentProvider ==='payadmit') {
                                                         //skip the card info form for PayAdmin and use hosted payment dialog
@@ -713,17 +729,21 @@ class CampaignPage extends Component {
                                                         this.setState({showCCinfoModal: true});
                                                     }
                                                 }
-                                            }><img src={visaMcLogo} width={17} height={16} style={{marginRight:5}} />USD</Dropdown.Item> }
-                                            {this.state.chains.map((item, i) =>
-                                                    <Dropdown.Item key={item["CHAIN"]} as="button" onClick={() => this.handleDonateClick(item["CHAIN"])}><img src={IMG_MAP[this.state.campaign.coins[item["CHAIN"]].name]} width={16} height={16} style={{marginRight:5}} />{this.state.campaign.coins[item["CHAIN"]].name} ({item["CHAIN_NAME"]})</Dropdown.Item>
-                                                )}
+                                        }><img src={visaMcLogo} width={17} height={16} style={{marginRight:5}} />USD</Button></Col>}
+                                         {this.state.chains.map((item, i) =>
+                                                    <Col>
+                                                      <DropdownButton title= {item["CHAIN_NAME"]} >
+                                                       {this.state.chains_coins[this.state.campaign.coins[item["CHAIN"]].id].coins.map((item_coins, j) =>
+                                                          <Dropdown.Item key={item_coins.address} as="button" onClick={() => this.handleDonateClick(item["CHAIN"],item_coins.address)}><img src={IMG_MAP[item_coins.name]} width={16} height={16} style={{marginRight:5}} />{item_coins.name}</Dropdown.Item>
+                                                       )}
+                                                      </DropdownButton>
+                                                    </Col>
+                                           )}
                                             {this.state.campaign.coinbaseCommerceURL &&
-                                                <Dropdown.Item key="DonateCoinbaseCommerce" href={`${this.state.campaign.coinbaseCommerceURL}`} target="_blank"><img src={coinBaseLogo} width={16} height={16} style={{marginRight:5}} /><Trans i18nKey="otherCoinsCoinbase" /></Dropdown.Item>
+                                                <Col><Button key="DonateCoinbaseCommerce" href={`${this.state.campaign.coinbaseCommerceURL}`} target="_blank"><img src={coinBaseLogo} width={16} height={16} style={{marginRight:5}} /><Trans i18nKey="otherCoinsCoinbase" /></Button></Col>
                                             }
-                                        </DropdownButton>
-
-                                    </InputGroup.Append>
-                                </InputGroup>
+                                    
+                              
                             </Row>
                         </Col>
                     </Row>
@@ -769,6 +789,7 @@ class CampaignPage extends Component {
                     modalMessage: modalMessage
                 })
             })
+       
         let campaign = (await this.getCampaign(campaignId));
         if(!campaign) {
             this.props.history.push("/404");
@@ -805,6 +826,7 @@ class CampaignPage extends Component {
                 chains.push(configChains[ch]);
             }
         }
+        
         let globals = config.get("GLOBALS");
         globals.forEach(element => {
             if(element._id === 'FIATPAYMENT') {
@@ -834,6 +856,27 @@ class CampaignPage extends Component {
             }
         }
 
+        await axios.post('/api/getcoinslist')
+        .then(res => {
+            let chains_coins = {};
+            for (let i = 0; i <  res.data.length; i++){
+                if(campaign.coins[res.data[i]._id])
+                campaign.coins[res.data[i]._id].id = i;    
+            }
+            this.setState({chains_coins:res.data})
+        }).catch(err => {
+            if (err.response) {
+                modalMessage = 'Failed to load coins. We are having technical difficulties'}
+            else if(err.request) {
+                modalMessage = 'Failed to load coins. Please check your internet connection'
+            }
+            console.log(err);
+            this.setState({
+                showError: true,
+                modalMessage: modalMessage
+            })
+        })
+        
         this.setState({
             chains: chains,
             campaignId: campaignId,

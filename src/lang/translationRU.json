@@ -174,5 +174,7 @@
     "showLessTextCollapse": "Свернуть текст...",
     "defDonationAmount": "Сумма пожертвования по умолчанию",
     "fiatPayments": "Использовать банковские карточки для пожертвований",
-    "withdrawDonations" : "Снять пожертвования" 
-}
+    "withdrawDonations" : "Снять пожертвования",
+    "donationsize" : "Введите размер пожертвования:"
+} 
+
