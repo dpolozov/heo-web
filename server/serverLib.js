@@ -46,16 +46,7 @@ class ServerLib {
     }
 
     async handleAddDanate(req, res, Sentry, DB){
-       let web3 = new Web3(Web3.givenProvider || 'ws://some.local-or-remote.node:8546');
-       await web3.eth.getTransaction(req.body.mydata.transactionHash)
-       .then(result => {
-        res.send(result);
-       })
-       .catch(err =>{
-        Sentry.captureException(new Error(err));
-        res.sendStatus(500);
-       }); 
-        const ITEM = {
+       const ITEM = {
             campaignID: req.body.mydata.campaignID.toLowerCase(),
             donatorID: req.body.mydata.donatorID.toLowerCase(),
             raisedAmount: req.body.mydata.raisedAmount,

@@ -318,9 +318,10 @@ class CampaignPage extends Component {
                           raisedAmount: value,
                           transactionHash: transactionHash,
                           chainId: chainId,
-                          coinAddress: coinAddress,
+                          coinAddress: coinAddress
                         };
         let result = await axios.post('/api/donate/adddanate', {mydata: donateData}, {headers: {"Content-Type": "application/json"}});
+
         console.log(result);
         this.setState({showModal:true, goHome: true,
             modalMessage: 'campaignCreateSuccess',
