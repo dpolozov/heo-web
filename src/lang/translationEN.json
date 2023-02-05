@@ -177,6 +177,6 @@
     "defDonationAmount": "Default donation amount",
     "fiatPayments": "Use bank cards for donations",
     "withdrawDonations" : "Withdraw donations",
-    "donationsize" : "Enter donation size:"
+    "donationsSize" : "Donations size"
 }
 

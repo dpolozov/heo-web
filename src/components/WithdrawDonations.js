@@ -20,7 +20,6 @@ import { Editor, EditorState, convertFromRaw, CompositeDecorator } from "draft-j
 import '../css/campaignPage.css';
 import '../css/modal.css';
 import ReactGA from "react-ga4";
-
 import bnbIcon from '../images/binance-coin-bnb-logo.png';
 import busdIcon from '../images/binance-usd-busd-logo.png';
 import usdcIcon from '../images/usd-coin-usdc-logo.png';
@@ -30,7 +29,6 @@ import btcLogo from '../images/bitcoin-logo.png';
 import daiLogo from '../images/dai-logo.png';
 import ltcLogo from '../images/ltc-logo.png'
 import visaMcLogo from '../images/visa-mc-logo.png';
-
 import coinBaseLogo from '../images/coinbase-c-logo.png';
 import CCData from '../components/CCData';
 
@@ -98,6 +96,7 @@ class WithdrawDonations extends Component {
             modalButtonVariant: "",
             chainId:"",
             chains:[],
+            chains_coins:[],
             coins:[],
             ccinfo:{},
             showCCinfoModal: false,
@@ -139,9 +138,6 @@ class WithdrawDonations extends Component {
         let raisedAmount = campaign.raisedAmount ? parseFloat(campaign.raisedAmount) : 0;
         let fiatDonations = campaign.fiatDonations ? parseFloat(campaign.fiatDonations) : 0;
         let raisedOnCoinbase = campaign.raisedOnCoinbase ? parseFloat(campaign.raisedOnCoinbase) : 0;
-
-
-
         if(raisedAmount || fiatDonations || raisedOnCoinbase) {
             campaign["raisedAmount"] = Math.round((raisedAmount + fiatDonations + raisedOnCoinbase) * 100)/100;
         }
@@ -152,7 +148,7 @@ class WithdrawDonations extends Component {
         let data = {campaignID : this.state.campaignId};
         var raisedAmount;
         var modalMessage;
-        await axios.post('/api/campaign/getalldanates', {mydata: data}, {headers: {"Content-Type": "application/json"}})
+        await axios.post('/api/campaign/getalldonations', {mydata: data}, {headers: {"Content-Type": "application/json"}})
             .then(res => {
                 raisedAmount = res.data;
                 this.setState({raisedAmount: raisedAmount}); 
@@ -177,6 +173,45 @@ class WithdrawDonations extends Component {
     onModalClose() {
         if(this.state.tryAgainCC) {
             this.setState({showCCinfoModal:true});
+        }
+    }
+
+    getDaonateSize = async (chainId, campaign) =>{
+      try{
+          await clearWeb3Provider(this);
+          await initWeb3Modal(chainId);
+          await initWeb3(chainId, this);
+          let web3 = this.state.web3;
+          var currentProvider = "";
+          if(web3.currentProvider && web3.currentProvider.isMetaMask) {
+              currentProvider = "metamask";
+          } else if(web3.currentProvider && web3.currentProvider.isWalletConnect) {
+              currentProvider = "walletconnect";
+          }
+          HEOCampaign = (await import("../remote/"+ chainId + "/HEOCampaign")).default;
+          ERC20Coin = (await import("../remote/"+ chainId + "/ERC20")).default;
+          let campaignAddress = campaign.addresses[chainId];
+          let campaignInstance = new web3.eth.Contract(HEOCampaign, campaignAddress);
+          let coinAddress = (await campaignInstance.methods.currency().call()).toLowerCase();
+          let userCoinInstance = new web3.eth.Contract(ERC20Coin, coinAddress);
+          let campaignBalance = await userCoinInstance.methods.balanceOf(campaignAddress).call();
+          return(campaignBalance/(10**18));
+      }
+    catch (err) {
+            console.log(err);
+            this.setState({
+                showModal: true, modalTitle: 'failed',
+                errorIcon: 'XCircle', modalButtonMessage: 'closeBtn',
+                modalButtonVariant: '#E63C36', waitToClose: false,
+                modalMessage: 'blockChainConnectFailed'
+            });
+            ReactGA.event({
+                category: "error",
+                action: "transaction_error",
+                label: (err && err.message ? err.message : "blockChainConnectFailed"), // optional, must be a number
+                nonInteraction: false
+            });
+            return (0);
         }
     }
 
@@ -312,45 +347,16 @@ class WithdrawDonations extends Component {
                                 <p id='progressBarLabel'><span id='progressBarLabelStart'>&#36;{`${this.state.raisedAmount}`}</span>{i18n.t('raised')}&#36;{this.state.campaign.maxAmount} {i18n.t('goal')}</p>
                                 <ProgressBar id='progressBar' now={this.state.campaign.percentRaised}/>
                             </Row>
-                            <Row id='acceptingRow'>
-                                <div id='acceptingDiv'>
-                                    <p><Trans i18nKey='accepting'/>:
-                                        {this.state.fiatPaymentEnabled && <span className='coinRewardInfo'><img src={visaMcLogo} witdth={21} height={20} style={{marginRight:5, marginLeft:5}} /> </span> }
-                                        {this.state.coins.map((item, i) =>
-                                            <span className='coinRewardInfo'><img src={IMG_MAP[item]} width={20} height={20} style={{marginRight:5, marginLeft:5}} /> </span>
-                                            )}
-                                        {this.state.campaign.coinbaseCommerceURL && <span className='coinRewardInfo'><img src={ethIcon} width={20} height={20} style={{marginRight:5, marginLeft:5}} /> </span> }
-                                        {this.state.campaign.coinbaseCommerceURL && <span className='coinRewardInfo'><img src={btcLogo} width={20} height={20} style={{marginRight:5, marginLeft:5}} /> </span> }
-                                        {this.state.campaign.coinbaseCommerceURL && <span className='coinRewardInfo'><img src={daiLogo} width={20} height={20} style={{marginRight:5, marginLeft:5}} /> </span> }
-                                        {this.state.campaign.coinbaseCommerceURL && <span className='coinRewardInfo'><img src={ltcLogo} width={20} height={20} style={{marginRight:5, marginLeft:5}} /> </span> }
-                                    </p>
-                                </div>
-                            </Row>
                             <Row id='donateRow'>
                                 <InputGroup className="mb-1">
                                     <InputGroup.Append>
                                         <DropdownButton id='donateButton' title={i18n.t('withdrawDonations')}>
-                                            {this.state.fiatPaymentEnabled && <Dropdown.Item key="_fiat" as="button" onClick={
-                                                () => {
-                                                    if(this.state.fiatPaymentProvider ==='payadmit') {
-                                                        //skip the card info form for PayAdmin and use hosted payment dialog
-                                                        this.setState({showCCinfoModal: false});
-                                                        this.setState({showCCWarningModal: true});
-                                                    } else {
-                                                        //for Cirle use our payment dialog
-                                                        this.setState({showCCWarningModal: false});
-                                                        this.setState({showCCinfoModal: true});
-                                                    }
-                                                }
-                                            }><img src={visaMcLogo} width={17} height={16} style={{marginRight:5}} />USD</Dropdown.Item> }
                                             {this.state.chains.map((item, i) =>
-                                                    <Dropdown.Item key={item["CHAIN"]} as="button" onClick={() => this.handleDonateClick(item["CHAIN"])}><img src={IMG_MAP[this.state.campaign.coins[item["CHAIN"]].name]} width={16} height={16} style={{marginRight:5}} />{this.state.campaign.coins[item["CHAIN"]].name} ({item["CHAIN_NAME"]})</Dropdown.Item>
-                                                )}
-                                            {this.state.campaign.coinbaseCommerceURL &&
-                                                <Dropdown.Item key="DonateCoinbaseCommerce" href={`${this.state.campaign.coinbaseCommerceURL}`} target="_blank"><img src={coinBaseLogo} width={16} height={16} style={{marginRight:5}} /><Trans i18nKey="otherCoinsCoinbase" /></Dropdown.Item>
-                                            }
+                                                    <Dropdown.Item key={item["CHAIN"]} as="button" onClick={() => this.handleDonateClick(item["CHAIN"])}>
+                                                     {item["CHAIN_NAME"]}  {"-"}  {i18n.t('donationsSize')}{":"} {this.state.campaign.coins[item["CHAIN"]].donate}
+                                                     </Dropdown.Item>
+                                            )}
                                         </DropdownButton>
-
                                     </InputGroup.Append>
                                 </InputGroup>
                             </Row>
@@ -376,6 +382,7 @@ class WithdrawDonations extends Component {
         );
     }
 
+
     async componentDidMount() {
         window.scrollTo(0,0);
         var modalMessage = 'failedToLoadCampaign';
@@ -386,7 +393,6 @@ class WithdrawDonations extends Component {
         await axios.post('/api/campaign/getid', data, {headers: {"Content-Type": "application/json"}})
             .then(res => {
                 campaignId = res.data;
-                this.setState({campaignId: campaignId}); 
             }).catch(err => {
                 if (err.response) {
                     modalMessage = 'technicalDifficulties'}
@@ -396,7 +402,7 @@ class WithdrawDonations extends Component {
                 console.log(err);
                 this.setState({
                     showError: true,
-                    modalMessage: modalMessage
+                    modalMessage,
                 })
             })
         let campaign = (await this.getCampaign(campaignId));
@@ -404,9 +410,8 @@ class WithdrawDonations extends Component {
             this.props.history.push("/404");
             return;
         }
-        await this.updateRaisedAmount();
         this.state.donationAmount = campaign.defaultDonationAmount ? campaign.defaultDonationAmount : "10";
-        campaign.percentRaised = 100 * (this.state.raisedAmount)/campaign.maxAmount;
+        campaign.percentRaised = 100 * (campaign.raisedAmount)/campaign.maxAmount;
         var contentState = {};
         if(campaign.descriptionEditor[i18n.language]) {
             for(var lng in campaign.descriptionEditor) {
@@ -433,6 +438,7 @@ class WithdrawDonations extends Component {
         let configChains = config.get("CHAINS");
         for(var ch in campaign.addresses) {
             if(configChains[ch]) {
+                campaign.coins[configChains[ch].CHAIN].donate = await this.getDaonateSize(configChains[ch].CHAIN, campaign);
                 chains.push(configChains[ch]);
             }
         }
@@ -472,6 +478,7 @@ class WithdrawDonations extends Component {
             coins: dedupedCoinNames,
             editorState: EditorState.createWithContent(contentState[i18n.language], createDecorator())
         });
+         
 
         ReactGA.send({ hitType: "pageview", page: this.props.location.pathname });
 
@@ -537,134 +544,14 @@ function findLinkEntities(contentBlock, callback, contentState) {
       },
       callback
     );
-  }
+}
 
-  const editorLink = (props) => {
+const editorLink = (props) => {
     const {url} = props.contentState.getEntity(props.entityKey).getData();
     return (
       <a href={url} target='_blank'>
         {props.children}
       </a>
     );
-  };
-
-function checkDonationTransaction(txnObject, decimals, chainId, that) {
-    if(txnObject.blockNumber) {
-        console.log(`Donation transaction successful in block ${txnObject.blockNumber}`);
-        let accounts = that.state.accounts;
-        let web3 = that.state.web3;
-
-        let campaignInstance = new web3.eth.Contract(HEOCampaign, that.state.campaign.addresses[chainId]);
-        if(decimals > 0) {
-            that.updateRaisedAmount(accounts, campaignInstance, web3, decimals);
-        }
-        that.setState({
-            showModal: true, modalTitle: 'complete',
-            modalMessage: 'thankYouDonation',
-            errorIcon: 'CheckCircle', modalButtonMessage: 'closeBtn',
-            modalButtonVariant: '#588157', waitToClose: false
-        });
-        ReactGA.event({
-            category: "donation",
-            action: "donation_succeeded",
-            value: parseInt(that.state.donationAmount), // optional, must be a number
-            nonInteraction: false
-        });
-    } else {
-        that.state.web3.eth.getTransaction(txnObject.hash).then(function(txnObject2) {
-            if(txnObject2) {
-                setTimeout(checkDonationTransaction, 3000, txnObject2, decimals, chainId, that);
-            } else {
-                console.log(`Empty txnObject2. Using transaction hash to check status.`);
-                setTimeout(checkDonationTransaction, 3000, {hash:txnObject.hash}, decimals, chainId, that);
-            }
-        });
-    }
-}
-
-function checkApprovalTransaction(txnObject, decimals, chainId, that) {
-    if(txnObject && txnObject.blockNumber) {
-        //successful, can make a donation now
-        let web3 = that.state.web3;
-        let accounts = that.state.accounts;
-        let campaignInstance = new web3.eth.Contract(HEOCampaign, that.state.campaign.addresses[chainId]);
-        let toDonate = new web3.utils.BN(""+that.state.donationAmount).mul(new web3.utils.BN(new web3.utils.BN("10").pow(new web3.utils.BN(""+decimals))));
-
-        that.setState({
-            showModal: true, modalTitle: 'processingWait',
-            modalMessage: "approveDonate",
-            errorIcon: 'HourglassSplit', modalButtonVariant: "gold", waitToClose: true
-        });
-        ReactGA.event({
-            category: "donation",
-            action: "approval_succeeded",
-            value: parseInt(that.state.donationAmount), // optional, must be a number
-            nonInteraction: false
-        });
-        campaignInstance.methods.donateERC20(""+toDonate).send(
-            {from:accounts[0]}
-        ).once('transactionHash', function(transactionHash) {
-            console.log(`Got donation trnasaction hash ${transactionHash}`);
-            ReactGA.event({
-                category: "donation",
-                action: "donation_hash",
-                label: transactionHash, // optional, must be a number
-                nonInteraction: false
-            });
-            web3.eth.getTransaction(transactionHash).then(
-                function(txnObject2) {
-                    if(txnObject2) {
-                        checkDonationTransaction(txnObject2, decimals, chainId, that);
-                    } else {
-                        console.log(`Empty txnObject2. Using transaction hash to check donation status.`);
-                        checkDonationTransaction({hash:transactionHash}, decimals, chainId, that);
-                    }
-                }
-            );
-        }).on('error', function(error) {
-            ReactGA.event({
-                category: "donation",
-                action: "donation_failed",
-                label: error, // optional, must be a number
-                nonInteraction: false
-            });
-            that.setState({
-                showModal: true, modalTitle: 'failed',
-                errorIcon: 'XCircle', modalButtonMessage: 'closeBtn',
-                modalButtonVariant: '#E63C36', waitToClose: false,
-                modalMessage: 'blockChainTransactionFailed'
-            });
-            clearWeb3Provider(that)
-            console.log('error handler invoked in checkApprovalTransaction')
-            console.log(error);
-        })
-    } else {
-        if(txnObject) {
-            that.state.web3.eth.getTransaction(txnObject.hash).then(function(txnObject2) {
-                if(txnObject2) {
-                    console.log(`Got updated txnObject for approval transaction`);
-                    setTimeout(checkApprovalTransaction, 3000, txnObject2, decimals, chainId, that);
-                } else {
-                    console.log(`txnObject2 is null. Using txnObject with transaction hash`);
-                    setTimeout(checkApprovalTransaction, 3000, txnObject, decimals, chainId, that);
-                }
-            });
-        } else {
-            console.log(`txnObject is null`);
-            that.setState({
-                showModal: true, modalTitle: 'failed',
-                errorIcon: 'XCircle', modalButtonMessage: 'closeBtn',
-                modalButtonVariant: '#E63C36', waitToClose: false,
-                modalMessage: 'blockChainTransactionFailed'
-            });
-            ReactGA.event({
-                category: "donation",
-                action: "transaction_failed",
-                label: "txnObject is null", // optional, must be a number
-                nonInteraction: false
-            });
-        }
-    }
-}
-
+};
 export default WithdrawDonations;

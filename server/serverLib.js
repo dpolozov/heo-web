@@ -94,7 +94,8 @@ class ServerLib {
             lastDonationTime: 0,
             coins: req.body.mydata.coins,
             addresses: req.body.mydata.addresses,
-            active: true
+            active: true,
+            new: true
         }
         try {
             const myCollection = await DB.collection('campaigns');
@@ -212,7 +213,7 @@ class ServerLib {
     async handleGetCoinsList(req, res, Sentry, DB) {
         try {
             const myCollection = await DB.collection('coins_for_chains');
-            let coins = await myCollection.aggregate([{$group:{ _id : "$chain", coins:{$push: "$coin"}}}]);
+            let coins = await myCollection.find();//aggregate([{$group:{ _id : "$chain", coins:{$push: "$coin"}}}]);
             const result = await coins.toArray();
             res.send(result);
         } catch (err) {Sentry.captureException(new Error(err));}
