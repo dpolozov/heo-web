@@ -244,12 +244,7 @@ APP.post('/api/auth/jwt', async(req, res) => {
 });
 
 APP.get('/api/auth/status', (req, res) => {
-    if(req.user && req.user.address) {
-        res.send({addr:req.user.address});
-    } else {
-        Sentry.captureException(new Error('failed addr vs usr addr'));
-        res.sendStatus(401);
-    }
+    if(serverLib.authenticated(req, res, Sentry)) res.send({addr:req.user.address});
 });
 
 APP.post('/api/auth/logout', (req, res) => {

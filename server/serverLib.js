@@ -3,10 +3,8 @@ const { default: axios } = require('axios');
 const { ObjectId } = require('mongodb');
 const {Web3} = require('web3');
 
-
 class ServerLib {
     constructor() {
-     
     }
     
     testingClass() {
@@ -152,15 +150,10 @@ class ServerLib {
 
     async handleLoadAllCampaigns(req, res, Sentry, DB) {
         try{
-            const pipeline = [
-               {
-                  $match: {active: true }
-                },
-                {
-                  $sort: {lastDonationTime : -1}
-                }
-            ];
-            const result = await DB.collection('campaigns').aggregate(pipeline).toArray();
+            const myCollection = await DB.collection('campaigns');
+            const campaigns = await myCollection.find({active: true});
+            const sortedCampaigns = await campaigns.sort({"lastDonationTime" : -1});
+            const result = await sortedCampaigns.toArray();
             res.send(result);
         } catch (err) {
             Sentry.captureException(new Error(err));

@@ -1,4 +1,4 @@
-import React, { Component} from 'react';
+import React, { Component, lazy } from 'react';
 import config from 'react-global-configuration';
 import '../css/modal.css';
 import '../css/campaignList.css';
@@ -10,6 +10,10 @@ import { i18nString, DescriptionPreview, LogIn, initWeb3, checkAuth, initWeb3Mod
 import { Trans } from 'react-i18next';
 import i18n from '../util/i18n';
 import {UserContext} from './UserContext';
+import i18next from 'i18next';
+import Web3Modal from 'web3modal';
+import Web3 from 'web3';
+import WalletConnectProvider from '@walletconnect/web3-provider';
 import ReactGA from "react-ga4";
 
 ReactGA.initialize("G-C657WZY5VT");
