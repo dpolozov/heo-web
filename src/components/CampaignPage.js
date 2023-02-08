@@ -997,7 +997,7 @@ class CampaignPage extends Component {
                                                 }
                                             }><img src={visaMcLogo} width={17} height={16} style={{marginRight:5}} />USD</Dropdown.Item> }
                                             {this.state.chains_coins.map((item, i) =>
-                                                    <Dropdown.Item key={item.chain.address} as="button" onClick={() => this.handleDonateClick(item.chain, item.coin.address)}><img src={IMG_MAP[item.coin.name]} width={16} height={16} style={{marginRight:5}} />{item.coin.name} ({item.chain})</Dropdown.Item>
+                                                    <Dropdown.Item key={item.chain.address} as="button" onClick={() => this.handleDonateClick(item.chain, item.coin.address)}><img src={IMG_MAP[item.coin.name]} width={16} height={16} style={{marginRight:5}} />{item.coin.name} ({item.chain_name })</Dropdown.Item>
                                                 )}
                                             {this.state.campaign.coinbaseCommerceURL &&
                                                 <Dropdown.Item key="DonateCoinbaseCommerce" href={`${this.state.campaign.coinbaseCommerceURL}`} target="_blank"><img src={coinBaseLogo} width={16} height={16} style={{marginRight:5}} /><Trans i18nKey="otherCoinsCoinbase" /></Dropdown.Item>
@@ -1121,8 +1121,15 @@ class CampaignPage extends Component {
         .then(res => {
             let chains_coins = [];
             for (let i = 0; i <  res.data.length; i++){
+                res.data[i].chain_name = "";
                 if(campaign.coins[res.data[i].chain])
                 {
+                    for (let j = 0; j < chains.length; j++){
+                     if (chains[j].CHAIN == res.data[i].chain){
+                        res.data[i].chain_name = chains[j].CHAIN_NAME;
+                        break;
+                     }     
+                    }
                     chains_coins.push(res.data[i]); 
                     campaign.coins[res.data[i].chain].id = i;
                 }
@@ -1140,7 +1147,8 @@ class CampaignPage extends Component {
                 modalMessage: modalMessage
             })
         })
-        
+        console.log("Компания:");
+        console.log(chains);
         this.setState({
             chains: chains,
             campaignId: campaignId,
