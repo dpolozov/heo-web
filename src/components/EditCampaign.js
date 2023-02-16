@@ -69,7 +69,6 @@ class EditCampaign extends React.Component {
             chains:{},
             chainId:"",
             addresses: {},
-            coins: {},
             defDonationAmount: 0,
             fiatPayments: true
         };
@@ -279,9 +278,7 @@ class EditCampaign extends React.Component {
                 if(result && result.events && result.events.CampaignDeployed && result.events.CampaignDeployed.address) {
                     console.log(`Deployed campaign to ${chainId} at ${result.events.CampaignDeployed.returnValues.campaignAddress}`)
                     data.addresses = this.state.addresses;
-                    data.coins = this.state.coins;
                     data.addresses[chainId] = result.events.CampaignDeployed.returnValues.campaignAddress;
-                    data.coins[chainId] = {address: this.state.chains[chainId].currencyOptions.value, name: this.state.chains[chainId].currencyOptions.text};
                 } else {
                     return false;
                 }
@@ -624,7 +621,6 @@ class EditCampaign extends React.Component {
             chains: chains,
             chainId: chainId,
             addresses: dbCampaignObj.addresses,
-            coins: dbCampaignObj.coins,
             coinbaseCommerceURL: dbCampaignObj.coinbaseCommerceURL,
             defDonationAmount: dbCampaignObj.defaultDonationAmount,
             fiatPayments: dbCampaignObj.fiatPayments

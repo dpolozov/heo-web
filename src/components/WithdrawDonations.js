@@ -176,23 +176,15 @@ class WithdrawDonations extends Component {
         }
     }
 
-    getDaonateSize = async (chainId, campaign) =>{
+    getDaonateSize = async (chainId, campaign, coinAddress) =>{
       try{
           await clearWeb3Provider(this);
           await initWeb3Modal(chainId);
           await initWeb3(chainId, this);
           let web3 = this.state.web3;
-          var currentProvider = "";
-          if(web3.currentProvider && web3.currentProvider.isMetaMask) {
-              currentProvider = "metamask";
-          } else if(web3.currentProvider && web3.currentProvider.isWalletConnect) {
-              currentProvider = "walletconnect";
-          }
           HEOCampaign = (await import("../remote/"+ chainId + "/HEOCampaign")).default;
           ERC20Coin = (await import("../remote/"+ chainId + "/ERC20")).default;
           let campaignAddress = campaign.addresses[chainId];
-          let campaignInstance = new web3.eth.Contract(HEOCampaign, campaignAddress);
-          let coinAddress = (await campaignInstance.methods.currency().call()).toLowerCase();
           let userCoinInstance = new web3.eth.Contract(ERC20Coin, coinAddress);
           let campaignBalance = await userCoinInstance.methods.balanceOf(campaignAddress).call();
           return(campaignBalance/(10**18));
@@ -351,9 +343,9 @@ class WithdrawDonations extends Component {
                                 <InputGroup className="mb-1">
                                     <InputGroup.Append>
                                         <DropdownButton id='donateButton' title={i18n.t('withdrawDonations')}>
-                                            {this.state.chains.map((item, i) =>
+                                            {this.state.chains_coins.map((item, i) =>
                                                     <Dropdown.Item key={item["CHAIN"]} as="button" onClick={() => this.handleDonateClick(item["CHAIN"])}>
-                                                     {item["CHAIN_NAME"]}  {"-"}  {i18n.t('donationsSize')}{":"} {this.state.campaign.coins[item["CHAIN"]].donate}
+                                                     {item.coin.name} ({item.chain_name})  {"-"}  {i18n.t('donationsSize')}{":"} {item.donate}
                                                      </Dropdown.Item>
                                             )}
                                         </DropdownButton>
@@ -438,9 +430,41 @@ class WithdrawDonations extends Component {
         let configChains = config.get("CHAINS");
         for(var ch in campaign.addresses) {
             if(configChains[ch]) {
-                campaign.coins[configChains[ch].CHAIN].donate = await this.getDaonateSize(configChains[ch].CHAIN, campaign);
                 chains.push(configChains[ch]);
             }
+        }
+        await axios.post('/api/getcoinslist')
+        .then(res => {
+            let chains_coins = [];
+            for (let i = 0; i <  res.data.length; i++){
+                res.data[i].chain_name = "";
+                if(campaign.coins[res.data[i].chain])
+                {
+                 for (let j = 0; j < chains.length; j++){
+                  if (chains[j].CHAIN == res.data[i].chain){
+                   res.data[i].chain_name = chains[j].CHAIN_NAME;
+                   break;
+                  }     
+                 }
+                  res.data[i].donate = 1;//that.getDaonateSize(res.data[i].chain, campaign, res.data[i].coin.address);
+                 chains_coins.push(res.data[i]); 
+                }
+            }
+            this.setState({chains_coins:chains_coins})
+        }).catch(err => {
+            if (err.response) {
+                modalMessage = 'Failed to load coins. We are having technical difficulties'}
+            else if(err.request) {
+                modalMessage = 'Failed to load coins. Please check your internet connection'
+            }
+            console.log(err);
+            this.setState({
+                showError: true,
+                modalMessage: modalMessage
+            })
+        })
+        for(let j = 0; j < this.state.chains_coins.length; j++){
+            this.state.chains_coins[j].donate = await this.getDaonateSize(this.state.chains_coins[j].chain, campaign, this.state.chains_coins[j].coin.address); 
         }
         let globals = config.get("GLOBALS");
         globals.forEach(element => {

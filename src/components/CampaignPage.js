@@ -141,7 +141,7 @@ class CampaignPage extends Component {
         await axios.post('/api/campaign/loadOne', data, {headers: {"Content-Type": "application/json"}})
         .then(res => {
             campaign = res.data;
-        }).catch(err => {
+        }).catch(err => {    
             if (err.response) {
                 modalMessage = 'technicalDifficulties'}
             else if(err.request) {
@@ -153,6 +153,7 @@ class CampaignPage extends Component {
                 modalMessage: modalMessage
             })
         })
+        
         let raisedAmount = this.state.raisedAmount ? parseFloat(this.state.raisedAmount) : 0;
         let fiatDonations = campaign.fiatDonations ? parseFloat(campaign.fiatDonations) : 0;
         let raisedOnCoinbase = campaign.raisedOnCoinbase ? parseFloat(campaign.raisedOnCoinbase) : 0;
@@ -334,10 +335,10 @@ class CampaignPage extends Component {
     } 
 
     handleDonateClick = async(chain_name, coin_address) =>{
-      if (this.campaign.new == false) 
+        console.log("Метка 1"); 
+      if (this.state.campaign.new == false) 
        await this.handleDonateOld(chain_name, coin_address);
       else await this.handleDonateNew(chain_name, coin_address); 
-
     }
     
     
@@ -1052,7 +1053,7 @@ class CampaignPage extends Component {
                 })
             })
        
-        let campaign = (await this.getCampaign(campaignId));
+        let campaign = await this.getCampaign(campaignId);
         if(!campaign) {
             this.props.history.push("/404");
             return;
@@ -1131,7 +1132,6 @@ class CampaignPage extends Component {
                      }     
                     }
                     chains_coins.push(res.data[i]); 
-                    campaign.coins[res.data[i].chain].id = i;
                 }
             }
             this.setState({chains_coins:chains_coins})
@@ -1147,8 +1147,6 @@ class CampaignPage extends Component {
                 modalMessage: modalMessage
             })
         })
-        console.log("Компания:");
-        console.log(chains);
         this.setState({
             chains: chains,
             campaignId: campaignId,
