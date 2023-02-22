@@ -36,12 +36,14 @@ class CampaignList extends Component {
             showError:false,
             errorMessage:"",
             lang:'',
-            fiatPaymentEnabled:false
+            fiatPaymentEnabled:false,
+            coinslist: []
         };
     }
 
     async componentDidMount() {
         ReactGA.send({ hitType: "pageview", page: "/" });
+        await this.getCoins();
         let globals = await config.get("GLOBALS");
         globals.forEach(element => {
             if(element._id === 'FIATPAYMENT') {
@@ -52,12 +54,32 @@ class CampaignList extends Component {
             campaigns : (await this.getCampaigns())
         });
     }
-    /* this is a test comment */
+
+    async getCoins(){
+        var errorMessage = 'Failed to load coins';
+        await axios.post('/api/getcoinslist')
+        .then(res => {
+            this.setState({coinslist:res.data})
+        }).catch(err => {
+            if (err.response) {
+                errorMessage = 'Failed to load coins. We are having technical difficulties'}
+            else if(err.request) {
+                errorMessage = 'Failed to load coins. Please check your internet connection'
+            }
+            console.log(err);
+            this.setState({
+                showError: true,
+                errorMessage
+            })
+        })
+    }
+
     async getCampaigns() {
         var campaigns = [];
-        var donates = []
+        var donates = [];
+        await this.getCoins();
+        var that = this;
         var errorMessage = 'Failed to load campaigns';
-
         await axios.post('/api/campaign/loadAll')
         .then(res => {
             campaigns = res.data;
@@ -74,14 +96,15 @@ class CampaignList extends Component {
             })
         })
         //
+        errorMessage = 'Failed to load donates';
         await axios.post('/api/campaign/getalldonationsforlist')
         .then(res => {
             donates = res.data;
         }).catch(err => {
             if (err.response) {
-                errorMessage = 'Failed to load campaigns. We are having technical difficulties'}
+                errorMessage = 'Failed to load donates. We are having technical difficulties'}
             else if(err.request) {
-                errorMessage = 'Failed to load campaings. Please check your internet connection'
+                errorMessage = 'Failed to load donates. Please check your internet connection'
             }
             console.log(err);
             this.setState({
@@ -89,7 +112,6 @@ class CampaignList extends Component {
                 errorMessage,
             })
         })
-        console.log(donates);
         campaigns.forEach( campaign => {
             const found = donates.find(element => element._id == campaign._id); 
             if (found == undefined) campaign.raisedAmount = 0;
@@ -102,11 +124,16 @@ class CampaignList extends Component {
             }
             //dedupe coin names for "accepting" section
             let dedupedCoinNames = [];
-            for(var chain in campaign.coins) {
-                let coinName = campaign.coins[chain].name;
-                if(!dedupedCoinNames.includes(coinName)) {
-                    dedupedCoinNames.push(coinName);
-                }
+            for(var chain in campaign.addresses){
+                   
+                for(let i = 0; i < that.state.coinslist.length; i++){
+                       if (that.state.coinslist[i].chain == chain){
+                        let coinName = that.state.coinslist[i].coin.name;
+                        if(!dedupedCoinNames.includes(coinName)) {
+                            dedupedCoinNames.push(coinName);
+                        }
+                    }
+                }    
             }
             campaign.dedupedCoinNames = dedupedCoinNames;
         })

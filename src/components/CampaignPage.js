@@ -964,8 +964,8 @@ class CampaignPage extends Component {
                                 <div id='acceptingDiv'>
                                     <p><Trans i18nKey='accepting'/>:
                                         {this.state.fiatPaymentEnabled && <span className='coinRewardInfo'><img src={visaMcLogo} witdth={21} height={20} style={{marginRight:5, marginLeft:5}} /> </span> }
-                                        {this.state.coins.map((item, i) =>
-                                            <span className='coinRewardInfo'><img src={IMG_MAP[item]} width={20} height={20} style={{marginRight:5, marginLeft:5}} /> </span>
+                                        {this.state.chains_coins.map((item, i) =>
+                                            <span className='coinRewardInfo'><img src={IMG_MAP[item.coin.name]} width={20} height={20} style={{marginRight:5, marginLeft:5}} /> </span>
                                             )}
                                         {this.state.campaign.coinbaseCommerceURL && <span className='coinRewardInfo'><img src={ethIcon} width={20} height={20} style={{marginRight:5, marginLeft:5}} /> </span> }
                                         {this.state.campaign.coinbaseCommerceURL && <span className='coinRewardInfo'><img src={btcLogo} width={20} height={20} style={{marginRight:5, marginLeft:5}} /> </span> }
@@ -1123,7 +1123,7 @@ class CampaignPage extends Component {
             let chains_coins = [];
             for (let i = 0; i <  res.data.length; i++){
                 res.data[i].chain_name = "";
-                if(campaign.coins[res.data[i].chain])
+                if(campaign.addresses[res.data[i].chain])
                 {
                     for (let j = 0; j < chains.length; j++){
                      if (chains[j].CHAIN == res.data[i].chain){
