@@ -166,9 +166,11 @@ class CampaignPage extends Component {
     updateRaisedAmount = async () => {
         var modalMessage;
         let data = {campaignID: this.state.campaignId};
+        var raisedAmount;
         await axios.post('/api/campaign/getalldonations', {mydata: data}, {headers: {"Content-Type": "application/json"}})
             .then(res => {
-                this.setState({raisedAmount: res.data[0].totalQuantity}); 
+                raisedAmount = res.data[0].totalQuantity + this.state.campaign.raisedAmount;
+                this.setState({raisedAmount: raisedAmount}); 
             }).catch(err => {
                 if (err.response) {
                     modalMessage = 'technicalDifficulties'}
@@ -958,7 +960,7 @@ class CampaignPage extends Component {
                             <Row id='countryRow'><h2>{i18nString(this.state.campaign.org, i18n.language)}</h2></Row>
                             <Row id='progressRow'>
                                 <p id='progressBarLabel'><span id='progressBarLabelStart'>&#36;{`${this.state.raisedAmount}`}</span>{i18n.t('raised')}&#36;{this.state.campaign.maxAmount} {i18n.t('goal')}</p>
-                                <ProgressBar id='progressBar' now={this.state.campaign.percentRaised}/>
+                                <ProgressBar id='progressBar' now={100 * this.state.raisedAmount/this.state.campaign.maxAmount}/>
                             </Row>
                             <Row id='acceptingRow'>
                                 <div id='acceptingDiv'>
