@@ -150,7 +150,7 @@ class WithdrawDonations extends Component {
         var modalMessage;
         await axios.post('/api/campaign/getalldonations', {mydata: data}, {headers: {"Content-Type": "application/json"}})
             .then(res => {
-                raisedAmount = res.data;
+                raisedAmount = res.data[0].totalQuantity + this.state.campaign.raisedAmount;
                 this.setState({raisedAmount: raisedAmount}); 
             }).catch(err => {
                 if (err.response) {
@@ -337,7 +337,7 @@ class WithdrawDonations extends Component {
                             <Row id='countryRow'><h2>{i18nString(this.state.campaign.org, i18n.language)}</h2></Row>
                             <Row id='progressRow'>
                                 <p id='progressBarLabel'><span id='progressBarLabelStart'>&#36;{`${this.state.raisedAmount}`}</span>{i18n.t('raised')}&#36;{this.state.campaign.maxAmount} {i18n.t('goal')}</p>
-                                <ProgressBar id='progressBar' now={this.state.campaign.percentRaised}/>
+                                <ProgressBar id='progressBar' now={100 * this.state.raisedAmount/this.state.campaign.maxAmount}/>
                             </Row>
                             <Row id='donateRow'>
                                 <InputGroup className="mb-1">
@@ -402,6 +402,7 @@ class WithdrawDonations extends Component {
             this.props.history.push("/404");
             return;
         }
+        
         this.state.donationAmount = campaign.defaultDonationAmount ? campaign.defaultDonationAmount : "10";
         campaign.percentRaised = 100 * (campaign.raisedAmount)/campaign.maxAmount;
         var contentState = {};
@@ -458,7 +459,7 @@ class WithdrawDonations extends Component {
                 modalMessage = 'Failed to load coins. Please check your internet connection'
             }
             console.log(err);
-            this.setState({
+            that.setState({
                 showError: true,
                 modalMessage: modalMessage
             })
@@ -470,15 +471,15 @@ class WithdrawDonations extends Component {
         globals.forEach(element => {
             if(element._id === 'FIATPAYMENT') {
                 if(campaign.fiatPayments)
-                  this.setState({fiatPaymentEnabled: element.enabled});
-                else this.setState({fiatPaymentEnabled: false});
+                that.setState({fiatPaymentEnabled: element.enabled});
+                else that.setState({fiatPaymentEnabled: false});
                 if(element.enabled) {
                     if(element.CIRCLE && !element.PAYADMIT) {
                         this.setState(({
                             fiatPaymentProvider: 'circle'
                         }));
                     } else if (!element.CIRCLE && element.PAYADMIT) {
-                        this.setState(({
+                        that.setState(({
                             fiatPaymentProvider: 'payadmit'
                         }));
                     }
@@ -494,7 +495,6 @@ class WithdrawDonations extends Component {
                 dedupedCoinNames.push(coinName);
             }
         }
-
         this.setState({
             chains: chains,
             campaignId: campaignId,
@@ -502,10 +502,8 @@ class WithdrawDonations extends Component {
             coins: dedupedCoinNames,
             editorState: EditorState.createWithContent(contentState[i18n.language], createDecorator())
         });
-         
-
+        await this.updateRaisedAmount();
         ReactGA.send({ hitType: "pageview", page: this.props.location.pathname });
-
         const params = new Proxy(new URLSearchParams(window.location.search), {
             get: (searchParams, prop) => searchParams.get(prop),
         });
@@ -519,7 +517,7 @@ class WithdrawDonations extends Component {
                     modalButtonVariant: '#588157', waitToClose: false, tryAgainCC: false, ccinfo: {}
                 });
             } else if(params.fp === 'f') {
-                this.setState({
+                that.setState({
                     showModal: true, modalTitle: 'failed', modalMessage: 'failed3ds',
                     errorIcon: 'XCircle', modalButtonMessage: 'tryAgain',
                     modalButtonVariant: '#E63C36', waitToClose: false, tryAgainCC: true,
@@ -527,14 +525,14 @@ class WithdrawDonations extends Component {
                 });
             } else if(params.fp === 'pa' && params.state) {
                 if(params.state=='declined' || params.state=='cancelled') {
-                    this.setState({
+                    that.setState({
                         showModal: true, modalTitle: 'failed', modalMessage: 'cardPaymentDeclined',
                         errorIcon: 'XCircle', modalButtonMessage: 'tryAgain',
                         modalButtonVariant: '#E63C36', waitToClose: false, tryAgainCC: false,
                         donationAmount: params.am,  ccinfo: {}
                     });
                 } else {
-                    this.setState({
+                    that.setState({
                         showModal: true, modalTitle: 'complete',
                         modalMessage: 'thankYouFiatDonation',
                         errorIcon: 'CheckCircle', modalButtonMessage: 'closeBtn',

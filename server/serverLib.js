@@ -163,27 +163,27 @@ class ServerLib {
 
     async handleGetAllDonateForCampaign(req, res, Sentry, DB){
         try {  
-        let res = await DB.collection('donations').find({campaignID: req.body.mydata.campaignID});
-        if (res.length == 0) res.send(0);
+        let result = await DB.collection('donations').find({campaignID: req.body.mydata.campaignID});
+        if (result.length == 0) res.send(0);
         else
         {
-            const pipeline = [
-                { $match: {campaignID: req.body.mydata.campaignID, deleted : false, checked: true } },
-                {$group: { _id: null, totalQuantity: { $sum: "$raisedAmount" } }}  
-            ];
-            let result = await DB.collection('donations').aggregate(pipeline).toArray();
-            res.send(result);
+         const pipeline = [
+          { $match: {campaignID: req.body.mydata.campaignID, deleted : false } },
+           {$group: { _id: null, totalQuantity: { $sum: "$raisedAmount" } }}  
+         ];
+         result = await DB.collection('donations').aggregate(pipeline).toArray();
+         res.send(result);
         }      
        } catch (err) {
         Sentry.captureException(new Error(err));
-        res.sendn("error");
+        res.send("error");
        }  
     }
 
     async handleGetAllDonateForList(req, res, Sentry, DB){
         try {
             const pipeline = [
-                { $match: { deleted : false, checked: true } },
+                { $match: { deleted : false } },
                 {$group: { _id: '$campaignID', totalQuantity: {$sum: "$raisedAmount"}}}  
             ];
             let result = await DB.collection('donations').aggregate(pipeline).toArray();

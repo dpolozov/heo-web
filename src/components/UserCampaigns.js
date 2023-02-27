@@ -79,6 +79,7 @@ class UserCampaigns extends Component {
                 });
                 this.loadCampaigns();
             }
+
         } catch (err) {
             console.log(err);
             this.setState({
@@ -119,8 +120,22 @@ class UserCampaigns extends Component {
             modalMessage: 'waitingForNetwork', errorIcon:'HourglassSplit',
             modalButtonVariant: "gold", waitToClose: true});
         var campaigns = [];
+        var donates = [];
+        var modalTitle = 'failedToLoadDonates';
+        await axios.post('/api/campaign/getalldonationsforlist')
+        .then(res => {
+            donates = res.data;
+        }).catch(err => {
+            modalTitle = 'failedToLoadDonates'
+            console.log(err);
+            this.setState({showModal:true,
+                modalTitle: modalTitle,
+                modalMessage: 'technicalDifficulties',
+                errorIcon:'XCircle', modalButtonMessage: 'returnHome',
+                modalButtonVariant: "#E63C36", waitToClose: false});
+        })
         var modalTitle = 'failedToLoadCampaigns';
-        axios.post('/api/campaign/loadUserCampaigns', {}, {headers: {"Content-Type": "application/json"}})
+        await axios.post('/api/campaign/loadUserCampaigns', {}, {headers: {"Content-Type": "application/json"}})
         .then(res => {
             campaigns = res.data;
             this.setState({
@@ -136,6 +151,22 @@ class UserCampaigns extends Component {
                 errorIcon:'XCircle', modalButtonMessage: 'returnHome',
                 modalButtonVariant: "#E63C36", waitToClose: false});
         })
+        campaigns.forEach( campaign => {
+            const found = donates.find(element => element._id == campaign._id); 
+            campaign.raisedAmount = found ? (found.totalQuantity + campaign.raisedAmount) : campaign.raisedAmount;
+            let raisedAmount = campaign.raisedAmount ? parseFloat(campaign.raisedAmount) : 0;
+            let fiatDonations = campaign.fiatDonations ? parseFloat(campaign.fiatDonations) : 0;
+            let raisedOnCoinbase = campaign.raisedOnCoinbase ? parseFloat(campaign.raisedOnCoinbase) : 0;
+            if(raisedAmount || fiatDonations || raisedOnCoinbase) {
+                campaign["raisedAmount"] = Math.round((raisedAmount + fiatDonations + raisedOnCoinbase) * 100)/100;
+            }
+        })
+        console.log("Компания");
+        console.log(campaigns);
+        this.setState({
+            showModal: false,
+            campaigns: campaigns
+        });
     }
 
     async closeCampaignPrep(id, imageURL) {
@@ -162,7 +193,6 @@ class UserCampaigns extends Component {
         this.setState({showModal: true, modalMessage: 'confirmMetamask', modalIcon:'HourglassSplit',
             showTwoButtons: false, modalButtonVariant: "gold", waitToClose: true});
         try {
-            var that = this;
             this.deActivateInDB();
             this.setState({
                 modalMessage: 'campaignDeleted', modalTitle: 'complete',
@@ -288,7 +318,7 @@ class UserCampaigns extends Component {
                                                 <Card.Body>
                                                     <Card.Title>{i18nString(item.title, i18n.language)}</Card.Title>
                                                     <Card.Text>{`${DescriptionPreview(item.description, i18n.language)}...`}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span id='readMore'><Trans i18nKey='readMore'/></span></Card.Text>
-                                                    <p id='progressBarLabel'><span id='progressBarLabelStart'>{`$${item.raisedAmount}`}</span>{i18n.t('raised')}{item.maxAmount} {i18n.t('goal')}</p>
+                                                    <p id='progressBarLabel'><span id='progressBarLabelStart'>{item.raisedAmount}</span>{i18n.t('raised')}{item.maxAmount} {i18n.t('goal')}</p>
                                                     <ProgressBar now={100 * item.raisedAmount/item.maxAmount} />
                                                 </Card.Body>
                                             </Row>

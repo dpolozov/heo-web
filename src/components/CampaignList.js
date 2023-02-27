@@ -114,8 +114,7 @@ class CampaignList extends Component {
         })
         campaigns.forEach( campaign => {
             const found = donates.find(element => element._id == campaign._id); 
-            if (found == undefined) campaign.raisedAmount = 0;
-            else campaign.raisedAmount = found.totalQuantity;
+            campaign.raisedAmount = found ? (found.totalQuantity + campaign.raisedAmount) : campaign.raisedAmount;
             let raisedAmount = campaign.raisedAmount ? parseFloat(campaign.raisedAmount) : 0;
             let fiatDonations = campaign.fiatDonations ? parseFloat(campaign.fiatDonations) : 0;
             let raisedOnCoinbase = campaign.raisedOnCoinbase ? parseFloat(campaign.raisedOnCoinbase) : 0;
@@ -125,15 +124,14 @@ class CampaignList extends Component {
             //dedupe coin names for "accepting" section
             let dedupedCoinNames = [];
             for(var chain in campaign.addresses){
-                   
-                for(let i = 0; i < that.state.coinslist.length; i++){
-                       if (that.state.coinslist[i].chain == chain){
-                        let coinName = that.state.coinslist[i].coin.name;
-                        if(!dedupedCoinNames.includes(coinName)) {
-                            dedupedCoinNames.push(coinName);
-                        }
-                    }
-                }    
+             for(let i = 0; i < that.state.coinslist.length; i++){
+              if (that.state.coinslist[i].chain == chain){
+               let coinName = that.state.coinslist[i].coin.name;
+               if(!dedupedCoinNames.includes(coinName)) {
+                dedupedCoinNames.push(coinName);
+               }
+              }
+             }    
             }
             campaign.dedupedCoinNames = dedupedCoinNames;
         })
