@@ -153,12 +153,12 @@ class UserCampaigns extends Component {
         })
         campaigns.forEach( campaign => {
             const found = donates.find(element => element._id == campaign._id); 
-            campaign.raisedAmount = found ? (found.totalQuantity + campaign.raisedAmount) : campaign.raisedAmount;
+            let raisedDonations = found ? found.totalQuantity  : 0;
             let raisedAmount = campaign.raisedAmount ? parseFloat(campaign.raisedAmount) : 0;
             let fiatDonations = campaign.fiatDonations ? parseFloat(campaign.fiatDonations) : 0;
             let raisedOnCoinbase = campaign.raisedOnCoinbase ? parseFloat(campaign.raisedOnCoinbase) : 0;
-            if(raisedAmount || fiatDonations || raisedOnCoinbase) {
-                campaign["raisedAmount"] = Math.round((raisedAmount + fiatDonations + raisedOnCoinbase) * 100)/100;
+            if(raisedAmount || fiatDonations || raisedOnCoinbase || raisedDonations) {
+                campaign["raisedAmount"] = Math.round((raisedAmount + fiatDonations + raisedOnCoinbase + raisedDonations) * 100)/100;
             }
         })
         console.log("Компания");

@@ -153,24 +153,16 @@ class CampaignPage extends Component {
                 modalMessage: modalMessage
             })
         })
-        
-        let raisedAmount = this.state.raisedAmount ? parseFloat(this.state.raisedAmount) : 0;
-        let fiatDonations = campaign.fiatDonations ? parseFloat(campaign.fiatDonations) : 0;
-        let raisedOnCoinbase = campaign.raisedOnCoinbase ? parseFloat(campaign.raisedOnCoinbase) : 0;
-        if(raisedAmount || fiatDonations || raisedOnCoinbase) {
-            campaign["raisedAmount"] = Math.round((raisedAmount + fiatDonations + raisedOnCoinbase) * 100)/100;
-        }
         return campaign;
     }
 
     updateRaisedAmount = async () => {
         var modalMessage;
         let data = {campaignID: this.state.campaignId};
-        var raisedAmount;
+        var donateAmount;
         await axios.post('/api/campaign/getalldonations', {mydata: data}, {headers: {"Content-Type": "application/json"}})
             .then(res => {
-                raisedAmount = res.data[0].totalQuantity + this.state.campaign.raisedAmount;
-                this.setState({raisedAmount: raisedAmount}); 
+                donateAmount = (res.data == 0) ? 0 : parseFloat(res.data[0].totalQuantity); 
             }).catch(err => {
                 if (err.response) {
                     modalMessage = 'technicalDifficulties'}
@@ -183,6 +175,13 @@ class CampaignPage extends Component {
                     modalMessage: modalMessage,
                 })
             })
+            let baseAmount = this.state.campaign.raisedAmount ? parseFloat(this.state.campaign.raisedAmount) : 0;
+            let fiatDonations = this.state.campaign.fiatDonations ? parseFloat(this.state.campaign.fiatDonations) : 0;
+            let raisedOnCoinbase = this.state.campaign.raisedOnCoinbase ? parseFloat(this.state.campaign.raisedOnCoinbase) : 0;
+            if(baseAmount || fiatDonations || raisedOnCoinbase || donateAmount) {
+                let raisedAmount = Math.round((baseAmount + fiatDonations + raisedOnCoinbase + donateAmount) * 100)/100;
+                this.setState({raisedAmount : raisedAmount});
+            }    
     }
 
     handleDonateFiat = async () => {
@@ -1156,9 +1155,8 @@ class CampaignPage extends Component {
             coins: dedupedCoinNames,
             editorState: EditorState.createWithContent(contentState[i18n.language], createDecorator())
         });
-
+        await this.updateRaisedAmount();
         ReactGA.send({ hitType: "pageview", page: this.props.location.pathname });
-        this.updateRaisedAmount();
         const params = new Proxy(new URLSearchParams(window.location.search), {
             get: (searchParams, prop) => searchParams.get(prop),
         });
