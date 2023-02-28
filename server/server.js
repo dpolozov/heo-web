@@ -141,6 +141,13 @@ APP.post('/api/campaign/add', async (req, res) => {
     }
 });
 
+APP.post('/api/donate/adddanate', async (req, res) => {
+    if(serverLib.authenticated(req, res, Sentry)) {
+       const DB = CLIENT.db(DBNAME);
+       serverLib.handleAddDanate(req, res, Sentry, DB);
+    }
+});
+
 APP.post('/api/campaign/update', (req, res) => {
     if(serverLib.authenticated(req, res, Sentry)) {
         const DB = CLIENT.db(DBNAME);
@@ -163,6 +170,26 @@ APP.post('/api/campaign/loadAll', (req, res) => {
 APP.post('/api/campaign/getid', (req, res) => {
     const DB = CLIENT.db(DBNAME);
     serverLib.handleGetId(req, res, Sentry, DB);
+});
+
+APP.post('/api/campaign/getalldonations', (req, res) => {
+    const DB = CLIENT.db(DBNAME);
+    serverLib.handleGetAllDonateForCampaign(req, res, Sentry, DB);
+});
+
+APP.post('/api/getcoinslist', (req, res) => {
+    const DB = CLIENT.db(DBNAME);
+    serverLib.handleGetCoinsList(req, res, Sentry, DB);
+});
+
+APP.post('/api/getchainslist', (req, res) => {
+    const DB = CLIENT.db(DBNAME);
+    serverLib.handleGetChainsList(req, res, Sentry, DB);
+});
+
+APP.post('/api/campaign/getalldonationsforlist', (req, res) => {
+    const DB = CLIENT.db(DBNAME);
+    serverLib.handleGetAllDonateForList(req, res, Sentry, DB);
 });
 
 APP.post('/api/campaign/loadOne', (req, res) => {

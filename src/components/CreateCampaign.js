@@ -181,11 +181,6 @@ class CreateCampaign extends React.Component {
             campaignData.title[i18n.language] = this.state.title;
             campaignData.addresses = {};
             campaignData.addresses[this.state.chainId] = campaignData.address;
-            campaignData.coins = {};
-            campaignData.coins[this.state.chainId] = {
-                address: this.state.chainConfig.currencyOptions.value,
-                name:this.state.chainConfig.currencyOptions.text
-            };
             campaignData.description = {"default": this.state.description};
             campaignData.description[i18n.language] = this.state.description;
             campaignData.mainImageURL = this.state.mainImageURL;
@@ -270,7 +265,7 @@ class CreateCampaign extends React.Component {
 
             if(window.web3Modal.cachedProvider == "binancechainwallet") {
                 HEOCampaignFactory.methods.createCampaign(
-                    this.state.web3.utils.toWei(`${this.state.maxAmount}`), this.state.chainConfig.currencyOptions.value, this.state.beneficiaryAddress, compressed_meta)
+                    this.state.web3.utils.toWei(`${this.state.maxAmount}`), this.state.beneficiaryAddress, compressed_meta)
                     .send({from:this.state.accounts[0]})
                     .once('transactionHash', function(transactionHash) {
                         that.setState({showModal:true, modalTitle: 'processingWait',
@@ -285,7 +280,7 @@ class CreateCampaign extends React.Component {
                     });
             } else {
                 let result = await HEOCampaignFactory.methods.createCampaign(
-                    this.state.web3.utils.toWei(`${this.state.maxAmount}`), this.state.chainConfig.currencyOptions.value, this.state.beneficiaryAddress, compressed_meta)
+                    this.state.web3.utils.toWei(`${this.state.maxAmount}`), this.state.beneficiaryAddress, compressed_meta)
                     .send({from:this.state.accounts[0]})
                     .on('transactionHash',
                         function(transactionHash) {
@@ -633,11 +628,13 @@ class CreateCampaign extends React.Component {
         ReactGA.send({ hitType: "pageview", page: this.props.location.pathname });
         let chains = config.get("CHAINS");
         let chainId = config.get("CHAIN");
+        console.log("chainid is - " + chainId);
         let chainConfig = chains[chainId];
         await initWeb3Modal(chainId, this);
 
         // is the user logged in?
         if(!this.state.isLoggedIn) {
+            
             console.log(`User not logged in. Checking authentication on ${chainId}.`)
             await checkAuth(chainId, this);
         }

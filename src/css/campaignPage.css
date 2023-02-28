@@ -101,6 +101,19 @@ body {
     /* Frequently Used/Text/Primary Text - Grey 900 */
     color: #0E161C;
 }
+#titleDonation{
+    padding: inherit;
+    font-family: 'Poppins', sans-serif;
+    font-style: normal;
+    font-weight: 600;
+    font-size: 16px;
+    line-height: 32px;
+    /* identical to box height, or 133% */
+    letter-spacing: 0.005em;
+    /* Frequently Used/Text/Primary Text - Grey 900 */
+    color: #0E161C;
+}
+
 #progressRow{
     padding-top: 20px;
 }
@@ -151,6 +164,11 @@ body {
     display: inline-grid;
     grid-template-columns: 1fr 1fr;
 }
+.mb-1.input-group{
+    display: inline-grid;
+    grid-template-columns: 100px;
+}
+
 #countryRow h2 {
     font-family: Open Sans;
     font-style: normal;
@@ -266,6 +284,9 @@ body {
         width:100%;
     }
     .mb-3.input-group{
+        display:inline-block;
+    }
+    .mb-1.input-group{
         display:inline-block;
     }
     #donateButton {

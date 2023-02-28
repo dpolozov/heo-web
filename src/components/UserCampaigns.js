@@ -3,7 +3,7 @@ import config from 'react-global-configuration';
 import '../css/modal.css';
 import '../css/campaignList.css';
 import { Container, Row, Col, Card, ProgressBar, Button, Modal } from 'react-bootstrap';
-import { ChevronLeft, CheckCircle, ExclamationTriangle, HourglassSplit, XCircle } from 'react-bootstrap-icons';
+import { CheckCircle, ExclamationTriangle, HourglassSplit, XCircle } from 'react-bootstrap-icons';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
 import { i18nString, DescriptionPreview, LogIn, initWeb3, checkAuth, initWeb3Modal } from '../util/Utilities';
@@ -11,7 +11,6 @@ import { Trans } from 'react-i18next';
 import i18n from '../util/i18n';
 import {UserContext} from './UserContext';
 import i18next from 'i18next';
-
 import Web3Modal from 'web3modal';
 import Web3 from 'web3';
 import WalletConnectProvider from '@walletconnect/web3-provider';
@@ -80,6 +79,7 @@ class UserCampaigns extends Component {
                 });
                 this.loadCampaigns();
             }
+
         } catch (err) {
             console.log(err);
             this.setState({
@@ -90,7 +90,7 @@ class UserCampaigns extends Component {
             });
         }
     }
-
+    
     async componentDidMount() {
         ReactGA.send({ hitType: "pageview", page: this.props.location.pathname });
         let chainId = config.get("CHAIN");
@@ -120,8 +120,22 @@ class UserCampaigns extends Component {
             modalMessage: 'waitingForNetwork', errorIcon:'HourglassSplit',
             modalButtonVariant: "gold", waitToClose: true});
         var campaigns = [];
+        var donates = [];
+        var modalTitle = 'failedToLoadDonates';
+        await axios.post('/api/campaign/getalldonationsforlist')
+        .then(res => {
+            donates = res.data;
+        }).catch(err => {
+            modalTitle = 'failedToLoadDonates'
+            console.log(err);
+            this.setState({showModal:true,
+                modalTitle: modalTitle,
+                modalMessage: 'technicalDifficulties',
+                errorIcon:'XCircle', modalButtonMessage: 'returnHome',
+                modalButtonVariant: "#E63C36", waitToClose: false});
+        })
         var modalTitle = 'failedToLoadCampaigns';
-        axios.post('/api/campaign/loadUserCampaigns', {}, {headers: {"Content-Type": "application/json"}})
+        await axios.post('/api/campaign/loadUserCampaigns', {}, {headers: {"Content-Type": "application/json"}})
         .then(res => {
             campaigns = res.data;
             this.setState({
@@ -137,6 +151,22 @@ class UserCampaigns extends Component {
                 errorIcon:'XCircle', modalButtonMessage: 'returnHome',
                 modalButtonVariant: "#E63C36", waitToClose: false});
         })
+        campaigns.forEach( campaign => {
+            const found = donates.find(element => element._id == campaign._id); 
+            let raisedDonations = found ? found.totalQuantity  : 0;
+            let raisedAmount = campaign.raisedAmount ? parseFloat(campaign.raisedAmount) : 0;
+            let fiatDonations = campaign.fiatDonations ? parseFloat(campaign.fiatDonations) : 0;
+            let raisedOnCoinbase = campaign.raisedOnCoinbase ? parseFloat(campaign.raisedOnCoinbase) : 0;
+            if(raisedAmount || fiatDonations || raisedOnCoinbase || raisedDonations) {
+                campaign["raisedAmount"] = Math.round((raisedAmount + fiatDonations + raisedOnCoinbase + raisedDonations) * 100)/100;
+            }
+        })
+        console.log("Компания");
+        console.log(campaigns);
+        this.setState({
+            showModal: false,
+            campaigns: campaigns
+        });
     }
 
     async closeCampaignPrep(id, imageURL) {
@@ -163,7 +193,6 @@ class UserCampaigns extends Component {
         this.setState({showModal: true, modalMessage: 'confirmMetamask', modalIcon:'HourglassSplit',
             showTwoButtons: false, modalButtonVariant: "gold", waitToClose: true});
         try {
-            var that = this;
             this.deActivateInDB();
             this.setState({
                 modalMessage: 'campaignDeleted', modalTitle: 'complete',
@@ -289,13 +318,16 @@ class UserCampaigns extends Component {
                                                 <Card.Body>
                                                     <Card.Title>{i18nString(item.title, i18n.language)}</Card.Title>
                                                     <Card.Text>{`${DescriptionPreview(item.description, i18n.language)}...`}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span id='readMore'><Trans i18nKey='readMore'/></span></Card.Text>
-                                                    <p id='progressBarLabel'><span id='progressBarLabelStart'>{`$${item.raisedAmount}`}</span>{i18n.t('raised')}{item.maxAmount} {i18n.t('goal')}</p>
+                                                    <p id='progressBarLabel'><span id='progressBarLabelStart'>{item.raisedAmount}</span>{i18n.t('raised')}{item.maxAmount} {i18n.t('goal')}</p>
                                                     <ProgressBar now={100 * item.raisedAmount/item.maxAmount} />
                                                 </Card.Body>
                                             </Row>
                                             </Link>
                                             <Row id='buttonsRow'>
                                                 <Col className='buttonCol'><Button variant="danger" id='donateBtn' block onClick={() => this.closeCampaignPrep(item._id, item.mainImageURL)}><Trans i18nKey='closeCmpnBtn'/></Button></Col>
+                                                {item.new &&
+                                                 <Col className='buttonCol'><Link to={'/withdrawDonations/' + item.key} id='cardLink'><Button id='editBtn' block><Trans i18nKey='withdrawDonations'/></Button></Link></Col>    
+                                                }
                                                 <Col className='buttonCol'><Link to={'/editCampaign/' + item.key} id='cardLink'><Button id='editBtn' block><Trans i18nKey='editCmpnBtn'/></Button></Link></Col>
                                             </Row>
                                         </Col>

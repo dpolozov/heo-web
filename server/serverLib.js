@@ -1,10 +1,12 @@
 const { registerRequestInstrumentation } = require('@sentry/tracing');
 const { default: axios } = require('axios');
+const { ObjectId } = require('mongodb');
+const {Web3} = require('web3');
 
 class ServerLib {
     constructor() {
     }
-
+    
     testingClass() {
         console.log('server library class');
     }
@@ -41,6 +43,28 @@ class ServerLib {
         });
     }
 
+    async handleAddDanate(req, res, Sentry, DB){
+       const ITEM = {
+            campaignID: req.body.mydata.campaignID.toLowerCase(),
+            donatorID: req.body.mydata.donatorID.toLowerCase(),
+            raisedAmount: req.body.mydata.raisedAmount,
+            transactionHash: req.body.mydata.transactionHash,
+            chainId: req.body.mydata.chainId,
+            coinAddress: req.body.mydata.coinAddress,
+            donateDate: Date.now(),
+            deleted: false,
+            checked: false
+        }
+        try {
+            const myCollection = await DB.collection('donations');
+            await myCollection.insertOne(ITEM);
+            res.send('success');
+        } catch (err) {
+            Sentry.captureException(new Error(err));
+            res.sendStatus(500);
+        }
+    } 
+
     async handleAddCampaign(req, res, Sentry, DB, newWalletId) {
         const ITEM = {
             _id: req.body.mydata.address.toLowerCase(),
@@ -68,7 +92,8 @@ class ServerLib {
             lastDonationTime: 0,
             coins: req.body.mydata.coins,
             addresses: req.body.mydata.addresses,
-            active: true
+            active: true,
+            new: true
         }
         try {
             const myCollection = await DB.collection('campaigns');
@@ -136,12 +161,63 @@ class ServerLib {
         }
     }
 
+    async handleGetAllDonateForCampaign(req, res, Sentry, DB){
+        try {  
+        let result = await DB.collection('donations').find({campaignID: req.body.mydata.campaignID});
+        if (result.length == 0) res.send(0);
+        else
+        {
+         const pipeline = [
+          { $match: {campaignID: req.body.mydata.campaignID, deleted : false } },
+           {$group: { _id: null, totalQuantity: { $sum: "$raisedAmount" } }}  
+         ];
+         result = await DB.collection('donations').aggregate(pipeline).toArray();
+         res.send(result);
+        }      
+       } catch (err) {
+        Sentry.captureException(new Error(err));
+        res.send("error");
+       }  
+    }
+
+    async handleGetAllDonateForList(req, res, Sentry, DB){
+        try {
+            const pipeline = [
+                { $match: { deleted : false } },
+                {$group: { _id: '$campaignID', totalQuantity: {$sum: "$raisedAmount"}}}  
+            ];
+            let result = await DB.collection('donations').aggregate(pipeline).toArray();
+            res.send(result);  
+       } catch (err) {
+        Sentry.captureException(new Error(err));
+        res.sendn("error");
+       }  
+    }
+  
     async handleGetId(req, res, Sentry, DB) {
         try {
             const myCollection = await DB.collection('campaigns');
             let result = await myCollection.findOne({"key" : req.body.KEY});
             if (result) res.send(result._id);
             else res.send(req.body.KEY);
+        } catch (err) {Sentry.captureException(new Error(err));}
+    }
+
+    async handleGetCoinsList(req, res, Sentry, DB) {
+        try {
+            const myCollection = await DB.collection('coins_for_chains');
+            let coins = await myCollection.find();//aggregate([{$group:{ _id : "$chain", coins:{$push: "$coin"}}}]);
+            const result = await coins.toArray();
+            res.send(result);
+        } catch (err) {Sentry.captureException(new Error(err));}
+    }
+
+    async handleGetChainsLis(req, res, Sentry, DB) {
+        try {
+            const myCollection = await DB.collection('coins_for_chains');
+            let chains = await myCollection.distinct("chain");
+            const result = await chains.toArray();
+            res.send(result._id);
         } catch (err) {Sentry.captureException(new Error(err));}
     }
 
@@ -205,7 +281,6 @@ class ServerLib {
         try{
             const myCollection = await DB.collection('fiat_payment_records');
             await myCollection.updateOne({'_id': recordId}, {$set: data});
-            //console.log(await DB.collection('fiat_payment_records').findOne({'_id': recordId}));
         }
         catch (err) {Sentry.captureException(new Error(err))}
     }
