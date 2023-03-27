@@ -127,9 +127,9 @@ class CampaignPage extends Component {
      for (let i = 0; i < this.state.chains_coins.length; i++){
         if (this.state.chains_coins._id == value){
             this.setState({cur_chain: i});
-            return(i); 
-        } 
-     }  
+            return(i);
+        }
+     }
      this.setState({cur_chain: -1});
      return(-1);
     }
@@ -141,7 +141,7 @@ class CampaignPage extends Component {
         await axios.post('/api/campaign/loadOne', data, {headers: {"Content-Type": "application/json"}})
         .then(res => {
             campaign = res.data;
-        }).catch(err => {    
+        }).catch(err => {
             if (err.response) {
                 modalMessage = 'technicalDifficulties'}
             else if(err.request) {
@@ -162,7 +162,7 @@ class CampaignPage extends Component {
         var donateAmount;
         await axios.post('/api/campaign/getalldonations', {mydata: data}, {headers: {"Content-Type": "application/json"}})
             .then(res => {
-                donateAmount = (res.data == 0) ? 0 : parseFloat(res.data[0].totalQuantity); 
+                donateAmount = (res.data == 0) ? 0 : parseFloat(res.data[0].totalQuantity);
             }).catch(err => {
                 if (err.response) {
                     modalMessage = 'technicalDifficulties'}
@@ -181,7 +181,7 @@ class CampaignPage extends Component {
             if(baseAmount || fiatDonations || raisedOnCoinbase || donateAmount) {
                 let raisedAmount = Math.round((baseAmount + fiatDonations + raisedOnCoinbase + donateAmount) * 100)/100;
                 this.setState({raisedAmount : raisedAmount});
-            }    
+            }
     }
 
     handleDonateFiat = async () => {
@@ -315,8 +315,8 @@ class CampaignPage extends Component {
             value = parseFloat(value/Math.pow(10, decimals));
         }
         let donateData = {
-                          campaignID : this.state.campaignId, 
-                          donatorID: accounts[0], 
+                          campaignID : this.state.campaignId,
+                          donatorID: accounts[0],
                           raisedAmount: value,
                           transactionHash: transactionHash,
                           chainId: chainId,
@@ -333,18 +333,18 @@ class CampaignPage extends Component {
             modalButtonVariant: "#588157", waitToClose: false
         });
         await this.updateRaisedAmount();
-    } 
+    }
 
     handleDonateClick = async(chain_name, coin_address) =>{
-        console.log("Метка 1"); 
-      if (this.state.campaign.new == false) 
+        console.log("Метка 1");
+      if (this.state.campaign.new == false)
        await this.handleDonateOld(chain_name, coin_address);
-      else await this.handleDonateNew(chain_name, coin_address); 
+      else await this.handleDonateNew(chain_name, coin_address);
     }
-    
-    
+
+
     handleDonateOld = async (chainId, coinAddress) => {
-        //TODO: check that this.state.donationAmount is larger than 
+        //TODO: check that this.state.donationAmount is larger than
         try {
             await clearWeb3Provider(this);
             await initWeb3Modal(chainId);
@@ -605,7 +605,7 @@ class CampaignPage extends Component {
     }
 
     handleDonateNew = async (chainId, coinAddress) => {
-        //TODO: check that this.state.donationAmount is larger than 
+        //TODO: check that this.state.donationAmount is larger than
         try {
             await clearWeb3Provider(this);
             await initWeb3Modal(chainId);
@@ -676,9 +676,9 @@ class CampaignPage extends Component {
                                     }
                                 }
                             );
-                        
+
                         });
-                        
+
                     } catch (err) {
                         this.setState({
                             showModal: true, modalTitle: 'failed', modalMessage: 'blockChainTransactionFailed',
@@ -698,9 +698,9 @@ class CampaignPage extends Component {
                                 if(err) {
                                     console.log(`Failed to fetch decimals from ${coinAddress} `);
                                     console.log(err);
-                                } 
+                                }
                                 else decimals = result;
-                            });    
+                            });
                             that.saveDonateToDb(toDonate, decimals, transactionHash, chainId, coinAddress);
                         });
                         this.setState({
@@ -722,7 +722,7 @@ class CampaignPage extends Component {
             } else {
                 //for ERC20 donations
                 ERC20Coin = (await import("../remote/"+ chainId + "/ERC20")).default;
-                
+
                 this.setState({
                     showModal: true, modalTitle: 'processingWait',
                     modalMessage: "approveSpend",
@@ -792,7 +792,7 @@ class CampaignPage extends Component {
                                 console.log('error handler invoked in checkApprovalTransaction')
                                 console.log(error);
                             })
-                            
+
                         });
                     } else {
                         console.log(`Using provider ${currentProvider}`);
@@ -803,7 +803,7 @@ class CampaignPage extends Component {
                             nonInteraction: false
                         });
                         decimals = await coinInstance.methods.decimals().call();
-                        
+
                         toDonate = new web3.utils.BN(""+that.state.donationAmount).mul(new web3.utils.BN(new web3.utils.BN("10").pow(new web3.utils.BN(""+decimals))));
                         var curTransactionHash;
                         let result = await coinInstance.methods.transfer(campaignAddress, toDonate).send(
@@ -835,8 +835,8 @@ class CampaignPage extends Component {
                             errorIcon: 'CheckCircle', modalButtonMessage: 'closeBtn',
                             modalButtonVariant: '#588157', waitToClose: false
                         });
-                        
-                        
+
+
                     }
                 } catch (err) {
                     this.setState({
@@ -985,19 +985,9 @@ class CampaignPage extends Component {
                                     />
                                     <InputGroup.Append>
                                         <DropdownButton id='donateButton' title={i18n.t('donate')}>
-                                            {this.state.fiatPaymentEnabled && <Dropdown.Item key="_fiat" as="button" onClick={
-                                                () => {
-                                                    if(this.state.fiatPaymentProvider ==='payadmit') {
-                                                        //skip the card info form for PayAdmin and use hosted payment dialog
-                                                        this.setState({showCCinfoModal: false});
-                                                        this.setState({showCCWarningModal: true});
-                                                    } else {
-                                                        //for Cirle use our payment dialog
-                                                        this.setState({showCCWarningModal: false});
-                                                        this.setState({showCCinfoModal: true});
-                                                    }
-                                                }
-                                            }><img src={visaMcLogo} width={17} height={16} style={{marginRight:5}} />USD</Dropdown.Item> }
+                                            {this.state.campaign.stripeURL &&
+                                                <Dropdown.Item key="_fiat"  href={`${this.state.campaign.stripeURL}`} target="_blank"><img src={visaMcLogo} width={17} height={16} style={{marginRight:5}} />USD</Dropdown.Item>
+                                            }
                                             {this.state.chains_coins.map((item, i) =>
                                                     <Dropdown.Item key={item.chain.address} as="button" onClick={() => this.handleDonateClick(item.chain, item.coin.address)}><img src={IMG_MAP[item.coin.name]} width={16} height={16} style={{marginRight:5}} />{item.coin.name} ({item.chain_name })</Dropdown.Item>
                                                 )}
@@ -1053,7 +1043,7 @@ class CampaignPage extends Component {
                     modalMessage: modalMessage
                 })
             })
-       
+
         let campaign = await this.getCampaign(campaignId);
         if(!campaign) {
             this.props.history.push("/404");
@@ -1090,7 +1080,7 @@ class CampaignPage extends Component {
                 chains.push(configChains[ch]);
             }
         }
-        
+
         let globals = config.get("GLOBALS");
         globals.forEach(element => {
             if(element._id === 'FIATPAYMENT') {
@@ -1130,9 +1120,9 @@ class CampaignPage extends Component {
                      if (chains[j].CHAIN == res.data[i].chain){
                         res.data[i].chain_name = chains[j].CHAIN_NAME;
                         break;
-                     }     
+                     }
                     }
-                    chains_coins.push(res.data[i]); 
+                    chains_coins.push(res.data[i]);
                 }
             }
             this.setState({chains_coins:chains_coins})
@@ -1233,7 +1223,7 @@ function findLinkEntities(contentBlock, callback, contentState) {
 function checkDonationTransaction(txnObject, decimals, chainId, that) {
     if(txnObject.blockNumber) {
         console.log(`Donation transaction successful in block ${txnObject.blockNumber}`);
-        
+
         if(decimals > 0) {
             that.updateRaisedAmount();
         }
