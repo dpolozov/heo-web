@@ -135,6 +135,7 @@ class WithdrawDonations extends Component {
                 modalMessage: modalMessage
             })
         })
+        return(campaign);
     }
 
     updateRaisedAmount = async () => {
@@ -206,13 +207,14 @@ class WithdrawDonations extends Component {
         }
     }
 
-    handleDonateClick = async (chainId) => {
+    handleDonateClick = async (chainId, coin_adres) => {
         try{
             await clearWeb3Provider(this);
             await initWeb3Modal(chainId);
             await initWeb3(chainId, this);
             let web3 = this.state.web3;
             let accounts = this.state.accounts;
+            var chains_coins = this.state.chains_coins;
             var currentProvider = "";
             if(web3.currentProvider && web3.currentProvider.isMetaMask) {
                 currentProvider = "metamask";
@@ -223,8 +225,7 @@ class WithdrawDonations extends Component {
             ERC20Coin = (await import("../remote/"+ chainId + "/ERC20")).default;
             let campaignAddress = this.state.campaign.addresses[chainId];
             let campaignInstance = new web3.eth.Contract(HEOCampaign, campaignAddress);
-            let coinAddress = (await campaignInstance.methods.currency().call()).toLowerCase();
-            let userCoinInstance = new web3.eth.Contract(ERC20Coin, coinAddress);
+            let userCoinInstance = new web3.eth.Contract(ERC20Coin, coin_adres);
             let campaignBalance = await userCoinInstance.methods.balanceOf(campaignAddress).call();
             var that = this;
             ReactGA.event({
@@ -236,7 +237,7 @@ class WithdrawDonations extends Component {
            
             try {
                  
-                let result = await campaignInstance.methods.donateToBeneficiary().send(
+                let result = await campaignInstance.methods.donateToBeneficiary(coin_adres).send(
                  {from: accounts[0]}
                  ).once('transactionHash', function(transactionHash) {
                     console.log(`transaction hash for donateToBeneficiary ${transactionHash}`);
@@ -259,6 +260,13 @@ class WithdrawDonations extends Component {
                     clearWeb3Provider(this);
                     return;
                 }
+                for (let j = 0; j < chains_coins.length; j++){
+                    if ((chains_coins.chain == chainId)&&(chains_coins.coin.address == coin_adres)){
+                        chains_coins.donate = await this.getDaonateSize(chainId, this.state.campaignId, coin_adres);
+                        break;
+                    }
+                }    
+                this.setState({chains_coins:chains_coins});
             } catch (err) {
                 this.setState({
                     showModal: true, modalTitle: 'failed', modalMessage: 'blockChainTransactionFailed',
@@ -343,7 +351,7 @@ class WithdrawDonations extends Component {
                                     <InputGroup.Append>
                                         <DropdownButton id='donateButton' title={i18n.t('withdrawDonations')}>
                                             {this.state.chains_coins.map((item, i) =>
-                                                    <Dropdown.Item key={item["CHAIN"]} as="button" onClick={() => this.handleDonateClick(item["CHAIN"])}>
+                                                    <Dropdown.Item key={item["CHAIN"]} as="button" onClick={() => this.handleDonateClick(item.chain, item.coin.address)}>
                                                      {item.coin.name} ({item.chain_name})  {"-"}  {i18n.t('donationsSize')}{":"} {item.donate}
                                                      </Dropdown.Item>
                                             )}
@@ -398,8 +406,8 @@ class WithdrawDonations extends Component {
             })
         let campaign = (await this.getCampaign(campaignId));
         if(!campaign) {
-            this.props.history.push("/404");
-            return;
+          this.props.history.push("/404");
+          return;
         }
         
         this.state.donationAmount = campaign.defaultDonationAmount ? campaign.defaultDonationAmount : "10";
@@ -438,16 +446,12 @@ class WithdrawDonations extends Component {
             let chains_coins = [];
             for (let i = 0; i <  res.data.length; i++){
                 res.data[i].chain_name = "";
-                if(campaign.coins[res.data[i].chain])
-                {
-                 for (let j = 0; j < chains.length; j++){
+                for (let j = 0; j < chains.length; j++){
                   if (chains[j].CHAIN == res.data[i].chain){
                    res.data[i].chain_name = chains[j].CHAIN_NAME;
-                   break;
+                   res.data[i].donate = that.getDaonateSize(res.data[i].chain, campaign, res.data[i].coin.address);
+                   chains_coins.push(res.data[i]);
                   }     
-                 }
-                  res.data[i].donate = 1;//that.getDaonateSize(res.data[i].chain, campaign, res.data[i].coin.address);
-                 chains_coins.push(res.data[i]); 
                 }
             }
             this.setState({chains_coins:chains_coins})
@@ -466,6 +470,7 @@ class WithdrawDonations extends Component {
         for(let j = 0; j < this.state.chains_coins.length; j++){
             this.state.chains_coins[j].donate = await this.getDaonateSize(this.state.chains_coins[j].chain, campaign, this.state.chains_coins[j].coin.address); 
         }
+        
         let globals = config.get("GLOBALS");
         globals.forEach(element => {
             if(element._id === 'FIATPAYMENT') {
