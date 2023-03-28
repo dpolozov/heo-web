@@ -357,7 +357,7 @@ class CampaignPage extends Component {
             } else if(web3.currentProvider && web3.currentProvider.isWalletConnect) {
                 currentProvider = "walletconnect";
             }
-            HEOCampaign = (await import("../remote/"+ chainId + "/HEOCampaign")).default;
+            HEOCampaign = (await import("../remote/"+ chainId + "/HEOCampaign_old")).default;
             let campaignAddress = this.state.campaign.addresses[chainId];
             let campaignInstance = new web3.eth.Contract(HEOCampaign, campaignAddress);
             //let coinAddress = (await campaignInstance.methods.currency().call()).toLowerCase();

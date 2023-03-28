@@ -187,7 +187,8 @@ class WithdrawDonations extends Component {
           let campaignAddress = campaign.addresses[chainId];
           let userCoinInstance = new web3.eth.Contract(ERC20Coin, coinAddress);
           let campaignBalance = await userCoinInstance.methods.balanceOf(campaignAddress).call();
-          return(campaignBalance/(10**18));
+          let decimals = await userCoinInstance.methods.decimals().call();
+          return(campaignBalance/(10**decimals));
       }
     catch (err) {
             console.log(err);
