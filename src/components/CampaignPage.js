@@ -20,7 +20,7 @@ import { Editor, EditorState, convertFromRaw, CompositeDecorator } from "draft-j
 import '../css/campaignPage.css';
 import '../css/modal.css';
 import ReactGA from "react-ga4";
-
+import web3 from 'web3';
 import bnbIcon from '../images/binance-coin-bnb-logo.png';
 import busdIcon from '../images/binance-usd-busd-logo.png';
 import usdcIcon from '../images/usd-coin-usdc-logo.png';
@@ -100,13 +100,14 @@ class CampaignPage extends Component {
             modalButtonVariant: "",
             chainId:"",
             chains:[],
+            chains_coins:[],
             coins:[],
             ccinfo:{},
             showCCinfoModal: false,
             tryAgainCC: false,
             fiatPaymentEnabled: false,
-            fiatPaymentProvider: ''
-
+            fiatPaymentProvider: '',
+            cur_chain: -1
         };
         this.handleGetCCInfo = this.handleGetCCInfo.bind(this);
         this.handleCCInfoCancel = this.handleCCInfoCancel.bind(this);
@@ -122,6 +123,17 @@ class CampaignPage extends Component {
     handleDonationAmount = (e) => {
         this.setState({donationAmount: e.target.value});
     };
+
+    getCurChaincCoins= (value) =>{
+     for (let i = 0; i < this.state.chains_coins.length; i++){
+        if (this.state.chains_coins._id == value){
+            this.setState({cur_chain: i});
+            return(i);
+        }
+     }
+     this.setState({cur_chain: -1});
+     return(-1);
+    }
 
     async getCampaign(address) {
         var campaign = {};
@@ -139,37 +151,38 @@ class CampaignPage extends Component {
             console.log(err);
             this.setState({
                 showError: true,
-                modalMessage,
+                modalMessage: modalMessage
             })
         })
-        let raisedAmount = campaign.raisedAmount ? parseFloat(campaign.raisedAmount) : 0;
-        let fiatDonations = campaign.fiatDonations ? parseFloat(campaign.fiatDonations) : 0;
-        let raisedOnCoinbase = campaign.raisedOnCoinbase ? parseFloat(campaign.raisedOnCoinbase) : 0;
-
-
-
-        if(raisedAmount || fiatDonations || raisedOnCoinbase) {
-            campaign["raisedAmount"] = Math.round((raisedAmount + fiatDonations + raisedOnCoinbase) * 100)/100;
-        }
         return campaign;
     }
 
-    updateRaisedAmount = async (accounts, campaignInstance, web3, decimals) => {
-        var campaign = this.state.campaign;
-        var that = this;
-        campaignInstance.methods.raisedAmount().call({from:accounts[0]}, function(err, result) {
-            if(!err) {
-                if(decimals == 18) {
-                    campaign.raisedAmount = parseFloat(web3.utils.fromWei(result));
-                } else {
-                    campaign.raisedAmount = parseFloat(result/Math.pow(10, decimals));
+    updateRaisedAmount = async () => {
+        var modalMessage;
+        let data = {campaignID: this.state.campaignId};
+        var donateAmount;
+        await axios.post('/api/campaign/getalldonations', {mydata: data}, {headers: {"Content-Type": "application/json"}})
+            .then(res => {
+                donateAmount = (res.data == 0) ? 0 : parseFloat(res.data[0].totalQuantity);
+            }).catch(err => {
+                if (err.response) {
+                    modalMessage = 'technicalDifficulties'}
+                else if(err.request) {
+                    modalMessage = 'checkYourConnection'
                 }
-                that.setState({campaign:campaign});
-            } else {
-                console.log("Failed to update raised amount.")
                 console.log(err);
+                this.setState({
+                    showError: true,
+                    modalMessage: modalMessage,
+                })
+            })
+            let baseAmount = this.state.campaign.raisedAmount ? parseFloat(this.state.campaign.raisedAmount) : 0;
+            let fiatDonations = this.state.campaign.fiatDonations ? parseFloat(this.state.campaign.fiatDonations) : 0;
+            let raisedOnCoinbase = this.state.campaign.raisedOnCoinbase ? parseFloat(this.state.campaign.raisedOnCoinbase) : 0;
+            if(baseAmount || fiatDonations || raisedOnCoinbase || donateAmount) {
+                let raisedAmount = Math.round((baseAmount + fiatDonations + raisedOnCoinbase + donateAmount) * 100)/100;
+                this.setState({raisedAmount : raisedAmount});
             }
-        });
     }
 
     handleDonateFiat = async () => {
@@ -210,7 +223,6 @@ class CampaignPage extends Component {
                 campaignId: this.state.campaignId
             };
         }
-
         try {
             this.setState({
                 showCCWarningModal:false,
@@ -296,8 +308,44 @@ class CampaignPage extends Component {
         this.setState({showCoinbaseModal: true});
     }
 
-    handleDonateClick = async (chainId) => {
-        //TODO: check that this.state.donationAmount is larger than 
+    saveDonateToDb = async (value, decimals, transactionHash, chainId, coinAddress) => {
+        let accounts = this.state.accounts;
+        if(decimals == 18) {
+            value = parseFloat(web3.utils.fromWei(value));
+        } else {
+            value = parseFloat(value/Math.pow(10, decimals));
+        }
+        let donateData = {
+                          campaignID : this.state.campaignId,
+                          donatorID: accounts[0],
+                          raisedAmount: value,
+                          transactionHash: transactionHash,
+                          chainId: chainId,
+                          coinAddress: coinAddress
+                        };
+        let result = await axios.post('/api/donate/adddanate', {mydata: donateData}, {headers: {"Content-Type": "application/json"}});
+
+        console.log(result);
+        this.setState({showModal:true, goHome: true,
+            modalMessage: 'campaignCreateSuccess',
+            modalTitle: 'success',
+            modalIcon: 'CheckCircle',
+            modalButtonMessage: 'returnHome',
+            modalButtonVariant: "#588157", waitToClose: false
+        });
+        await this.updateRaisedAmount();
+    }
+
+    handleDonateClick = async(chain_name, coin_address) =>{
+        console.log("Метка 1");
+      if (this.state.campaign.new == false)
+       await this.handleDonateOld(chain_name, coin_address);
+      else await this.handleDonateNew(chain_name, coin_address);
+    }
+
+
+    handleDonateOld = async (chainId, coinAddress) => {
+        //TODO: check that this.state.donationAmount is larger than
         try {
             await clearWeb3Provider(this);
             await initWeb3Modal(chainId);
@@ -310,10 +358,10 @@ class CampaignPage extends Component {
             } else if(web3.currentProvider && web3.currentProvider.isWalletConnect) {
                 currentProvider = "walletconnect";
             }
-            HEOCampaign = (await import("../remote/"+ chainId + "/HEOCampaign")).default;
+            HEOCampaign = (await import("../remote/"+ chainId + "/HEOCampaign_old")).default;
             let campaignAddress = this.state.campaign.addresses[chainId];
             let campaignInstance = new web3.eth.Contract(HEOCampaign, campaignAddress);
-            let coinAddress = (await campaignInstance.methods.currency().call()).toLowerCase();
+            //let coinAddress = (await campaignInstance.methods.currency().call()).toLowerCase();
             let toDonate = web3.utils.toWei(this.state.donationAmount);
             ReactGA.event({
                 category: "donation",
@@ -557,6 +605,274 @@ class CampaignPage extends Component {
         }
     }
 
+    handleDonateNew = async (chainId, coinAddress) => {
+        //TODO: check that this.state.donationAmount is larger than
+        try {
+            await clearWeb3Provider(this);
+            await initWeb3Modal(chainId);
+            await initWeb3(chainId, this);
+            let web3 = this.state.web3;
+            let accounts = this.state.accounts;
+            let currentProvider = "";
+            if(web3.currentProvider && web3.currentProvider.isMetaMask) {
+                currentProvider = "metamask";
+            } else if(web3.currentProvider && web3.currentProvider.isWalletConnect) {
+                currentProvider = "walletconnect";
+            }
+            HEOCampaign = (await import("../remote/"+ chainId + "/HEOCampaign")).default;
+            ERC20Coin = (await import("../remote/"+ chainId + "/ERC20")).default;
+            let campaignAddress = this.state.campaign.addresses[chainId];
+            let campaignInstance = new web3.eth.Contract(HEOCampaign, campaignAddress);
+            //let coinAddress = (await campaignInstance.methods.currency().call()).toLowerCase();
+            let toDonate = web3.utils.toWei(""+this.state.donationAmount);
+            var coinInstance = new web3.eth.Contract(ERC20Coin, coinAddress);
+            ReactGA.event({
+                category: "donation",
+                action: "donate_button_click",
+                value: parseInt(this.state.donationAmount), // optional, must be a number
+                nonInteraction: false
+            });
+            //check if donating to oneself
+            if(accounts[0].toLowerCase() == this.state.campaign.beneficiaryId.toLowerCase()) {
+                this.setState({
+                    showModal: true, modalTitle: 'notAllowed',
+                    modalMessage: 'donateToYourSelf',
+                    errorIcon: 'ExclamationTriangle', modalButtonMessage: 'closeBtn',
+                    modalButtonVariant: '#E63C36', waitToClose: false
+                });
+                ReactGA.event({
+                    category: "donation",
+                    action: "self_donation_blocked",
+                    nonInteraction: false
+                });
+                console.log("Accounts[0]" + accounts[0]);
+                console.log("Beneficiary" + this.state.campaign.beneficiaryId);
+                return;
+            }
+
+            var that = this;
+            //for native donations
+            if(coinAddress === "0x0000000000000000000000000000000000000000") {
+                this.setState({
+                    showModal: true, modalTitle: 'processingWait',
+                    modalMessage: "confirmDonation",
+                    errorIcon: 'HourglassSplit', modalButtonVariant: "gold", waitToClose: true
+                });
+                if(currentProvider !== "metamask" && currentProvider !== "injected") {
+                    // Binance Chain Extension Wallet does not support network events
+                    // so we have to poll for transaction status instead of using
+                    // event listeners and promises.
+                    try {
+                        campaignInstance.methods.donateNative().send(
+                            {from:accounts[0], value:(""+toDonate)}
+                        ).once('transactionHash', function(transactionHash) {
+                            that.setState({modalMessage: "waitingForNetwork"});
+                            that.saveDonateToDb(toDonate, 0, transactionHash, chainId, coinAddress);
+                            web3.eth.getTransaction(transactionHash).then(
+                                function(txnObject) {
+                                    if(txnObject) {
+                                        checkDonationTransaction(txnObject, 0, chainId, that);
+                                    } else {
+                                        checkDonationTransaction({hash:transactionHash}, 0, chainId, that);
+                                    }
+                                }
+                            );
+
+                        });
+
+                    } catch (err) {
+                        this.setState({
+                            showModal: true, modalTitle: 'failed', modalMessage: 'blockChainTransactionFailed',
+                            errorIcon: 'XCircle', modalButtonMessage: 'closeBtn',
+                            modalButtonVariant: '#E63C36', waitToClose: false
+                        });
+                        console.log(err);
+                    }
+                } else {
+                    try {
+                        await campaignInstance.methods.donateNative().send(
+                            {from:accounts[0], value:(""+toDonate)}
+                        ).once('transactionHash', function(transactionHash) {
+                            that.setState({modalMessage: "waitingForNetwork"});
+                            let decimals = 0;
+                            coinInstance.methods.decimals().call({from:accounts[0]}, function(err, result) {
+                                if(err) {
+                                    console.log(`Failed to fetch decimals from ${coinAddress} `);
+                                    console.log(err);
+                                }
+                                else decimals = result;
+                            });
+                            that.saveDonateToDb(toDonate, decimals, transactionHash, chainId, coinAddress);
+                        });
+                        this.setState({
+                            showModal: true, modalTitle: 'complete',
+                            modalMessage: 'thankYouDonation',
+                            errorIcon: 'CheckCircle', modalButtonMessage: 'closeBtn',
+                            modalButtonVariant: '#588157', waitToClose: false
+                        });
+                    } catch (err) {
+                        this.setState({
+                            showModal: true, modalTitle: 'failed', modalMessage: 'blockChainTransactionFailed',
+                            errorIcon: 'XCircle', modalButtonMessage: 'closeBtn',
+                            modalButtonVariant: '#E63C36', waitToClose: false
+                        });
+                        console.log("donateNative transaction failed");
+                        console.log(err);
+                    }
+                }
+            } else {
+                //for ERC20 donations
+                ERC20Coin = (await import("../remote/"+ chainId + "/ERC20")).default;
+
+                this.setState({
+                    showModal: true, modalTitle: 'processingWait',
+                    modalMessage: "approveSpend",
+                    errorIcon: 'HourglassSplit', modalButtonVariant: "#E63C36", waitToClose: false,
+                    modalButtonMessage: 'abortBtn',
+                });
+
+                try {
+                    let decimals = 6;
+                    toDonate = new web3.utils.BN(""+this.state.donationAmount).mul(new web3.utils.BN("1000000"));
+                    if(currentProvider != "metamask") {
+                        ReactGA.event({
+                            category: "provider",
+                            action: "using_noninjected_provider",
+                            label: window.web3Modal.cachedProvider,
+                            nonInteraction: false
+                        });
+                        // Binance Chain Extension Wallet does not support network events
+                        // so we have to poll for transaction status instead of using
+                        // event listeners and promises.
+                        console.log(`Using provider ${currentProvider}`);
+                        coinInstance.methods.decimals().call({from:accounts[0]}, function(err, result) {
+                            if(err) {
+                                console.log(`Failed to fetch decimals from ${coinAddress} `);
+                                console.log(err);
+                            } else {
+                                decimals = result;
+                                console.log(`${coinAddress} has ${result} decimals`);
+                                toDonate = new web3.utils.BN(""+that.state.donationAmount).mul(new web3.utils.BN(new web3.utils.BN("10").pow(new web3.utils.BN(""+decimals))));
+                                console.log(`Adjusted donation amount is ${toDonate.toString()}`);
+                            }
+                            coinInstance.methods.transfer(campaignAddress, toDonate).send(
+                                {from:accounts[0]}
+                            ).once('transactionHash', function(transactionHash) {
+                                console.log(`Got donation trnasaction hash ${transactionHash}`);
+                                that.saveDonateToDb(toDonate,decimals, transactionHash, chainId, coinAddress);
+                                ReactGA.event({
+                                    category: "donation",
+                                    action: "donation_hash",
+                                    label: transactionHash, // optional, must be a number
+                                    nonInteraction: false
+                                });
+                                web3.eth.getTransaction(transactionHash).then(
+                                    function(txnObject2) {
+                                        if(txnObject2) {
+                                            checkDonationTransaction(txnObject2, decimals, chainId, that);
+                                        } else {
+                                            console.log(`Empty txnObject2. Using transaction hash to check donation status.`);
+                                            checkDonationTransaction({hash:transactionHash}, decimals, chainId, that);
+                                        }
+                                    }
+                                );
+                            }).on('error', function(error) {
+                                ReactGA.event({
+                                    category: "donation",
+                                    action: "donation_failed",
+                                    label: error, // optional, must be a number
+                                    nonInteraction: false
+                                });
+                                that.setState({
+                                    showModal: true, modalTitle: 'failed',
+                                    errorIcon: 'XCircle', modalButtonMessage: 'closeBtn',
+                                    modalButtonVariant: '#E63C36', waitToClose: false,
+                                    modalMessage: 'blockChainTransactionFailed'
+                                });
+                                clearWeb3Provider(that)
+                                console.log('error handler invoked in checkApprovalTransaction')
+                                console.log(error);
+                            })
+
+                        });
+                    } else {
+                        console.log(`Using provider ${currentProvider}`);
+                        ReactGA.event({
+                            category: "provider",
+                            action: "using_injected_provider",
+                            label: window.web3Modal.cachedProvider, // optional, must be a number
+                            nonInteraction: false
+                        });
+                        decimals = await coinInstance.methods.decimals().call();
+
+                        toDonate = new web3.utils.BN(""+that.state.donationAmount).mul(new web3.utils.BN(new web3.utils.BN("10").pow(new web3.utils.BN(""+decimals))));
+                        var curTransactionHash;
+                        let result = await coinInstance.methods.transfer(campaignAddress, toDonate).send(
+                            {from:accounts[0]}
+                        ).once('transactionHash', function(transactionHash) {
+                            console.log(`transaction hash for donateERC20 ${transactionHash}`);
+                            that.setState({modalMessage: "waitingForNetwork"});
+                            that.saveDonateToDb(toDonate,decimals, transactionHash, chainId, coinAddress);
+                        });
+                        if(result.code) {
+                            this.setState({
+                                showModal: true, modalTitle: 'failed',
+                                errorIcon: 'XCircle', modalButtonMessage: 'closeBtn',
+                                modalButtonVariant: '#E63C36', waitToClose: false,
+                                modalMessage: 'blockChainTransactionFailed'
+                            });
+                            ReactGA.event({
+                                category: "error",
+                                action: "transaction_error",
+                                label: `Metamask transaction failed with code ${result.code}`,
+                                nonInteraction: false
+                            });
+                            clearWeb3Provider(this);
+                            return;
+                        }
+                        this.setState({
+                            showModal: true, modalTitle: 'complete',
+                            modalMessage: 'thankYouDonation',
+                            errorIcon: 'CheckCircle', modalButtonMessage: 'closeBtn',
+                            modalButtonVariant: '#588157', waitToClose: false
+                        });
+
+
+                    }
+                } catch (err) {
+                    this.setState({
+                        showModal: true, modalTitle: 'failed',
+                        errorIcon: 'XCircle', modalButtonMessage: 'closeBtn',
+                        modalButtonVariant: '#E63C36', waitToClose: false,
+                        modalMessage: 'blockChainTransactionFailed'
+                    });
+                    ReactGA.event({
+                        category: "error",
+                        action: "transaction_error",
+                        label: (err && err.message ? err.message : "blockChainTransactionFailed"), // optional, must be a number
+                        nonInteraction: false
+                    });
+                    clearWeb3Provider(this);
+                    console.log(err);
+                }
+            }
+        } catch (err) {
+            console.log(err);
+            this.setState({
+                showModal: true, modalTitle: 'failed',
+                errorIcon: 'XCircle', modalButtonMessage: 'closeBtn',
+                modalButtonVariant: '#E63C36', waitToClose: false,
+                modalMessage: 'blockChainConnectFailed'
+            });
+            ReactGA.event({
+                category: "error",
+                action: "transaction_error",
+                label: (err && err.message ? err.message : "blockChainConnectFailed"), // optional, must be a number
+                nonInteraction: false
+            });
+        }
+    }
+
     onModalClose() {
         if(this.state.tryAgainCC) {
             this.setState({showCCinfoModal:true});
@@ -643,15 +959,15 @@ class CampaignPage extends Component {
                             </Row>
                             <Row id='countryRow'><h2>{i18nString(this.state.campaign.org, i18n.language)}</h2></Row>
                             <Row id='progressRow'>
-                                <p id='progressBarLabel'><span id='progressBarLabelStart'>&#36;{`${this.state.campaign.raisedAmount}`}</span>{i18n.t('raised')}&#36;{this.state.campaign.maxAmount} {i18n.t('goal')}</p>
-                                <ProgressBar id='progressBar' now={this.state.campaign.percentRaised}/>
+                                <p id='progressBarLabel'><span id='progressBarLabelStart'>&#36;{`${this.state.raisedAmount}`}</span>{i18n.t('raised')}&#36;{this.state.campaign.maxAmount} {i18n.t('goal')}</p>
+                                <ProgressBar id='progressBar' now={100 * this.state.raisedAmount/this.state.campaign.maxAmount}/>
                             </Row>
                             <Row id='acceptingRow'>
                                 <div id='acceptingDiv'>
                                     <p><Trans i18nKey='accepting'/>:
                                         {this.state.fiatPaymentEnabled && <span className='coinRewardInfo'><img src={visaMcLogo} witdth={21} height={20} style={{marginRight:5, marginLeft:5}} /> </span> }
-                                        {this.state.coins.map((item, i) =>
-                                            <span className='coinRewardInfo'><img src={IMG_MAP[item]} width={20} height={20} style={{marginRight:5, marginLeft:5}} /> </span>
+                                        {this.state.chains_coins.map((item, i) =>
+                                            <span className='coinRewardInfo'><img src={IMG_MAP[item.coin.name]} width={20} height={20} style={{marginRight:5, marginLeft:5}} /> </span>
                                             )}
                                         {this.state.campaign.coinbaseCommerceURL && <span className='coinRewardInfo'><img src={ethIcon} width={20} height={20} style={{marginRight:5, marginLeft:5}} /> </span> }
                                         {this.state.campaign.coinbaseCommerceURL && <span className='coinRewardInfo'><img src={btcLogo} width={20} height={20} style={{marginRight:5, marginLeft:5}} /> </span> }
@@ -672,21 +988,11 @@ class CampaignPage extends Component {
                                     />
                                     <InputGroup.Append>
                                         <DropdownButton id='donateButton' title={i18n.t('donate')}>
-                                            {this.state.fiatPaymentEnabled && <Dropdown.Item key="_fiat" as="button" onClick={
-                                                () => {
-                                                    if(this.state.fiatPaymentProvider ==='payadmit') {
-                                                        //skip the card info form for PayAdmin and use hosted payment dialog
-                                                        this.setState({showCCinfoModal: false});
-                                                        this.setState({showCCWarningModal: true});
-                                                    } else {
-                                                        //for Cirle use our payment dialog
-                                                        this.setState({showCCWarningModal: false});
-                                                        this.setState({showCCinfoModal: true});
-                                                    }
-                                                }
-                                            }><img src={visaMcLogo} width={17} height={16} style={{marginRight:5}} />USD</Dropdown.Item> }
-                                            {this.state.chains.map((item, i) =>
-                                                    <Dropdown.Item key={item["CHAIN"]} as="button" onClick={() => this.handleDonateClick(item["CHAIN"])}><img src={IMG_MAP[this.state.campaign.coins[item["CHAIN"]].name]} width={16} height={16} style={{marginRight:5}} />{this.state.campaign.coins[item["CHAIN"]].name} ({item["CHAIN_NAME"]})</Dropdown.Item>
+                                            {this.state.campaign.stripeURL &&
+                                                <Dropdown.Item key="_fiat"  href={`${this.state.campaign.stripeURL}`} target="_blank"><img src={visaMcLogo} width={17} height={16} style={{marginRight:5}} />USD</Dropdown.Item>
+                                            }
+                                            {this.state.chains_coins.map((item, i) =>
+                                                    <Dropdown.Item key={item.chain.address} as="button" onClick={() => this.handleDonateClick(item.chain, item.coin.address)}><img src={IMG_MAP[item.coin.name]} width={16} height={16} style={{marginRight:5}} />{item.coin.name} ({item.chain_name })</Dropdown.Item>
                                                 )}
                                             {this.state.campaign.coinbaseCommerceURL && <Dropdown.Item className='coinRewardInfo' href={`${this.state.campaign.coinbaseCommerceURL}`} target="_blank"><img src={ethIcon} width={20} height={20} style={{marginRight:5, marginLeft:5}} />ETH</Dropdown.Item> }
                                             {this.state.campaign.coinbaseCommerceURL && <Dropdown.Item className='coinRewardInfo' href={`${this.state.campaign.coinbaseCommerceURL}`} target="_blank"><img src={btcLogo} width={20} height={20} style={{marginRight:5, marginLeft:5}} />BTC</Dropdown.Item> }
@@ -740,16 +1046,17 @@ class CampaignPage extends Component {
                 console.log(err);
                 this.setState({
                     showError: true,
-                    modalMessage,
+                    modalMessage: modalMessage
                 })
             })
-        let campaign = (await this.getCampaign(campaignId));
+
+        let campaign = await this.getCampaign(campaignId);
         if(!campaign) {
             this.props.history.push("/404");
             return;
         }
         this.state.donationAmount = campaign.defaultDonationAmount ? campaign.defaultDonationAmount : "10";
-        campaign.percentRaised = 100 * (campaign.raisedAmount)/campaign.maxAmount;
+        campaign.percentRaised = 100 * (this.state.raisedAmount)/campaign.maxAmount;
         var contentState = {};
         if(campaign.descriptionEditor[i18n.language]) {
             for(var lng in campaign.descriptionEditor) {
@@ -779,6 +1086,7 @@ class CampaignPage extends Component {
                 chains.push(configChains[ch]);
             }
         }
+
         let globals = config.get("GLOBALS");
         globals.forEach(element => {
             if(element._id === 'FIATPAYMENT') {
@@ -807,7 +1115,35 @@ class CampaignPage extends Component {
                 dedupedCoinNames.push(coinName);
             }
         }
-
+        await axios.post('/api/getcoinslist')
+        .then(res => {
+            let chains_coins = [];
+            for (let i = 0; i <  res.data.length; i++){
+                res.data[i].chain_name = "";
+                if(campaign.addresses[res.data[i].chain])
+                {
+                    for (let j = 0; j < chains.length; j++){
+                     if (chains[j].CHAIN == res.data[i].chain){
+                        res.data[i].chain_name = chains[j].CHAIN_NAME;
+                        break;
+                     }
+                    }
+                    chains_coins.push(res.data[i]);
+                }
+            }
+            this.setState({chains_coins:chains_coins})
+        }).catch(err => {
+            if (err.response) {
+                modalMessage = 'Failed to load coins. We are having technical difficulties'}
+            else if(err.request) {
+                modalMessage = 'Failed to load coins. Please check your internet connection'
+            }
+            console.log(err);
+            this.setState({
+                showError: true,
+                modalMessage: modalMessage
+            })
+        })
         this.setState({
             chains: chains,
             campaignId: campaignId,
@@ -815,9 +1151,8 @@ class CampaignPage extends Component {
             coins: dedupedCoinNames,
             editorState: EditorState.createWithContent(contentState[i18n.language], createDecorator())
         });
-
+        await this.updateRaisedAmount();
         ReactGA.send({ hitType: "pageview", page: this.props.location.pathname });
-
         const params = new Proxy(new URLSearchParams(window.location.search), {
             get: (searchParams, prop) => searchParams.get(prop),
         });
@@ -894,12 +1229,9 @@ function findLinkEntities(contentBlock, callback, contentState) {
 function checkDonationTransaction(txnObject, decimals, chainId, that) {
     if(txnObject.blockNumber) {
         console.log(`Donation transaction successful in block ${txnObject.blockNumber}`);
-        let accounts = that.state.accounts;
-        let web3 = that.state.web3;
 
-        let campaignInstance = new web3.eth.Contract(HEOCampaign, that.state.campaign.addresses[chainId]);
         if(decimals > 0) {
-            that.updateRaisedAmount(accounts, campaignInstance, web3, decimals);
+            that.updateRaisedAmount();
         }
         that.setState({
             showModal: true, modalTitle: 'complete',

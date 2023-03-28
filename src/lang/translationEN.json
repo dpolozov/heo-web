@@ -175,6 +175,8 @@
     "showMoreTextExpand": "Show more...",
     "showLessTextCollapse": "Show less...",
     "defDonationAmount": "Default donation amount",
-    "fiatPayments": "Use bank cards for donations"
+    "fiatPayments": "Use bank cards for donations",
+    "withdrawDonations" : "Withdraw donations",
+    "donationsSize" : "Available to withdraw"
 }
 
