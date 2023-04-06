@@ -965,7 +965,7 @@ class CampaignPage extends Component {
                             <Row id='acceptingRow'>
                                 <div id='acceptingDiv'>
                                     <p><Trans i18nKey='accepting'/>:
-                                        {this.state.fiatPaymentEnabled && <span className='coinRewardInfo'><img src={visaMcLogo} witdth={21} height={20} style={{marginRight:5, marginLeft:5}} /> </span> }
+                                        {this.state.fiatPaymentEnabled && this.state.campaign.stripeURL && <span className='coinRewardInfo'><img src={visaMcLogo} witdth={21} height={20} style={{marginRight:5, marginLeft:5}} /> </span> }
                                         {this.state.chains_coins.map((item, i) =>
                                             <span className='coinRewardInfo'><img src={IMG_MAP[item.coin.name]} width={20} height={20} style={{marginRight:5, marginLeft:5}} /> </span>
                                             )}
@@ -988,7 +988,7 @@ class CampaignPage extends Component {
                                     />
                                     <InputGroup.Append>
                                         <DropdownButton id='donateButton' title={i18n.t('donate')}>
-                                            {this.state.campaign.stripeURL &&
+                                            {this.state.fiatPaymentEnabled && this.state.campaign.stripeURL &&
                                                 <Dropdown.Item key="_fiat"  href={`${this.state.campaign.stripeURL}`} target="_blank"><img src={visaMcLogo} width={17} height={16} style={{marginRight:5}} />USD</Dropdown.Item>
                                             }
                                             {this.state.chains_coins.map((item, i) =>
