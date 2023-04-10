@@ -57,8 +57,6 @@ class EditCampaign extends React.Component {
             mainImageURL: "",
             imgID:"",
             mainImageFile:"",
-            qrCodeImageURL:"",
-            qrCodeImageFile:"",
             waitToClose: false,
             maxAmount:0,
             updateImage: false,
@@ -101,9 +99,6 @@ class EditCampaign extends React.Component {
         });
     }
 
-    qrfileSelected = e => {
-        this.setState({qrCodeImageFile:e.target.files[0], qrCodeImageURL: URL.createObjectURL(e.target.files[0])});
-    };
 
     handleClick = async (chainId) => {
         await initWeb3Modal(chainId, this);
@@ -182,18 +177,6 @@ class EditCampaign extends React.Component {
                 return;
             }
         }
-        var newQrImgUrl = this.state.qrCodeImageURL;
-        if(this.state.updateImage) {
-            newQrImgUrl = await this.uploadImageS3('qrCode');
-            if(!newQrImgUrl) {
-                this.setState({showModal:true,
-                    modalTitle: 'imageUploadFailed',
-                    modalMessage: 'technicalDifficulties',
-                    errorIcon:'XCircle', modalButtonMessage: 'returnHome',
-                    modalButtonVariant: "#E63C36", waitToClose: false});
-                return;
-            }
-        }
 
         //updating existing HEOCampaign
         if(this.state.updateMeta) {
@@ -224,7 +207,6 @@ class EditCampaign extends React.Component {
         try {
             let data = {
                 mainImageURL: this.state.mainImageURL,
-                qrCodeImageURL: this.state.qrCodeImageURL,
                 coinbaseCommerceURL: this.state.coinbaseCommerceURL,
                 fn: this.state.fn,
                 ln: this.state.ln,
@@ -316,7 +298,6 @@ class EditCampaign extends React.Component {
         modalMessage: 'uploadingImageWait', errorIcon:'HourglassSplit',
         modalButtonVariant: "gold", waitToClose: true});
         let imgID = this.state.imgID;
-        let qrImgID = this.state.qrImgID;
         const formData = new FormData();
         if(type === 'main') {
             this.setState({ imageFileName : imgID,});
@@ -326,21 +307,11 @@ class EditCampaign extends React.Component {
                 this.state.mainImageFile,
                 `${imgID}.${fileType}`,
             );
-        } else if (type === 'qrCode') {
-            this.setState({ imageFileName : qrImgID,});
-            let fileType = this.state.qrCodeImageFile.type.split("/")[1];
-            formData.append(
-                "myFile",
-                this.state.qrCodeImageFile,
-                `${qrImgID}.${fileType}`,
-            );
         }
         try {
             let res = await axios.post('/api/uploadimage', formData);
             if(type === 'main') {
                 this.setState({showModal: false, mainImageURL: res.data});
-            } else if (type === 'qrCode') {
-                this.setState({showModal: false, qrCodeImageURL: res.data});
             }
             return res.data;
         } catch (err) {
@@ -413,16 +384,16 @@ class EditCampaign extends React.Component {
                                           value={this.state.defDonationAmount} placeholder={this.state.defDonationAmount}
                                           name='defDonationAmount' onChange={this.handleChange} onwheel="this.blur()" />
                             <Row>
-                            <Col xs="auto">                 
+                            <Col xs="auto">
                             <Form.Label><Trans i18nKey='fiatPayments'/><span
                                 className='redAsterisk'></span></Form.Label>
-                            </Col> 
-                            <Col xs lg="1">     
-                            <Form.Check type="checkbox" checked={this.state.fiatPayments} 
-                                        value={this.state.fiatPayments} placeholder={this.state.fiatPayments} 
+                            </Col>
+                            <Col xs lg="1">
+                            <Form.Check type="checkbox" checked={this.state.fiatPayments}
+                                        value={this.state.fiatPayments} placeholder={this.state.fiatPayments}
                                         name='fiatPayments' onChange={this.handleChange} onwheel="this.blur()"/>
-                            </Col>             
-                            </Row>            
+                            </Col>
+                            </Row>
                             <Form.Label><Trans i18nKey='coinbaseCommerceURL'/><span
                                 className='optional'>(<Trans i18nKey='optional'/>)</span></Form.Label>
                             <Form.Control ria-describedby="currencyHelpBlock"
@@ -458,15 +429,6 @@ class EditCampaign extends React.Component {
                                 name='description' value={this.state.description} onChange={this.handleTextArea} />
                             <Form.Label><Trans i18nKey='campaignDescription'/><span className='redAsterisk'>*</span></Form.Label>
                             {this.state.updatedEditorState && <TextEditor  />}
-                        </Form.Group>
-                        <Form.Group>
-                            <Form.Label><Trans i18nKey='selectQRCodeImage'/></Form.Label>
-                            <Form.File
-                                name='qrCodeImageFile' className="position-relative"
-                                id="campaignImgInput" accept='.jpg,.png,.jpeg,.gif'
-                                onChange={this.qrfileSelected}
-                            />
-                            <Image id='qrCodeImg' src={this.state.qrCodeImageURL}/>
                         </Form.Group>
                         <DropdownButton title={i18n.t('saveCampaignBtn')} id='createCampaignBtn' name='ff3'>
                         {Object.keys(this.state.chains).map((chain, i) =>
@@ -531,7 +493,7 @@ class EditCampaign extends React.Component {
                     modalMessage,
                 })
             })
-         
+
 
         let dbCampaignObj = await this.getCampaignFromDB(id);
         let chains = config.get("CHAINS");
@@ -558,12 +520,6 @@ class EditCampaign extends React.Component {
             let splits = metaData.mainImageURL.split("/");
             if(splits && splits.length) {
                 metaData.imgID = splits[splits.length-1];
-            }
-        }
-        if(metaData.qrCodeImageURL) {
-            let splits = metaData.mainImageURL.split("/");
-            if(splits && splits.length) {
-                metaData.qrImgID = splits[splits.length-1];
             }
         }
 
@@ -607,9 +563,8 @@ class EditCampaign extends React.Component {
             cn : metaData.cn,
             vl : metaData.vl,
             imgID: metaData.imgID,
-            qrImgID: metaData.qrImgID,
             org: orgObj[i18n.language],
-            orgEn:orgObj["default"], 
+            orgEn:orgObj["default"],
             ogOrg: orgObj,
             title: titleObj[i18n.language],
             ogTitle: titleObj,
