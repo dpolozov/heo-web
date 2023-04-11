@@ -54,6 +54,22 @@ APP.use(Sentry.Handlers.tracingHandler());
 
 APP.use(FILE_UPLOAD());
 APP.use(CORS());
+
+APP.post('/api/stripenotifications', EXPRESS.raw({type: 'application/json'}),async (req, res) => {
+    const DB = CLIENT.db(DBNAME);
+    let fiatPayment;
+    try {
+        fiatPayment = await serverLib.handleGetFiatPaymentSettings(DB, Sentry);
+    } catch (err) {Sentry.captureException(new Error(err));}
+
+    if (fiatPayment && fiatPayment === 'stripeLib') {
+        stripeLib.handleNotification(req, res, STRIPE_API_KEY, STRIPE_WH_SECRET, CLIENT, DBNAME, Sentry);
+        res.sendStatus(200);
+    } else {
+        res.status(503).send('serviceNotAvailable');
+    }
+});
+
 APP.use(EXPRESS.json());
 
 const URL = `mongodb+srv://${process.env.MONGO_LOGIN}:${process.env.MONGODB_PWD}${process.env.MONGO_URL}`;
@@ -66,6 +82,7 @@ const validator = new MessageValidator();
 const PAYADMIT_API_KEY = process.env.PAYADMIT_API_KEY;
 const PAYADMIT_API_URL = process.env.PAYADMIT_API_URL;
 const STRIPE_API_KEY = process.env.STRIPE_API_KEY;
+const STRIPE_WH_SECRET = process.env.STRIPE_WH_SECRET;
 
 CLIENT.connect(err => {
     if(err) {
@@ -121,6 +138,7 @@ APP.post('/api/circlenotifications', async (req, res) => {
         circleLib.handleCircleNotifications(req, res, CIRCLEARN, CIRCLE_API_KEY, validator, CLIENT, DBNAME, Sentry);
     } else {res.status(503).send('serviceNotAvailable');}
 });
+
 
 APP.post('/api/uploadimage', (req,res) => {
     if(serverLib.authenticated(req, res, Sentry)) serverLib.handleUploadImage(req, res, S3, Sentry);
