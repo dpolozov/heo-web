@@ -1,7 +1,7 @@
 const { default: axios } = require('axios');
 const { v4: uuidv4 } = require('uuid');
 
-class PayadmitLib{
+class PayadmitLib {
     constructor() {}
 
     async handleDonateFiat(req, res, PAYADMIT_API_URL, PAYADMIT_API_KEY, Sentry, CLIENT, DBNAME) {

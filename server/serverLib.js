@@ -6,7 +6,7 @@ const {Web3} = require('web3');
 class ServerLib {
     constructor() {
     }
-    
+
     testingClass() {
         console.log('server library class');
     }
@@ -63,7 +63,7 @@ class ServerLib {
             Sentry.captureException(new Error(err));
             res.sendStatus(500);
         }
-    } 
+    }
 
     async handleAddCampaign(req, res, Sentry, DB, newWalletId) {
         const ITEM = {
@@ -162,38 +162,38 @@ class ServerLib {
     }
 
     async handleGetAllDonateForCampaign(req, res, Sentry, DB){
-        try {  
+        try {
         let result = await DB.collection('donations').find({campaignID: req.body.mydata.campaignID});
         if (result.length == 0) res.send(0);
         else
         {
          const pipeline = [
           { $match: {campaignID: req.body.mydata.campaignID, deleted : false } },
-           {$group: { _id: null, totalQuantity: { $sum: "$raisedAmount" } }}  
+           {$group: { _id: null, totalQuantity: { $sum: "$raisedAmount" } }}
          ];
          result = await DB.collection('donations').aggregate(pipeline).toArray();
          res.send(result);
-        }      
+        }
        } catch (err) {
         Sentry.captureException(new Error(err));
         res.send("error");
-       }  
+       }
     }
 
     async handleGetAllDonateForList(req, res, Sentry, DB){
         try {
             const pipeline = [
                 { $match: { deleted : false } },
-                {$group: { _id: '$campaignID', totalQuantity: {$sum: "$raisedAmount"}}}  
+                {$group: { _id: '$campaignID', totalQuantity: {$sum: "$raisedAmount"}}}
             ];
             let result = await DB.collection('donations').aggregate(pipeline).toArray();
-            res.send(result);  
+            res.send(result);
        } catch (err) {
         Sentry.captureException(new Error(err));
         res.sendn("error");
-       }  
+       }
     }
-  
+
     async handleGetId(req, res, Sentry, DB) {
         try {
             const myCollection = await DB.collection('campaigns');
@@ -301,9 +301,11 @@ class ServerLib {
             let fiatSettingsRAW = await configCollection.find({_id : 'FIATPAYMENT'});
             let fiatSettings = await fiatSettingsRAW.toArray();
             if(fiatSettings[0].enabled) {
-                if(fiatSettings[0].CIRCLE && !fiatSettings[0].PAYADMIT) {
+                if (fiatSettings[0].STRIPE) {
+                    return 'stripeLib';
+                } else if(fiatSettings[0].CIRCLE) {
                     return 'circleLib';
-                } else if (!fiatSettings[0].CIRCLE && fiatSettings[0].PAYADMIT) {
+                } else if (fiatSettings[0].PAYADMIT) {
                     return 'payadmitLib';
                 }
             }

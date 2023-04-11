@@ -16,6 +16,7 @@ const Tracing = require("@sentry/tracing");
 const ServerLib = require('./serverLib');
 const CircleLib = require('./circleLib');
 const PayadmitLib = require('./payadmitLib');
+const StripeLib = require('./stripeLib');
 const PORT = process.env.PORT || 5000;
 
 
@@ -26,6 +27,7 @@ const APP = EXPRESS();
 const serverLib = new ServerLib();
 const circleLib = new CircleLib();
 const payadmitLib = new PayadmitLib();
+const stripeLib = new StripeLib();
 
 Sentry.init({
     dsn: process.env.SENTRY_DSN,
@@ -63,6 +65,7 @@ const CIRCLEARN = /^arn:aws:sns:.*:908968368384:(sandbox|prod)_platform-notifica
 const validator = new MessageValidator();
 const PAYADMIT_API_KEY = process.env.PAYADMIT_API_KEY;
 const PAYADMIT_API_URL = process.env.PAYADMIT_API_URL;
+const STRIPE_API_KEY = process.env.STRIPE_API_KEY;
 
 CLIENT.connect(err => {
     if(err) {
@@ -79,7 +82,7 @@ const S3 = new AWS.S3({
     secretAccessKey: process.env.SERVER_APP_ACCESS_KEY
 });
 
-getId = async(DB, key) =>{
+async function getId(DB, key){
     try {
         const myCollection = await DB.collection('campaigns');
         let result = await myCollection.findOne({"key" : key});
@@ -311,6 +314,7 @@ APP.post('/api/donatefiat', async (req, res) => {
     const DB = CLIENT.db(DBNAME);
     let fiatPayment;
     try {
+        console.log("Looking up fiat library");
         fiatPayment = await serverLib.handleGetFiatPaymentSettings(DB, Sentry);
     } catch (err) {
         Sentry.captureException(new Error(err));
@@ -320,7 +324,11 @@ APP.post('/api/donatefiat', async (req, res) => {
         circleLib.handleDonateFiat(req, res, CIRCLE_API_URL, CIRCLE_API_KEY, Sentry, CLIENT, DBNAME);
     } else if (fiatPayment && fiatPayment === 'payadmitLib') {
         payadmitLib.handleDonateFiat(req, res, PAYADMIT_API_URL, PAYADMIT_API_KEY, Sentry, CLIENT, DBNAME);
-    } else {res.status(503).send('serviceNotAvailable');}
+    } else if (fiatPayment && fiatPayment === 'stripeLib') {
+        console.log("Handing fiat via Stripe");
+        stripeLib.handleDonateFiat(req, res, STRIPE_API_KEY, Sentry);
+    }
+    else {res.status(503).send('serviceNotAvailable');}
 
 });
 

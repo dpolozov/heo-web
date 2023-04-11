@@ -189,7 +189,14 @@ class CampaignPage extends Component {
         //TODO: check that this.state.donationAmount is larger than 0
         let cardKeyData, encryptedCardData, encryptedSecurityData;
         var data;
-        if(this.state.fiatPaymentProvider === 'circle') {
+        if(this.state.fiatPaymentProvider === 'stripe') {
+            data = {
+                amount: this.state.donationAmount,
+                currency: "USD",
+                campaignId: this.state.campaignId,
+                campaignName: i18nString(this.state.campaign.title, i18n.language)
+            };
+        } else if(this.state.fiatPaymentProvider === 'circle') {
             cardKeyData = await getPCIPublicKey();
             encryptedCardData = await encryptCardData(cardKeyData, {number:this.state.ccinfo.number, cvv:this.state.ccinfo.cvc});
             encryptedSecurityData = await encryptCardData(cardKeyData, {cvv:this.state.ccinfo.cvc});
@@ -245,7 +252,7 @@ class CampaignPage extends Component {
                 this.setState({
                     showModal: true, modalTitle: 'failed', modalMessage: PAYMENT_ERROR_MESSAGES[resp.data.paymentStatus],
                     errorIcon: 'XCircle', modalButtonMessage: 'tryAgain',
-                    modalButtonVariant: '#E63C36', waitToClose: false, tryAgainCC: true
+                    modalButtonVariant: '#E63C36', waitToClose: false, tryAgainCC: false
                 });
                 this.setState(prevState => ({
                     ccinfo: {
@@ -288,7 +295,7 @@ class CampaignPage extends Component {
             this.setState({
                 showModal: true, modalTitle: 'failed',
                 errorIcon: 'XCircle', modalButtonMessage: 'tryAgain',
-                modalButtonVariant: '#E63C36', waitToClose: false, tryAgainCC: true
+                modalButtonVariant: '#E63C36', waitToClose: false, tryAgainCC: (this.state.fiatPaymentProvider != 'stripe')
             });
             if(!errorFound) {
                 if (this.state.fiatPaymentProvider === 'circle') {
@@ -988,9 +995,23 @@ class CampaignPage extends Component {
                                     />
                                     <InputGroup.Append>
                                         <DropdownButton id='donateButton' title={i18n.t('donate')}>
-                                            {this.state.fiatPaymentEnabled && this.state.campaign.stripeURL &&
-                                                <Dropdown.Item key="_fiat"  href={`${this.state.campaign.stripeURL}`} target="_blank"><img src={visaMcLogo} width={17} height={16} style={{marginRight:5}} />USD</Dropdown.Item>
+                                            {this.state.fiatPaymentEnabled && <Dropdown.Item key="_fiat" as="button" onClick={
+                                            () => {
+                                                if(this.state.fiatPaymentProvider ==='stripe') {
+                                                    //skip the card info form for PayAdmin and use hosted payment dialog
+                                                    this.handleDonateFiat();
+                                                } else if(this.state.fiatPaymentProvider ==='payadmit') {
+                                                    //skip the card info form for PayAdmin and use hosted payment dialog
+                                                    this.setState({showCCinfoModal: false});
+                                                    this.setState({showCCWarningModal: true});
+                                                } else if(this.state.fiatPaymentProvider ==='circle') {
+                                                    //for Cirle use our payment dialog
+                                                    this.setState({showCCWarningModal: false});
+                                                    this.setState({showCCinfoModal: true});
+                                                }
                                             }
+                                            }><img src={visaMcLogo} width={17} height={16} style={{marginRight:5}} />USD</Dropdown.Item> }
+
                                             {this.state.chains_coins.map((item, i) =>
                                                     <Dropdown.Item key={item.chain.address} as="button" onClick={() => this.handleDonateClick(item.chain, item.coin.address)}><img src={IMG_MAP[item.coin.name]} width={16} height={16} style={{marginRight:5}} />{item.coin.name} ({item.chain_name })</Dropdown.Item>
                                                 )}
@@ -1090,15 +1111,22 @@ class CampaignPage extends Component {
         let globals = config.get("GLOBALS");
         globals.forEach(element => {
             if(element._id === 'FIATPAYMENT') {
-                if(campaign.fiatPayments)
-                  this.setState({fiatPaymentEnabled: element.enabled});
-                else this.setState({fiatPaymentEnabled: false});
+                if(campaign.fiatPayments) {
+                    this.setState({fiatPaymentEnabled: element.enabled});
+                } else {
+                    this.setState({fiatPaymentEnabled: false});
+                }
+
                 if(element.enabled) {
-                    if(element.CIRCLE && !element.PAYADMIT) {
+                    if(element.STRIPE) {
+                        this.setState(({
+                            fiatPaymentProvider: 'stripe'
+                        }));
+                    } else if(element.CIRCLE) {
                         this.setState(({
                             fiatPaymentProvider: 'circle'
                         }));
-                    } else if (!element.CIRCLE && element.PAYADMIT) {
+                    } else if (element.PAYADMIT) {
                         this.setState(({
                             fiatPaymentProvider: 'payadmit'
                         }));
