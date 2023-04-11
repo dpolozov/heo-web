@@ -36,26 +36,89 @@ class StripeLib {
             }
             // Handle the event
             switch (event.type) {
-                case 'payment_intent.succeeded':
-                    const paymentIntent = event.data.object;
-                    console.log(`PaymentIntent for ${paymentIntent.amount} was successful!`);
-                    // Then define and call a method to handle the successful payment intent.
-                    // handlePaymentIntentSucceeded(paymentIntent);
-                    break;
                 case 'checkout.session.completed':
-                    console.log('Checkout session completed');
+                    Sentry.addBreadcrumb({
+                        category: "stripe",
+                        message: `Checkout session completed`,
+                        level: "debug",
+                    });
                     const sessionObj = event.data.object;
-                    console.log(sessionObj);
-                    console.log(`Checkout session for ${sessionObj.amount_total}`);
+                    Sentry.addBreadcrumb({
+                        category: "stripe",
+                        message: `Checkout session for ${sessionObj.amount_total}`,
+                        level: "debug",
+                    });
                     if(sessionObj.metadata && sessionObj.metadata.campaign_id) {
                         //this is a payment for a campaign
                         if(sessionObj.payment_status && sessionObj.payment_status == "paid") {
-                            console.log(`Received a payment for campaign ${sessionObj.metadata.campaign_id} for ${sessionObj.amount_total}/100`);
+                            //try finding an existing record
+                            const data = {
+                                paymentStatus: sessionObj.payment_status,
+                                lastUpdated: new Date(),
+                                currency: sessionObj.currency,
+                                paymentAmount: sessionObj.amount_total/100,
+                                referenceId: sessionObj.payment_intent,
+                                campaignId: sessionObj.metadata.campaign_id,
+                                paymentCreationDate: new Date().toISOString(),
+                                provider: 'stripe'
+                            }
+                            try {
+                                const DB = CLIENT.db(DBNAME);
+                                const paymentRecordsCollection = await DB.collection('fiat_payment_records');
+                                let paymentRecord = await paymentRecordsCollection.findOne({"referenceId" : sessionObj.payment_intent});
+                                if(!paymentRecord) {
+                                    await paymentRecordsCollection.insertOne(data);
+                                    Sentry.addBreadcrumb({
+                                        category: "stripe",
+                                        message: `inserted record into fiat_payment_records. Record data: ${data}`,
+                                        level: "debug",
+                                    });
+                                } else {
+                                    await paymentRecordsCollection.updateOne({'_id': paymentRecord._id}, {$set: data});
+                                }
+                                //get all payment records for this campaign
+                                let paidPayments = await (await paymentRecordsCollection.aggregate([
+                                    {$match:{campaignId: sessionObj.metadata.campaign_id, paymentStatus:'paid'}},
+                                    {$group:{_id:"$campaignId", total: { $sum: "$paymentAmount" }}}
+                                ])).next();
+
+                                Sentry.addBreadcrumb({
+                                    category: "stripe",
+                                    message: `Aggregated total paid payments: ${paidPayments}`,
+                                    level: "debug",
+                                });
+                                if(paidPayments && paidPayments.total) {
+                                    //update fiatDonations field of the campaign
+                                    const campaignsCollection = await DB.collection('campaigns');
+                                    let campaignRecord = await campaignsCollection.findOne({"_id" : sessionObj.metadata.campaign_id});
+                                    if(campaignRecord) {
+                                        await campaignsCollection.updateOne({"_id" : sessionObj.metadata.campaign_id}, {$set: {fiatDonations:paidPayments.total}});
+                                        //console.log(`Updated total fiatPayments for campaign ${sessionObj.metadata.campaign_id} to ${paidPayments.total}`);
+                                        Sentry.addBreadcrumb({
+                                            category: "stripe",
+                                            message: `Updated total fiatPayments for campaign ${sessionObj.metadata.campaign_id} to ${paidPayments.total}`,
+                                            level: "debug",
+                                        });
+                                    }
+                                }
+
+                            } catch (err) {
+                                console.log(err);
+                                Sentry.captureException(new Error(err));
+                            }
                         } else {
-                            console.log(`Payment status is ${sessionObj.payment_status} `);
+                            Sentry.addBreadcrumb({
+                                category: "stripe",
+                                message: `Payment status is ${sessionObj.payment_status} `,
+                                level: "debug",
+                            });
                         }
                     } else {
-                        console.log("Could not find campaign Id in metadata");
+                        Sentry.addBreadcrumb({
+                            category: "stripe",
+                            message: `Could not find campaign Id in metadata`,
+                            level: "debug",
+                        });
                     }
                     break;
                 default:
