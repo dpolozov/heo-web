@@ -175,6 +175,11 @@ class StripeLib {
                 metadata: {
                     campaign_id: req.body.campaignId
                 },
+                payment_intent_data: {
+                    description: req.body.campaignName,
+                    statement_descriptor: req.body.campaignName,
+                },
+                submit_type: "donate",
                 mode: 'payment',
                 client_reference_id: reffId,
                 success_url: `${url}?fp=s&am=${req.body.amount}&ref=${reffId}`,
