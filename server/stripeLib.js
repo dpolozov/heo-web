@@ -88,11 +88,15 @@ class StripeLib {
                                     level: "debug",
                                 });
                                 if(paidPayments && paidPayments.total) {
+                                    //get the fees
                                     //update fiatDonations field of the campaign
                                     const campaignsCollection = await DB.collection('campaigns');
                                     let campaignRecord = await campaignsCollection.findOne({"_id" : sessionObj.metadata.campaign_id});
                                     if(campaignRecord) {
-                                        await campaignsCollection.updateOne({"_id" : sessionObj.metadata.campaign_id}, {$set: {fiatDonations:paidPayments.total}});
+                                        await campaignsCollection.updateOne({"_id" : sessionObj.metadata.campaign_id},
+                                            {$set: {fiatDonations:paidPayments.total,
+                                                    lastDonationTime : Date.now()
+                                            }});
                                         //console.log(`Updated total fiatPayments for campaign ${sessionObj.metadata.campaign_id} to ${paidPayments.total}`);
                                         Sentry.addBreadcrumb({
                                             category: "stripe",
