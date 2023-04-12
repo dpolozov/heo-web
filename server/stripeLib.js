@@ -95,7 +95,7 @@ class StripeLib {
                                     if(campaignRecord) {
                                         await campaignsCollection.updateOne({"_id" : sessionObj.metadata.campaign_id},
                                             {$set: {fiatDonations:paidPayments.total,
-                                                    lastDonationTime : Date.now()
+                                                    lastDonationTime : new Date(Date.now())
                                             }});
                                         //console.log(`Updated total fiatPayments for campaign ${sessionObj.metadata.campaign_id} to ${paidPayments.total}`);
                                         Sentry.addBreadcrumb({
@@ -144,7 +144,6 @@ class StripeLib {
             }
             Sentry.captureException(new Error(err));
         }
-
     }
     async handleDonateFiat(req, res, STRIPE_API_KEY, Sentry) {
         const stripe = require('stripe')(STRIPE_API_KEY);
@@ -175,6 +174,11 @@ class StripeLib {
                 metadata: {
                     campaign_id: req.body.campaignId
                 },
+                payment_intent_data: {
+                    description: req.body.campaignName,
+                    statement_descriptor: "blago.click donation",
+                },
+                submit_type: "donate",
                 mode: 'payment',
                 client_reference_id: reffId,
                 success_url: `${url}?fp=s&am=${req.body.amount}&ref=${reffId}`,
@@ -182,6 +186,7 @@ class StripeLib {
             });
             if(session && session.url) {
                 res.status(200).send({paymentStatus: 'action_required', redirectUrl: session.url});
+                return;
             } else {
                 console.log("Failed to create Stripe checkout session")
             }
@@ -199,7 +204,7 @@ class StripeLib {
             }
             Sentry.captureException(new Error(err));
         }
-
+        res.sendStatus(500);
     }
 }
 
