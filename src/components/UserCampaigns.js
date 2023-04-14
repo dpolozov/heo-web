@@ -10,10 +10,7 @@ import { i18nString, DescriptionPreview, LogIn, initWeb3, checkAuth, initWeb3Mod
 import { Trans } from 'react-i18next';
 import i18n from '../util/i18n';
 import {UserContext} from './UserContext';
-import i18next from 'i18next';
-import Web3Modal from 'web3modal';
-import Web3 from 'web3';
-import WalletConnectProvider from '@walletconnect/web3-provider';
+
 import ReactGA from "react-ga4";
 
 ReactGA.initialize("G-C657WZY5VT");
@@ -90,7 +87,7 @@ class UserCampaigns extends Component {
             });
         }
     }
-    
+
     async componentDidMount() {
         ReactGA.send({ hitType: "pageview", page: this.props.location.pathname });
         let chainId = config.get("CHAIN");
@@ -152,7 +149,7 @@ class UserCampaigns extends Component {
                 modalButtonVariant: "#E63C36", waitToClose: false});
         })
         campaigns.forEach( campaign => {
-            const found = donates.find(element => element._id == campaign._id); 
+            const found = donates.find(element => element._id == campaign._id);
             let raisedDonations = found ? found.totalQuantity  : 0;
             let raisedAmount = campaign.raisedAmount ? parseFloat(campaign.raisedAmount) : 0;
             let fiatDonations = campaign.fiatDonations ? parseFloat(campaign.fiatDonations) : 0;
@@ -326,7 +323,7 @@ class UserCampaigns extends Component {
                                             <Row id='buttonsRow'>
                                                 <Col className='buttonCol'><Button variant="danger" id='donateBtn' block onClick={() => this.closeCampaignPrep(item._id, item.mainImageURL)}><Trans i18nKey='closeCmpnBtn'/></Button></Col>
                                                 {item.new &&
-                                                 <Col className='buttonCol'><Link to={'/withdrawDonations/' + item.key} id='cardLink'><Button id='editBtn' block><Trans i18nKey='withdrawDonations'/></Button></Link></Col>    
+                                                 <Col className='buttonCol'><Link to={'/withdrawDonations/' + item.key} id='cardLink'><Button id='editBtn' block><Trans i18nKey='withdrawDonations'/></Button></Link></Col>
                                                 }
                                                 <Col className='buttonCol'><Link to={'/editCampaign/' + item.key} id='cardLink'><Button id='editBtn' block><Trans i18nKey='editCmpnBtn'/></Button></Link></Col>
                                             </Row>
