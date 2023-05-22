@@ -183,6 +183,11 @@ APP.post('/api/campaign/deactivate', (req, res) => {
     }
 });
 
+APP.post('/api/campaign/loadFinishedCampaigns', (req, res) => {
+    const DB = CLIENT.db(DBNAME);
+    serverLib.handleLoadFinishedCampaigns(req, res, Sentry, DB);
+});
+
 APP.post('/api/campaign/loadAll', (req, res) => {
     const DB = CLIENT.db(DBNAME);
     serverLib.handleLoadAllCampaigns(req, res, Sentry, DB);
