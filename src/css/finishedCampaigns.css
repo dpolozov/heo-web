@@ -1,0 +1,28 @@
+#finishedCampaignsMainDiv {
+    background: rgba(255,255,255,.1);
+    display: grid;
+    grid-template-columns: repeat(3,1fr);
+    grid-column-gap: 14px;
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+#finishedCampaignsMainDiv .card-img {
+    width: 116px;
+}
+
+#finishedCardHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 29px;
+    -webkit-box-pack: justify;
+}
+
+#finishedCampaignsMainDiv .card-title.h5 {
+    font-family: 'Poppins', sans-serif;
+    font-style: normal;
+    font-weight: 600;
+    font-size: 20px;
+    color: #0E161C;
+}

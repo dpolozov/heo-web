@@ -1,0 +1,20 @@
+.heo-head h3 {
+    font-size: 25px;
+    font-family: MonumentExtended,sans-serif;
+    font-weight: 400;
+    margin-bottom:10px;
+    padding-bottom: 10px;
+    display: inline-block;
+    -webkit-transform: scale(1.5, 1);
+    -moz-transform: scale(1.5, 1);
+    -o-transform: scale(1.5, 1);
+    transform: scale(1.5, 1);
+}
+
+@font-face{
+    font-family:MonumentExtended-Regular;
+    src:local("MonumentExtended-Regular"),url(../fonts/MonumentExtended-Regular.woff2) format("woff2"),url(../fonts/MonumentExtended-Regular.woff) format("woff");
+    font-weight:400;
+    font-style:normal;
+    font-display:swap
+}
