@@ -151,8 +151,7 @@ class ServerLib {
     async handleLoadFinishedCampaigns(req, res, Sentry, DB) {
         try{
             const myCollection = await DB.collection('campaigns');
-            const campaigns = await myCollection.find({active: false}, {limit:3, sort:{"raisedAmount" : -1}});
-            //const sortedCampaigns = await campaigns.sort({"lastDonationTime" : -1});
+            const campaigns = await myCollection.find({active: false}, {limit:3, sort:{raisedAmount: -1, raisedOnCoinbase: -1}});
             const result = await campaigns.toArray();
             res.send(result);
         } catch (err) {
@@ -165,8 +164,7 @@ class ServerLib {
     async handleLoadAllCampaigns(req, res, Sentry, DB) {
         try{
             const myCollection = await DB.collection('campaigns');
-            const campaigns = await myCollection.find({active: true}, {limit: 20, sort:{"lastDonationTime" : -1}});
-            //const sortedCampaigns = await campaigns.sort({"lastDonationTime" : -1});
+            const campaigns = await myCollection.find({active: true}, {limit: 20, sort:{lastDonationTime: -1, raisedAmount: -1, raisedOnCoinbase: -1}});
             const result = await campaigns.toArray();
             res.send(result);
         } catch (err) {
