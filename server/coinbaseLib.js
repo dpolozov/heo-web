@@ -86,8 +86,14 @@ class CoinbaseLib {
      * @param {*} Sentry 
      * @param {*} payload 
      */
-    async updateCharge(CLIENT, DBNAME, Sentry, payload) {
-        const chargeId = payload.data.id;
+    async updateCharge(DB, Sentry, payload) {
+        Sentry.addBreadcrumb({
+            category: "CoinbaseCommerce::updateCharge",
+            message: `payload: ${JSON.stringify(payload)}`,
+            level: "info",
+        });
+
+        const chargeId = payload.id;
         const chargesCollection = await DB.collection('coinbase_commerce_charges');
         let chargeRecord = await chargesCollection.findOne({"charge_id" : chargeId});
         if(chargeRecord) {

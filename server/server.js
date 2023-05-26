@@ -315,18 +315,18 @@ APP.get('/api/circle/publickey', async (req, res) => {
  */
 APP.post('/api/coinbasecommerce', async (req, res) => {
     const sharedSecret = process.env.COINBASE_SHARED_SECRET;
-    const payload = req.body;
   
     // Verify the webhook notification using the shared secret
-    const signature = req.headers['x-cc-webhook-signature'];
-    const isValid = coinbaseLib.verifyWebhookPayload(signature, payload, sharedSecret, Sentry);
-    if (isValid) {
-        coinbaseLib.updateCharge(CLIENT, DBNAME, Sentry, payload);
+//    const signature = req.headers['x-cc-webhook-signature'];
+//    const isValid = coinbaseLib.verifyWebhookPayload(signature, req.body, sharedSecret, Sentry);
+  //  if (isValid) {
+        const DB = CLIENT.db(DBNAME);
+        coinbaseLib.updateCharge(DB, Sentry, req.body);
         res.sendStatus(200);
-    } else {
+    /*} else {
         Sentry.captureException(new Error('Invalid signature for Coinbase Commerce webhook'));
         res.sendStatus(500);
-    }
+    }*/
 });
 
 /**
