@@ -186,12 +186,12 @@ class CampaignList extends Component {
                                                                 <span key={item._id + "-" + coin}><img src={IMG_MAP[coin]} width={20} height={20} style={{marginLeft:5, marginRight:5}} /> </span>
                                                             )}
 
-                                                            {item.coinbaseCommerceURL && <span className='coinRewardInfo'><img src={ethIcon} width={20} height={20} style={{marginRight:5, marginLeft:5}} /> </span> }
-                                                            {item.coinbaseCommerceURL && <span className='coinRewardInfo'><img src={btcLogo} width={20} height={20} style={{marginRight:5, marginLeft:5}} /> </span> }
-                                                            {item.coinbaseCommerceURL && <span className='coinRewardInfo'><img src={daiLogo} width={20} height={20} style={{marginRight:5, marginLeft:5}} /> </span> }
-                                                            {item.coinbaseCommerceURL && <span className='coinRewardInfo'><img src={usdcIcon} width={20} height={20} style={{marginRight:5, marginLeft:5}} /> </span> }
-                                                            {item.coinbaseCommerceURL && <span className='coinRewardInfo'><img src={usdtLogo} width={20} height={20} style={{marginRight:5, marginLeft:5}} /> </span> }
-                                                            {item.coinbaseCommerceURL && <span className='coinRewardInfo'><img src={ltcLogo} width={20} height={20} style={{marginRight:5, marginLeft:5}} /> </span> }
+                                                            <span className='coinRewardInfo'><img src={ethIcon} width={20} height={20} style={{marginRight:5, marginLeft:5}} /> </span>
+                                                            <span className='coinRewardInfo'><img src={btcLogo} width={20} height={20} style={{marginRight:5, marginLeft:5}} /> </span>
+                                                            <span className='coinRewardInfo'><img src={daiLogo} width={20} height={20} style={{marginRight:5, marginLeft:5}} /> </span>
+                                                            <span className='coinRewardInfo'><img src={usdcIcon} width={20} height={20} style={{marginRight:5, marginLeft:5}} /> </span>
+                                                            <span className='coinRewardInfo'><img src={usdtLogo} width={20} height={20} style={{marginRight:5, marginLeft:5}} /> </span>
+                                                            <span className='coinRewardInfo'><img src={ltcLogo} width={20} height={20} style={{marginRight:5, marginLeft:5}} /> </span>
 
                                                         </p>
                                                     </div></Col>
