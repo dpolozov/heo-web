@@ -326,12 +326,6 @@ APP.post('/api/coinbasecommerce', async (req, res) => {
         Sentry.Handlers.errorHandler()(new Error('Invalid signature for Coinbase Commerce webhook'));
     }
     const DB = CLIENT.db(DBNAME);
-
-    if (event.type === 'charge:confirmed') {
-      const payment = new Payment(event.data);
-      await payment.save();
-      console.log('Payment saved:', payment);
-    }
 });
 
 /**

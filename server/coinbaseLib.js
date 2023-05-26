@@ -1,7 +1,7 @@
 const Coinbase = require('coinbase-commerce-node');
 const CoinbaseClient = Coinbase.Client;
 const Sentry = require("@sentry/node");
-
+const crypto = require('crypto');
 
 class CoinbaseLib {
     constructor() {
@@ -109,10 +109,9 @@ class CoinbaseLib {
      *  Helper function to verify webhook payload using the shared secret 
      * */
     verifyWebhookPayload(signature, payload, sharedSecret) {
-        const crypto = require('crypto');
         const verifier = crypto.createVerify('SHA256');
         verifier.update(JSON.stringify(payload));
-    
+
         const isVerified = verifier.verify(sharedSecret, signature, 'base64');
         return isVerified;
     }
