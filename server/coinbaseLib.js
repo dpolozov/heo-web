@@ -99,7 +99,7 @@ class CoinbaseLib {
         if(chargeRecord) {
             chargeRecord.code = payload.event.data.code;
             chargeRecord.status = payload.event.type;
-            chargeRecord.paym,ents = payload.event.data.payments;
+            chargeRecord.payments = payload.event.data.payments;
             chargeRecord.fee = payload.event.data.fee_rate;
             chargeRecord.local_exchange_rates = payload.event.data.local_exchange_rates;
             chargeRecord.updated_at = new Date();
@@ -110,7 +110,7 @@ class CoinbaseLib {
                 message: `Charge ID ${chargeId} not found in DB`,
                 level: "info",
             });
-            Sentry.Handlers.errorHandler()(new Error('Received webhook notification for unknown charge ID'));
+            Sentry.captureException(new Error('Received webhook notification for unknown charge ID'));
         }
     }
 
