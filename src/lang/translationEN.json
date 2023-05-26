@@ -177,6 +177,7 @@
     "defDonationAmount": "Default donation amount",
     "fiatPayments": "Use bank cards for donations",
     "withdrawDonations" : "Withdraw donations",
-    "donationsSize" : "Available to withdraw"
+    "donationsSize" : "Available to withdraw",
+    "failedConnectCoinbaseCommerce":"Failed to connect to Coinbase Commerce"
 }
 

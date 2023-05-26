@@ -175,5 +175,6 @@
     "defDonationAmount": "Сумма пожертвования по умолчанию",
     "fiatPayments": "Использовать банковские карточки для пожертвований",
     "withdrawDonations" : "Снять пожертвования",
-    "donationsSize" : "Доступно для снятия"
+    "donationsSize" : "Доступно для снятия",
+    "failedConnectCoinbaseCommerce":"Не удалось подключиться к Coinbase Commerce"
 }

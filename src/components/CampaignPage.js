@@ -92,7 +92,6 @@ class CampaignPage extends Component {
             waitToClose:false,
             raisedAmount:0,
             showModal: false,
-            showCoinbaseModal: false,
             modalMessage:"",
             modalTitle:"",
             errorIcon:"",
@@ -185,6 +184,45 @@ class CampaignPage extends Component {
             }
     }
 
+    handleDonateCoinbaseCommerce = async () => {
+        let data = {
+            amount: this.state.donationAmount,
+            currency: "USD",
+            campaignId: this.state.campaignId,
+            campaignName: i18nString(this.state.campaign.title, i18n.language)
+        };
+        try {
+            this.setState({
+                showCCWarningModal:false,
+                showModal: true, modalTitle: 'processingWait',
+                modalMessage: "plzWait",
+                errorIcon: 'HourglassSplit', modalButtonVariant: "gold", waitToClose: true
+            });
+            let resp = await axios.post('/api/donatecoinbasecommerce', data, {headers: {"Content-Type": "application/json"}});
+            if(resp.data.paymentStatus === 'action_required') {
+                this.setState({showModal: false});
+                window.open(resp.data.redirectUrl, '_self');
+            } else {
+                this.setState({
+                    showModal: true, modalTitle: 'failed',
+                    errorIcon: 'XCircle', modalButtonMessage: 'closeBtn',
+                    modalMessage: "failedConnectCoinbaseCommerce",
+                    modalButtonVariant: '#E63C36', waitToClose: false, tryAgainCC: false
+                });
+            }
+        } catch (err) {
+            console.log(err);
+            this.setState({
+                showModal: true, modalTitle: 'failed',
+                errorIcon: 'XCircle', modalButtonMessage: 'closeBtn',
+                modalMessage: err.response.data,
+                modalButtonVariant: '#E63C36', waitToClose: false, tryAgainCC: false
+            });
+            return;
+        }    
+    }
+
+            
     handleDonateFiat = async () => {
         //TODO: check that this.state.donationAmount is larger than 0
         let cardKeyData, encryptedCardData, encryptedSecurityData;
@@ -309,10 +347,6 @@ class CampaignPage extends Component {
                 }
             }
         }
-    }
-
-    showCoinbaseCommerce = async() => {
-        this.setState({showCoinbaseModal: true});
     }
 
     saveDonateToDb = async (value, decimals, transactionHash, chainId, coinAddress) => {
@@ -974,14 +1008,14 @@ class CampaignPage extends Component {
                                     <p><Trans i18nKey='accepting'/>:
                                         {this.state.fiatPaymentEnabled && this.state.campaign.stripeURL && <span className='coinRewardInfo'><img src={visaMcLogo} witdth={21} height={20} style={{marginRight:5, marginLeft:5}} /> </span> }
                                         {this.state.chains_coins.map((item, i) =>
-                                            <span className='coinRewardInfo'><img src={IMG_MAP[item.coin.name]} width={20} height={20} style={{marginRight:5, marginLeft:5}} /> </span>
-                                            )}
-                                        {this.state.campaign.coinbaseCommerceURL && <span className='coinRewardInfo'><img src={ethIcon} width={20} height={20} style={{marginRight:5, marginLeft:5}} /> </span> }
-                                        {this.state.campaign.coinbaseCommerceURL && <span className='coinRewardInfo'><img src={btcLogo} width={20} height={20} style={{marginRight:5, marginLeft:5}} /> </span> }
-                                        {this.state.campaign.coinbaseCommerceURL && <span className='coinRewardInfo'><img src={daiLogo} width={20} height={20} style={{marginRight:5, marginLeft:5}} /> </span> }
-                                        {this.state.campaign.coinbaseCommerceURL && <span className='coinRewardInfo'><img src={usdcIcon} width={20} height={20} style={{marginRight:5, marginLeft:5}} /> </span> }
-                                        {this.state.campaign.coinbaseCommerceURL && <span className='coinRewardInfo'><img src={usdtLogo} width={20} height={20} style={{marginRight:5, marginLeft:5}} /> </span> }
-                                        {this.state.campaign.coinbaseCommerceURL && <span className='coinRewardInfo'><img src={ltcLogo} width={20} height={20} style={{marginRight:5, marginLeft:5}} /> </span> }
+                                            <span key={item.coin.name} className='coinRewardInfo'><img src={IMG_MAP[item.coin.name]} width={20} height={20} style={{marginRight:5, marginLeft:5}} /> </span>
+                                        )}
+                                        <span className='coinRewardInfo'><img src={ethIcon} width={20} height={20} style={{marginRight:5, marginLeft:5}} /> </span>
+                                        <span className='coinRewardInfo'><img src={btcLogo} width={20} height={20} style={{marginRight:5, marginLeft:5}} /> </span>
+                                        <span className='coinRewardInfo'><img src={daiLogo} width={20} height={20} style={{marginRight:5, marginLeft:5}} /> </span>
+                                        <span className='coinRewardInfo'><img src={usdcIcon} width={20} height={20} style={{marginRight:5, marginLeft:5}} /> </span>
+                                        <span className='coinRewardInfo'><img src={usdtLogo} width={20} height={20} style={{marginRight:5, marginLeft:5}} /> </span>
+                                        <span className='coinRewardInfo'><img src={ltcLogo} width={20} height={20} style={{marginRight:5, marginLeft:5}} /> </span>
                                     </p>
                                 </div>
                             </Row>
@@ -1015,14 +1049,37 @@ class CampaignPage extends Component {
                                             {this.state.chains_coins.map((item, i) =>
                                                     <Dropdown.Item key={item.chain.address} as="button" onClick={() => this.handleDonateClick(item.chain, item.coin.address)}><img src={IMG_MAP[item.coin.name]} width={16} height={16} style={{marginRight:5}} />{item.coin.name} ({item.chain_name })</Dropdown.Item>
                                                 )}
-                                            {this.state.campaign.coinbaseCommerceURL && <Dropdown.Item className='coinRewardInfo' href={`${this.state.campaign.coinbaseCommerceURL}`} target="_blank"><img src={ethIcon} width={20} height={20} style={{marginRight:5, marginLeft:5}} />ETH</Dropdown.Item> }
-                                            {this.state.campaign.coinbaseCommerceURL && <Dropdown.Item className='coinRewardInfo' href={`${this.state.campaign.coinbaseCommerceURL}`} target="_blank"><img src={btcLogo} width={20} height={20} style={{marginRight:5, marginLeft:5}} />BTC</Dropdown.Item> }
-                                            {this.state.campaign.coinbaseCommerceURL && <Dropdown.Item className='coinRewardInfo' href={`${this.state.campaign.coinbaseCommerceURL}`} target="_blank"><img src={daiLogo} width={20} height={20} style={{marginRight:5, marginLeft:5}} />DAI (ERC20)</Dropdown.Item> }
-                                            {this.state.campaign.coinbaseCommerceURL && <Dropdown.Item className='coinRewardInfo' href={`${this.state.campaign.coinbaseCommerceURL}`} target="_blank"><img src={usdcIcon} width={20} height={20} style={{marginRight:5, marginLeft:5}} />USDC (ERC20)</Dropdown.Item> }
-                                            {this.state.campaign.coinbaseCommerceURL && <Dropdown.Item className='coinRewardInfo' href={`${this.state.campaign.coinbaseCommerceURL}`} target="_blank"><img src={usdtLogo} width={20} height={20} style={{marginRight:5, marginLeft:5}} />USDT (ERC20)</Dropdown.Item> }
-                                            {this.state.campaign.coinbaseCommerceURL && <Dropdown.Item className='coinRewardInfo' href={`${this.state.campaign.coinbaseCommerceURL}`} target="_blank"><img src={ltcLogo} width={20} height={20} style={{marginRight:5, marginLeft:5}} />LTC</Dropdown.Item> }
+                                            <Dropdown.Item className='coinRewardInfo' onClick={
+                                                () => {
+                                                    this.handleDonateCoinbaseCommerce();
+                                                }
+                                            } ><img src={ethIcon} width={20} height={20} style={{marginRight:5, marginLeft:5}} />ETH</Dropdown.Item> 
+                                            <Dropdown.Item className='coinRewardInfo' onClick={
+                                                () => {
+                                                    this.handleDonateCoinbaseCommerce();
+                                                }
+                                            } ><img src={btcLogo} width={20} height={20} style={{marginRight:5, marginLeft:5}} />BTC</Dropdown.Item>
+                                            <Dropdown.Item className='coinRewardInfo' onClick={
+                                                () => {
+                                                    this.handleDonateCoinbaseCommerce();
+                                                }
+                                            } ><img src={daiLogo} width={20} height={20} style={{marginRight:5, marginLeft:5}} />DAI (ERC20)</Dropdown.Item>
+                                            <Dropdown.Item className='coinRewardInfo' onClick={
+                                                () => {
+                                                    this.handleDonateCoinbaseCommerce();
+                                                }
+                                            } >USDC (ERC20)</Dropdown.Item> 
+                                            <Dropdown.Item className='coinRewardInfo' onClick={
+                                                () => {
+                                                    this.handleDonateCoinbaseCommerce();
+                                                }
+                                            } ><img src={usdtLogo} width={20} height={20} style={{marginRight:5, marginLeft:5}} />USDT (ERC20)</Dropdown.Item>
+                                            <Dropdown.Item className='coinRewardInfo' onClick={
+                                                () => {
+                                                    this.handleDonateCoinbaseCommerce();
+                                                }
+                                            } ><img src={ltcLogo} width={20} height={20} style={{marginRight:5, marginLeft:5}} />LTC</Dropdown.Item>
                                         </DropdownButton>
-
                                     </InputGroup.Append>
                                 </InputGroup>
                             </Row>

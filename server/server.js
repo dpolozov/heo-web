@@ -17,6 +17,8 @@ const ServerLib = require('./serverLib');
 const CircleLib = require('./circleLib');
 const PayadmitLib = require('./payadmitLib');
 const StripeLib = require('./stripeLib');
+const CoinbaseLib = require('./coinbaseLib');
+
 const PORT = process.env.PORT || 5000;
 
 
@@ -28,6 +30,7 @@ const serverLib = new ServerLib();
 const circleLib = new CircleLib();
 const payadmitLib = new PayadmitLib();
 const stripeLib = new StripeLib();
+const coinbaseLib = new CoinbaseLib();
 
 Sentry.init({
     dsn: process.env.SENTRY_DSN,
@@ -83,6 +86,7 @@ const PAYADMIT_API_KEY = process.env.PAYADMIT_API_KEY;
 const PAYADMIT_API_URL = process.env.PAYADMIT_API_URL;
 const STRIPE_API_KEY = process.env.STRIPE_API_KEY;
 const STRIPE_WH_SECRET = process.env.STRIPE_WH_SECRET;
+const COINBASE_API_KEY = process.env.COINBASE_API_KEY;
 
 CLIENT.connect(err => {
     if(err) {
@@ -302,6 +306,8 @@ APP.get('/api/circle/publickey', async (req, res) => {
         res.sendStatus(500);
     }
 });
+
+
 /**
  * webhook for payadmit notifications. Url will have to
  * be changed in the payadmit shop for production
@@ -333,6 +339,7 @@ APP.post('/api/payadmit/getPaymentRecord', (req, res) => {
     payadmitLib.getPaymentDetails(req, res, Sentry, DB);
 })
 
+// Handles fiat payment initiation
 APP.post('/api/donatefiat', async (req, res) => {
     const DB = CLIENT.db(DBNAME);
     let fiatPayment;
@@ -353,6 +360,19 @@ APP.post('/api/donatefiat', async (req, res) => {
     }
     else {res.status(503).send('serviceNotAvailable');}
 
+});
+
+// Handles crypto payment initiation via coinbase commerce
+APP.post('/api/donatecoinbasecommerce', async (req, res) => {
+    const DB = CLIENT.db(DBNAME);
+    let coinbasePayment;
+    try {
+        console.log("Looking up coinbase library");
+        coinbaseLib.createCharge(req, res, CLIENT, DBNAME, Sentry, COINBASE_API_KEY);
+    } catch (err) {
+        console.log(err);
+        Sentry.captureException(new Error(err));
+    }
 });
 
 /**
