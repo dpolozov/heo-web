@@ -78,6 +78,44 @@ class CoinbaseLib {
         }
         res.sendStatus(500);
     }
+
+    /**
+     * Update charge status in DB
+     * @param {*} CLIENT 
+     * @param {*} DBNAME 
+     * @param {*} Sentry 
+     * @param {*} payload 
+     */
+    async updateCharge(CLIENT, DBNAME, Sentry, payload) {
+        const chargeId = payload.data.id;
+        const chargesCollection = await DB.collection('coinbase_commerce_charges');
+        let chargeRecord = await chargesCollection.findOne({"charge_id" : chargeId});
+        if(chargeRecord) {
+            chargeRecord.status = payload.event.type;
+            chargeRecord.amount = payload.data.pricing.local.amount;
+            chargeRecord.currency = payload.data.pricing.local.currency;
+            await chargesCollection.updateOne({'_id': chargeRecord._id}, {$set: chargeRecord});
+        } else {
+            Sentry.addBreadcrumb({
+                category: "CoinbaseCommerce",
+                message: `Charge ID ${chargeId} not found in DB`,
+                level: "info",
+            });
+            Sentry.Handlers.errorHandler()(new Error('Received webhook notification for unknown charge ID'));
+        }
+    }
+
+    /**
+     *  Helper function to verify webhook payload using the shared secret 
+     * */
+    verifyWebhookPayload(signature, payload, sharedSecret) {
+        const crypto = require('crypto');
+        const verifier = crypto.createVerify('SHA256');
+        verifier.update(JSON.stringify(payload));
+    
+        const isVerified = verifier.verify(sharedSecret, signature, 'base64');
+        return isVerified;
+    }
 }
 
 module.exports = CoinbaseLib;

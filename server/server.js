@@ -87,6 +87,7 @@ const PAYADMIT_API_URL = process.env.PAYADMIT_API_URL;
 const STRIPE_API_KEY = process.env.STRIPE_API_KEY;
 const STRIPE_WH_SECRET = process.env.STRIPE_WH_SECRET;
 const COINBASE_API_KEY = process.env.COINBASE_API_KEY;
+const COINBASE_SHARED_SECRET = process.env.COINBASE_SHARED_SECRET;
 
 CLIENT.connect(err => {
     if(err) {
@@ -307,6 +308,31 @@ APP.get('/api/circle/publickey', async (req, res) => {
     }
 });
 
+
+  
+/**
+ * webhook for Coinbase Commerce notifications
+ */
+APP.post('/api/coinbasecommerce', async (req, res) => {
+    const sharedSecret = process.env.COINBASE_SHARED_SECRET;
+    const payload = req.body;
+  
+    // Verify the webhook notification using the shared secret
+    const signature = req.headers['x-cc-webhook-signature'];
+    const isValid = coinbaseLib.verifyWebhookPayload(signature, payload, sharedSecret);
+    if (isValid) {
+        coinbaseLib.updateCharge(CLIENT, DBNAME, Sentry, payload);
+    } else {
+        Sentry.Handlers.errorHandler()(new Error('Invalid signature for Coinbase Commerce webhook'));
+    }
+    const DB = CLIENT.db(DBNAME);
+
+    if (event.type === 'charge:confirmed') {
+      const payment = new Payment(event.data);
+      await payment.save();
+      console.log('Payment saved:', payment);
+    }
+});
 
 /**
  * webhook for payadmit notifications. Url will have to
