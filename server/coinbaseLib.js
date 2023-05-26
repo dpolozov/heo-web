@@ -93,13 +93,16 @@ class CoinbaseLib {
             level: "info",
         });
 
-        const chargeId = payload.id;
+        const chargeId = payload.event.data.id;
         const chargesCollection = await DB.collection('coinbase_commerce_charges');
         let chargeRecord = await chargesCollection.findOne({"charge_id" : chargeId});
         if(chargeRecord) {
+            chargeRecord.code = payload.event.data.code;
             chargeRecord.status = payload.event.type;
-            chargeRecord.amount = payload.data.pricing.local.amount;
-            chargeRecord.currency = payload.data.pricing.local.currency;
+            chargeRecord.paym,ents = payload.event.data.payments;
+            chargeRecord.fee = payload.event.data.fee_rate;
+            chargeRecord.local_exchange_rates = payload.event.data.local_exchange_rates;
+            chargeRecord.updated_at = new Date();
             await chargesCollection.updateOne({'_id': chargeRecord._id}, {$set: chargeRecord});
         } else {
             Sentry.addBreadcrumb({
