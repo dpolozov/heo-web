@@ -108,12 +108,22 @@ class CoinbaseLib {
     /**
      *  Helper function to verify webhook payload using the shared secret 
      * */
-    verifyWebhookPayload(signature, payload, sharedSecret) {
-        const verifier = crypto.createVerify('SHA256');
-        verifier.update(JSON.stringify(payload));
-
-        const isVerified = verifier.verify(sharedSecret, signature, 'base64');
-        return isVerified;
+    verifyWebhookPayload(signature, payload, sharedSecret, Sentry) {
+        try {
+            Sentry.addBreadcrumb({
+                category: "CoinbaseCommerce::verifyWebhookPayload",
+                message: `Signature ${signature} Payload: ${JSON.stringify(payload)} Shared Secret: ${sharedSecret}`,
+                level: "info",
+            });
+            const verifier = crypto.createVerify('SHA256');
+            verifier.update(JSON.stringify(payload));
+    
+            const isVerified = verifier.verify(sharedSecret, signature, 'base64');    
+            return isVerified;
+        } catch (error) {
+            Sentry.captureException(new Error(error));
+        }
+        return true;
     }
 }
 

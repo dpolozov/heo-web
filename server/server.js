@@ -319,13 +319,14 @@ APP.post('/api/coinbasecommerce', async (req, res) => {
   
     // Verify the webhook notification using the shared secret
     const signature = req.headers['x-cc-webhook-signature'];
-    const isValid = coinbaseLib.verifyWebhookPayload(signature, payload, sharedSecret);
+    const isValid = coinbaseLib.verifyWebhookPayload(signature, payload, sharedSecret, Sentry);
     if (isValid) {
         coinbaseLib.updateCharge(CLIENT, DBNAME, Sentry, payload);
+        res.sendStatus(200);
     } else {
-        Sentry.Handlers.errorHandler()(new Error('Invalid signature for Coinbase Commerce webhook'));
+        Sentry.captureException(new Error('Invalid signature for Coinbase Commerce webhook'));
+        res.sendStatus(500);
     }
-    const DB = CLIENT.db(DBNAME);
 });
 
 /**
