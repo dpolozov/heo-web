@@ -88,7 +88,6 @@ class WithdrawDonations extends Component {
             waitToClose:false,
             raisedAmount:0,
             showModal: false,
-            showCoinbaseModal: false,
             modalMessage:"",
             modalTitle:"",
             errorIcon:"",
@@ -164,10 +163,6 @@ class WithdrawDonations extends Component {
                 let raisedAmount = Math.round((baseAmount + fiatDonations + raisedOnCoinbase + donateAmount) * 100)/100;
                 this.setState({raisedAmount : raisedAmount});
             }        
-    }
-
-    showCoinbaseCommerce = async() => {
-        this.setState({showCoinbaseModal: true});
     }
 
     onModalClose() {
