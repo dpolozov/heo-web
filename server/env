@@ -1,0 +1,20 @@
+# Settings for BSC test net
+SERVER_APP_ACCESS_ID=AKIAR7KSNPQDAIP22Z5W
+SERVER_APP_ACCESS_KEY=IjZ7UqqS3x70J7zfiRIwTR3UeGYedPrhn17BQ9xJ
+SERVER_APP_BUCKET_NAME=heodevmeta
+SERVER_APP_IMG_DIR_NAME=images
+CHAIN=bsctest
+TRON_CHAIN=shasta
+JWT_SECRET=karabasbarabas
+MONGO_LOGIN=heotestuser
+MONGO_DB_NAME=HEO-BSC-TEST
+MONGO_URL=@cluster0.tnlb3.mongodb.net/myFirstDatabase?retryWrites=true&w=majority
+MONGODB_PWD=jN2ufzYqWSzjbsS
+CHAIN_NAME=BSC Test
+TRON_CHAIN_NAME=TRON Shasta Testnet 
+SENTRY_DSN=https://1473bcc6b6af4172b7abf7f7ea857e35@o899113.ingest.sentry.io/6338058
+PAYADMIT_API_KEY=N3K4gI6AnhBntL1yKwy5ZFQvy87SoXu2
+PAYADMIT_API_URL=https://app-demo.payadmit.com/ 
+
+
+

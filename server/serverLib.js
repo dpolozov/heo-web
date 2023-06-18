@@ -6,7 +6,7 @@ const {Web3} = require('web3');
 class ServerLib {
     constructor() {
     }
-
+    
     testingClass() {
         console.log('server library class');
     }
@@ -23,7 +23,7 @@ class ServerLib {
                 Sentry.captureException(new Error(error));
                 res.sendStatus(500);
             } else {
-                res.send(data.Location);
+              res.send(data.Location);
             }
         });
     }
@@ -63,7 +63,7 @@ class ServerLib {
             Sentry.captureException(new Error(err));
             res.sendStatus(500);
         }
-    }
+    } 
 
     async handleAddCampaign(req, res, Sentry, DB, newWalletId) {
         const ITEM = {
@@ -148,24 +148,12 @@ class ServerLib {
         }
     }
 
-    async handleLoadFinishedCampaigns(req, res, Sentry, DB) {
-        try{
-            const myCollection = await DB.collection('campaigns');
-            const campaigns = await myCollection.find({active: false}, {limit:3, sort:{raisedAmount: -1, raisedOnCoinbase: -1}});
-            const result = await campaigns.toArray();
-            res.send(result);
-        } catch (err) {
-            console.log(err);
-            Sentry.captureException(new Error(err));
-            res.sendStatus(500);
-        }
-    }
-
     async handleLoadAllCampaigns(req, res, Sentry, DB) {
         try{
             const myCollection = await DB.collection('campaigns');
-            const campaigns = await myCollection.find({active: true}, {limit: 20, sort:{lastDonationTime: -1, raisedAmount: -1, raisedOnCoinbase: -1}});
-            const result = await campaigns.toArray();
+            const campaigns = await myCollection.find({active: true});
+            const sortedCampaigns = await campaigns.sort({"lastDonationTime" : -1});
+            const result = await sortedCampaigns.toArray();
             res.send(result);
         } catch (err) {
             Sentry.captureException(new Error(err));
@@ -174,43 +162,43 @@ class ServerLib {
     }
 
     async handleGetAllDonateForCampaign(req, res, Sentry, DB){
-        try {
+        try {  
         let result = await DB.collection('donations').find({campaignID: req.body.mydata.campaignID});
         if (result.length == 0) res.send(0);
         else
         {
          const pipeline = [
           { $match: {campaignID: req.body.mydata.campaignID, deleted : false } },
-           {$group: { _id: null, totalQuantity: { $sum: "$raisedAmount" } }}
+           {$group: { _id: null, totalQuantity: { $sum: "$raisedAmount" } }}  
          ];
          result = await DB.collection('donations').aggregate(pipeline).toArray();
          res.send(result);
-        }
+        }      
        } catch (err) {
         Sentry.captureException(new Error(err));
         res.send("error");
-       }
+       }  
     }
 
     async handleGetAllDonateForList(req, res, Sentry, DB){
         try {
             const pipeline = [
                 { $match: { deleted : false } },
-                {$group: { _id: '$campaignID', totalQuantity: {$sum: "$raisedAmount"}}}
+                {$group: { _id: '$campaignID', totalQuantity: {$sum: "$raisedAmount"}}}  
             ];
             let result = await DB.collection('donations').aggregate(pipeline).toArray();
-            res.send(result);
+            res.send(result);  
        } catch (err) {
         Sentry.captureException(new Error(err));
         res.sendn("error");
-       }
+       }  
     }
-
+  
     async handleGetId(req, res, Sentry, DB) {
         try {
             const myCollection = await DB.collection('campaigns');
-            let result = await myCollection.findOne({"key" : req.body.KEY});
-            if (result) res.send(result._id);
+            let result = await myCollection.findOne({"key" : req.body.KEY, active: true});
+            if (result) res.send(result._id)
             else res.send(req.body.KEY);
         } catch (err) {Sentry.captureException(new Error(err));}
     }
@@ -253,7 +241,7 @@ class ServerLib {
         }
     }
 
-    async handleLoadEnv(res, envCHAIN, Sentry, DB) {
+    async handleLoadEnv(res, envCHAIN, envTRONCHAIN, Sentry, DB) {
         try{
             let chainCollection = await DB.collection('chain_configs');
             let chain_configsRaw = await chainCollection.find();
@@ -269,6 +257,7 @@ class ServerLib {
                 {
                     CHAINS: chains,
                     CHAIN: envCHAIN,
+                    TRON_CHAIN: envTRONCHAIN,
                     GLOBALS: global_configs,
                 });
 
@@ -313,11 +302,9 @@ class ServerLib {
             let fiatSettingsRAW = await configCollection.find({_id : 'FIATPAYMENT'});
             let fiatSettings = await fiatSettingsRAW.toArray();
             if(fiatSettings[0].enabled) {
-                if (fiatSettings[0].STRIPE) {
-                    return 'stripeLib';
-                } else if(fiatSettings[0].CIRCLE) {
+                if(fiatSettings[0].CIRCLE && !fiatSettings[0].PAYADMIT) {
                     return 'circleLib';
-                } else if (fiatSettings[0].PAYADMIT) {
+                } else if (!fiatSettings[0].CIRCLE && fiatSettings[0].PAYADMIT) {
                     return 'payadmitLib';
                 }
             }

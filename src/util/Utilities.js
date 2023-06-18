@@ -6,11 +6,14 @@ import WalletConnectProvider from '@walletconnect/web3-provider';
 import ReactGA from "react-ga4";
 import { CheckCircle, HourglassSplit, XCircle } from 'react-bootstrap-icons';
 import { createMessage, encrypt, readKey } from 'openpgp';
+import { WalletDisconnectedError, WalletNotFoundError, WalletError } from '@tronweb3/tronwallet-abstract-adapter';
+import {TronLinkAdapter} from '@tronweb3/tronwallet-adapter-tronlink';
 
+const TronWeb = require('tronweb');
 ReactGA.initialize("G-C657WZY5VT");
 
 class Utilities {
-
+  
 }
 
 const clearWeb3Provider= async (that) => {
@@ -22,7 +25,40 @@ const clearWeb3Provider= async (that) => {
     }
 }
 
+const clearTronProvider = async (that) => {
+    await that.state.tronAdapter.disconnect();  
+}
+
+const LogInTron = async (that) => {
+    if (window.blockChainOrt == "ethereum") return;
+    that.setState({showModal:true, modalTitle: '',
+        modalMessage: 'signThePhrase', modalIcon: 'HourglassSplit',
+        modalButtonVariant: "#E63C36", waitToClose: false, modalButtonMessage: 'abortBtn',
+            onModalClose: function() {
+             clearTronProvider(that);
+          }
+       });
+    let dataToSign= await axios.get('/api/auth/msg');
+    let hexStrWithout0x = that.state.tronWeb.toHex(dataToSign).replace(/^0x/, '');
+    let byteArray = that.state.tronWeb.utils.code.hexStr2byteArray(hexStrWithout0x);
+    let strHash = that.state.tronWeb.sha3(byteArray).replace(/^0x/, '');
+    await that.state.tronAdapter.connect();
+    let signature = await that.state.tronAdapter.signMessage(strHash);
+    that.setState({
+            isLoggedInTron: true, showModal: true, modalMessage: 'logInSuccess', modalTitle: 'success',
+            modalIcon: 'CheckCircle', modalButtonVariant: "#588157", waitToClose: false, showModalDialog:false,
+            modalButtonMessage: 'closeBtn'
+        });
+    let authRes = await axios.post('/api/auth/jwt/tron',
+       {signature: signature, addr: that.state.tronAdapter._address},
+       {headers: {"Content-Type": "application/json"}});    
+       console.log("Метка 19");
+           
+    return authRes.data.success;
+} 
+
 const LogIn = async (accountAdd, web3, that) => {
+    if (window.blockChainOrt == "tron") return;
     that.setState({showModal:true, modalTitle: '',
         modalMessage: 'signThePhrase', modalIcon: 'HourglassSplit',
         modalButtonVariant: "#E63C36", waitToClose: false, modalButtonMessage: 'abortBtn',
@@ -34,6 +70,8 @@ const LogIn = async (accountAdd, web3, that) => {
     let dataToSign = res.data.dataToSign;
     if(window.web3Modal.cachedProvider == "binancechainwallet") {
         let signature = await window.BinanceChain.bnbSign(accountAdd,dataToSign);
+        console.log("Signature:");
+        console.log(signature);
         let authRes = await axios.post('/api/auth/jwt',
             {signature: signature, addr: accountAdd},
             {headers: {"Content-Type": "application/json"}});
@@ -66,6 +104,7 @@ function i18nString(value, lang) {
     }
     return value[lang] ? value[lang] : value["default"];
 }
+
 function DescriptionPreview(description, lang) {
     var i = 200;
     var text = "";
@@ -102,7 +141,74 @@ function GetLanguage() {
     return language;
 }
 
+const initTron = async (chainId, that) => {
+    
+    if(!that.state.tronAdapter){
+        await initTronadapter(chainId, that);
+    }
+    let chainConfig = config.get("CHAINS")[chainId];
+    if(!chainConfig) {
+      throw(`Unsupported blockchain: ${chainId}`);
+    }
+    let fullNode = chainConfig.FULL_NODE;
+    let solidityNode = chainConfig.SOLIDITY_NODE;
+    let eventServer = chainConfig.EVRNT_SERVER;
+    let privateKey = '';
+    let tronWeb = await new TronWeb(fullNode, solidityNode, eventServer, privateKey);
+    tronWeb.setAddress(that.state.tronAdapter.address);
+    await that.setState({tronWeb: tronWeb});
+    try {
+        ReactGA.event({
+            category: "provider",
+            action: "switching_network",
+            label: chainConfig["CHAIN_NAME"],
+            nonInteraction: false
+        });
+        /*
+        await window.ethereum.request({
+            method: 'wallet_switchEthereumChain',
+            params: [{ chainId: hexChainID }],
+        });
+        */
+    } catch (switchError) {
+        // This error code indicates that the chain has not been added to MetaMask.
+        if (switchError.code === 4902) {
+            try {
+                ReactGA.event({
+                    category: "provider",
+                    action: "adding_network",
+                    label: chainConfig["CHAIN_NAME"],
+                    nonInteraction: false
+                });
+                /*
+                await window.ethereum.request({
+                    method: 'wallet_addEthereumChain',
+                    params: [{
+                        chainId: hexChainID,
+                        rpcUrls: [chainConfig["WEB3_RPC_NODE_URL"]],
+                        chainName: chainConfig["CHAIN_NAME"],
+                    }],
+                });
+                */
+            } catch (addError) {
+                console.log(`Failed to add provider for ${chainId} and ${chainConfig["WEB3_RPC_NODE_URL"]}`)
+                console.log(addError);
+                ReactGA.event({
+                    category: "provider",
+                    action: "failed_to_add_provider",
+                    label: chainConfig["CHAIN_NAME"],
+                    nonInteraction: false
+                });
+            }
+        } else {
+            console.log(`Failed to switch provider to ${chainId}`)
+            console.log(switchError);
+        }
+    }
+}
+
 const initWeb3 = async (chainId, that) => {
+    
     if(!window.web3Modal) {
         await initWeb3Modal(chainId);
     }
@@ -110,7 +216,6 @@ const initWeb3 = async (chainId, that) => {
     provider.on("disconnect", (code, reason) => {
         that.setState({web3:null, accounts: null});
     });
-
     if(provider && provider.isMetaMask) {
         let chainConfig = config.get("CHAINS")[chainId];
         if(!chainConfig) {
@@ -176,10 +281,34 @@ const initWeb3 = async (chainId, that) => {
         provider.hasOwnProperty("request") && delete provider.request;
         //end workaround
     }
-
     let web3 = new Web3(provider);
     let accounts = await web3.eth.getAccounts();
     that.setState({web3:web3, accounts: accounts});
+}
+
+const checkAuthTron = async (chainId, that, skipError=false) => {
+    try {
+        if(that.state.tronAdapter._address) {
+            if(!that.state.tronWeb) {
+                await initTron(chainId, that);
+            }
+          that.setState({isLoggedInTron: false, showModal: false});
+        } else {
+                that.setState({isLoggedInTron: false, showModal: false});
+                await axios.post('/api/auth/logoutTron');
+        }
+    } catch (err) {
+        if(!skipError) {
+            that.setState({
+                showModal: true,
+                isLoggedInTron: false,
+                goHome: true,
+                modalTitle: 'authFailedTitle',
+                modalMessage: 'technicalDifficulties',
+                modalIcon: 'XCircle', modalButtonMessage: 'returnHome',
+                modalButtonVariant: "#E63C36", waitToClose: false});
+        }
+    }
 }
 
 const checkAuth = async (chainId, that, skipError=false) => {
@@ -215,7 +344,17 @@ const checkAuth = async (chainId, that, skipError=false) => {
     }
 }
 
+const initTronadapter = async(that, chainId) => {
+
+    let tronAdapter = new TronLinkAdapter();
+    that.setState({tronAdapter: tronAdapter});
+    that.state.tronAdapter.on('connect', () => {
+     tronAdapter.setAccount(that.state.tronAdapter._address);
+    });
+}
+
 const initWeb3Modal = async(chainId) => {
+
     let rpc = [];
     let chains = config.get("CHAINS");
     let chainConfig = chains[chainId];
@@ -226,7 +365,6 @@ const initWeb3Modal = async(chainId) => {
         rpc[chains[chainId]["WEB3_RPC_CHAIN_ID"]] = chains[chainId]["WEB3_RPC_NODE_URL"];
     }
     rpc[chainConfig["WEB3_RPC_CHAIN_ID"]] = chainConfig["WEB3_RPC_NODE_URL"];
-
     window.web3Modal = new Web3Modal({
         cacheProvider: false,
         providerOptions: {
@@ -254,6 +392,7 @@ const initWeb3Modal = async(chainId) => {
         }
     });
 }
+
 const getPCIPublicKey = async() => {
     let res = await axios.get('/api/circle/publickey');
     return res.data.data;
@@ -265,5 +404,6 @@ const encryptCardData = async(keyData, cardData) => {
     const encrypted = await encrypt({message, encryptionKeys: decodedPublicKey});
     return btoa(encrypted);
 }
-export {DescriptionPreview, i18nString, GetLanguage, LogIn, initWeb3, checkAuth, initWeb3Modal, clearWeb3Provider, getPCIPublicKey, encryptCardData };
+export {DescriptionPreview, i18nString, GetLanguage, LogIn, initWeb3, checkAuth, initWeb3Modal, clearWeb3Provider, 
+    getPCIPublicKey, encryptCardData, LogInTron, initTronadapter, initTron, checkAuthTron };
 export default Utilities;
