@@ -44,7 +44,7 @@ class ServerLib {
     }
 
     async handleAddDanate(req, res, Sentry, DB){
-       const ITEM = {
+        const ITEM = {
             campaignID: req.body.mydata.campaignID.toLowerCase(),
             donatorID: req.body.mydata.donatorID.toLowerCase(),
             raisedAmount: req.body.mydata.raisedAmount,
@@ -55,6 +55,7 @@ class ServerLib {
             deleted: false,
             checked: false
         }
+        
         try {
             const myCollection = await DB.collection('donations');
             await myCollection.insertOne(ITEM);
@@ -288,7 +289,7 @@ class ServerLib {
 
     async authenticated(req, res, Sentry) {
         if(req.user && req.user.address) {
-            return true;
+          return true;
         } else {
             Sentry.captureException(new Error('Failed 401'));
             res.sendStatus(401);

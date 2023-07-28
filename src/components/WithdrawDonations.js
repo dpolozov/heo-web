@@ -13,7 +13,10 @@ import {
     initWeb3Modal,
     clearWeb3Provider,
     encryptCardData,
-    getPCIPublicKey
+    getPCIPublicKey,
+    clearTronProvider,
+    initTronadapter, 
+    initTron
 } from '../util/Utilities';
 import i18n from '../util/i18n';
 import { Editor, EditorState, convertFromRaw, CompositeDecorator } from "draft-js";
@@ -31,6 +34,7 @@ import ltcLogo from '../images/ltc-logo.png'
 import visaMcLogo from '../images/visa-mc-logo.png';
 import coinBaseLogo from '../images/coinbase-c-logo.png';
 import CCData from '../components/CCData';
+import TronWeb from "tronweb";
 
 const IMG_MAP = {"BUSD": busdIcon,
     "BNB": bnbIcon,
@@ -88,6 +92,7 @@ class WithdrawDonations extends Component {
             waitToClose:false,
             raisedAmount:0,
             showModal: false,
+            showCoinbaseModal: false,
             modalMessage:"",
             modalTitle:"",
             errorIcon:"",
@@ -165,11 +170,47 @@ class WithdrawDonations extends Component {
             }        
     }
 
+    showCoinbaseCommerce = async() => {
+        this.setState({showCoinbaseModal: true});
+    }
+
     onModalClose() {
         if(this.state.tryAgainCC) {
             this.setState({showCCinfoModal:true});
         }
     }
+
+    getDaonateSizeTron = async (chainId, campaign, coinAddress) =>{
+        try{
+            await clearTronProvider();
+            await initTronadapter();
+            await initTron(chainId, this);
+            let HEOCampaign = (await import("../remote/"+ chainId + "/HEOCampaign")).default;
+            let TRC20Coin = (await import("../remote/"+ chainId + "/TRC20")).default;
+            let campaignAddress = campaign.addresses[chainId];
+            let userCoinInstance = await window.tronWeb.contract(TRC20Coin, window.tronWeb.address.fromHex(coinAddress));
+            let campaignBalance = await userCoinInstance.methods.balanceOf(campaignAddress).call();
+            let decimals = await userCoinInstance.methods.decimals().call();
+            campaignBalance = window.tronWeb.toDecimal(campaignBalance);
+            return(campaignBalance/(10**decimals));
+        }
+      catch (err) {
+              console.log(err);
+              this.setState({
+                  showModal: true, modalTitle: 'failed',
+                  errorIcon: 'XCircle', modalButtonMessage: 'closeBtn',
+                  modalButtonVariant: '#E63C36', waitToClose: false,
+                  modalMessage: 'blockChainConnectFailed'
+              });
+              ReactGA.event({
+                  category: "error",
+                  action: "transaction_error",
+                  label: (err && err.message ? err.message : "blockChainConnectFailed"), // optional, must be a number
+                  nonInteraction: false
+              });
+              return (0);
+          }
+      }
 
     getDaonateSize = async (chainId, campaign, coinAddress) =>{
       try{
@@ -203,7 +244,99 @@ class WithdrawDonations extends Component {
         }
     }
 
-    handleDonateClick = async (chainId, coin_adres) => {
+    handleDonateClick = async (chainId, coin_adres, blockChainOrt) => {
+        if(blockChainOrt == "ethereum"){
+            window.blockChainOrt = "ethereum";
+           this.handleDonateClickEthereum(chainId, coin_adres);
+
+        } else if (blockChainOrt == "tron"){
+            window.blockChainOrt = "tron";
+            this.handleDonateClickTron(chainId, coin_adres);
+        }
+    }
+
+    handleDonateClickTron = async (chainId, coin_adres) => {
+        try{
+            await clearTronProvider();
+            await initTronadapter(); 
+            await initTron(chainId, this);
+            var chains_coins = this.state.chains_coins;
+            HEOCampaign = (await import("../remote/"+ chainId + "/HEOCampaign")).default;
+            let TRC20Coin = (await import("../remote/"+ chainId + "/TRC20")).default;
+            let campaignAddress = this.state.campaign.addresses[chainId];
+            let campaignInstance = await window.tronWeb.contract(HEOCampaign, window.tronWeb.address.fromHex(campaignAddress));
+            let userCoinInstance = await window.tronWeb.contract(TRC20Coin, window.tronWeb.address.fromHex(coin_adres));
+            let campaignBalance = await userCoinInstance.methods.balanceOf(campaignAddress).call();
+            var that = this;
+            ReactGA.event({
+                category: "donation",
+                action: "donate_button_click",
+                value: parseInt(campaignBalance), // optional, must be a number
+                nonInteraction: false
+            });
+           
+            try {
+                 
+                let result = await campaignInstance.methods.donateToBeneficiary(coin_adres)
+                .send({from:window.tronAdapter.address,callValue:0,feeLimit:15000000000,shouldPollResponse:false});
+                let txnObject;
+                do{
+                    txnObject = await window.tronWeb.trx.getTransaction(result);  
+                }while(!txnObject.ret);
+                if (txnObject.ret[0].contractRet == "SUCCESS"){
+                    console.log(`transaction hash for donateToBeneficiary ${result}`);
+                    that.setState({modalMessage: "waitingForNetwork"})
+                    console.log(`Done with transactions`);
+                }else {
+                    this.setState({
+                        showModal: true, modalTitle: 'failed',
+                        errorIcon: 'XCircle', modalButtonMessage: 'closeBtn',
+                        modalButtonVariant: '#E63C36', waitToClose: false,
+                        modalMessage: 'blockChainTransactionFailed'
+                    });
+                    ReactGA.event({
+                        category: "error",
+                        action: "transaction_error",
+                        label: `Metamask transaction failed with code ${result.code}`,
+                        nonInteraction: false
+                    });
+                    clearWeb3Provider(this);
+                    return; 
+                }
+                for (let j = 0; j < chains_coins.length; j++){
+                    if ((chains_coins.chain == chainId)&&(chains_coins.coin.address == coin_adres)){
+                        chains_coins.donate = await this.getDaonateSizeTron(chainId, this.state.campaignId, coin_adres);
+                        break;
+                    }
+                }    
+                this.setState({chains_coins:chains_coins});
+            } catch (err) {
+                this.setState({
+                    showModal: true, modalTitle: 'failed', modalMessage: 'blockChainTransactionFailed',
+                    errorIcon: 'XCircle', modalButtonMessage: 'closeBtn',
+                    modalButtonVariant: '#E63C36', waitToClose: false
+                });
+                console.log(err);
+            }
+            
+        } catch (err) {
+            console.log(err);
+            this.setState({
+                showModal: true, modalTitle: 'failed',
+                errorIcon: 'XCircle', modalButtonMessage: 'closeBtn',
+                modalButtonVariant: '#E63C36', waitToClose: false,
+                modalMessage: 'blockChainConnectFailed'
+            });
+            ReactGA.event({
+                category: "error",
+                action: "transaction_error",
+                label: (err && err.message ? err.message : "blockChainConnectFailed"), // optional, must be a number
+                nonInteraction: false
+            });
+        }
+    }
+
+    handleDonateClickEthereum = async (chainId, coin_adres) => {
         try{
             await clearWeb3Provider(this);
             await initWeb3Modal(chainId);
@@ -347,7 +480,7 @@ class WithdrawDonations extends Component {
                                     <InputGroup.Append>
                                         <DropdownButton id='donateButton' title={i18n.t('withdrawDonations')}>
                                             {this.state.chains_coins.map((item, i) =>
-                                                    <Dropdown.Item key={item["CHAIN"]} as="button" onClick={() => this.handleDonateClick(item.chain, item.coin.address)}>
+                                                    <Dropdown.Item key={item["CHAIN"]} as="button" onClick={() => this.handleDonateClick(item.chain, item.coin.address, item.blockChainOrt)}>
                                                      {item.coin.name} ({item.chain_name})  {"-"}  {i18n.t('donationsSize')}{":"} {item.donate}
                                                      </Dropdown.Item>
                                             )}
@@ -437,20 +570,19 @@ class WithdrawDonations extends Component {
                 chains.push(configChains[ch]);
             }
         }
+        var chains_coins = [];
         await axios.post('/api/getcoinslist')
         .then(res => {
-            let chains_coins = [];
             for (let i = 0; i <  res.data.length; i++){
                 res.data[i].chain_name = "";
                 for (let j = 0; j < chains.length; j++){
                   if (chains[j].CHAIN == res.data[i].chain){
                    res.data[i].chain_name = chains[j].CHAIN_NAME;
-                   res.data[i].donate = that.getDaonateSize(res.data[i].chain, campaign, res.data[i].coin.address);
+                   res.data[i].donate = 0;
                    chains_coins.push(res.data[i]);
                   }     
                 }
             }
-            this.setState({chains_coins:chains_coins})
         }).catch(err => {
             if (err.response) {
                 modalMessage = 'Failed to load coins. We are having technical difficulties'}
@@ -463,10 +595,13 @@ class WithdrawDonations extends Component {
                 modalMessage: modalMessage
             })
         })
-        for(let j = 0; j < this.state.chains_coins.length; j++){
-            this.state.chains_coins[j].donate = await this.getDaonateSize(this.state.chains_coins[j].chain, campaign, this.state.chains_coins[j].coin.address); 
+        for(let j = 0; j < chains_coins.length; j++){
+            if (chains_coins[j].blockChainOrt == "ethereum")
+            chains_coins[j].donate = await this.getDaonateSize(chains_coins[j].chain, campaign, chains_coins[j].coin.address); 
+            else if (chains_coins[j].blockChainOrt == "tron")
+            chains_coins[j].donate = await this.getDaonateSizeTron(chains_coins[j].chain, campaign, chains_coins[j].coin.address);
         }
-        
+        this.setState({chains_coins:chains_coins});
         let globals = config.get("GLOBALS");
         globals.forEach(element => {
             if(element._id === 'FIATPAYMENT') {

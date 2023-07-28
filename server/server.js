@@ -120,7 +120,7 @@ APP.post('/api/circlenotifications', async (req, res) => {
 });
 
 APP.post('/api/uploadimage', (req,res) => {
-    if(serverLib.authenticated(req, res, Sentry)) serverLib.handleUploadImage(req, res, S3, Sentry);
+ if(serverLib.authenticated(req, res, Sentry)) serverLib.handleUploadImage(req, res, S3, Sentry);
 });
 
 APP.post('/api/deleteimage', (req, res) => {
@@ -200,7 +200,6 @@ APP.post('/api/campaign/loadOne', (req, res) => {
 APP.post('/api/campaign/loadUserCampaigns', (req, res) => {
     if(serverLib.authenticated(req, res, Sentry)) {
         const DB = CLIENT.db(DBNAME);
-
         serverLib.handleLoadUserCampaigns(req, res, Sentry, DB);
     }
 });
@@ -214,11 +213,9 @@ APP.get('/api/auth/msg', (req, res) => {
     res.json({dataToSign:`Today is ${(new Date()).toDateString()}`});
 });
 
-APP.post('/api/auth/jwt/tron', async(req, res) => {
-    //extract Address from signature
-    try {
-        const addr = req.body.addr.toLowerCase();
-        let token = jsonwebtoken.sign({ address:addr }, process.env.JWT_SECRET, { expiresIn: '7d' });
+APP.post('/api/auth/jwt_tron', async(req, res) =>{
+    try{
+        let token = jsonwebtoken.sign({ address:req.body.addr.toLowerCase() }, process.env.JWT_SECRET, { expiresIn: '7d' });
         res.cookie('authToken', token, { httpOnly: true }).send({success:true});
     } catch (err) {
         console.log(err);
@@ -226,7 +223,6 @@ APP.post('/api/auth/jwt/tron', async(req, res) => {
         res.sendStatus(401);
     }
 });
-
 
 APP.post('/api/auth/jwt', async(req, res) => {
     //extract Address from signature
@@ -264,11 +260,6 @@ APP.get('/api/auth/status', (req, res) => {
 APP.post('/api/auth/logout', (req, res) => {
     res.clearCookie('authToken').send({});
 });
-
-APP.post('/api/auth/logoutTron', (req, res) => {
-    res.clearCookie('authToken').send({});
-});
-
 
 APP.get('/api/circle/publickey', async (req, res) => {
     try {

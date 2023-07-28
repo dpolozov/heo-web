@@ -6,7 +6,7 @@ import { Container, Row, Col, Card, ProgressBar, Button, Modal } from 'react-boo
 import { CheckCircle, ExclamationTriangle, HourglassSplit, XCircle } from 'react-bootstrap-icons';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
-import { i18nString, DescriptionPreview, LogIn, initWeb3, checkAuth, initWeb3Modal } from '../util/Utilities';
+import { i18nString, DescriptionPreview, LogIn, initWeb3, checkAuth, initWeb3Modal, checkAuthTron, LogInTron, initTron } from '../util/Utilities';
 import { Trans } from 'react-i18next';
 import i18n from '../util/i18n';
 import {UserContext} from './UserContext';
@@ -18,19 +18,84 @@ ReactGA.initialize("G-C657WZY5VT");
 class UserCampaigns extends Component {
     constructor(props) {
         super(props);
-
         this.state = {
             campaigns: [],
             showError:false,
             modalTitle:"",
             modalMessage:"",
             isLoggedIn:false,
+            isLoggedInTron:false,
             whiteListed:false,
             showTwoButtons: false,
             campaignId: '',
-            fileName: ''
+            chainId:"",
+            tronChainId:"",
+            chainConfig:{},
+            tronChainConfig:{}, 
+            fileName: '',
+            showModal: false,
+            showModalDialog: false,
         };
     }
+
+    async checkWLTron(chainId) {
+        //is white list enabled?
+        try {
+            console.log(`Tron initialized. Account1: ${window.tronWeb.toHex(window.tronAdapter.address)}`);
+            console.log(`Loading HEOParameters on ${chainId}`);
+            let abi = (await import("../remote/" + chainId + "/HEOParameters")).abi;
+            let address = (await import("../remote/" + chainId + "/HEOParameters")).address;
+            var HEOParameters = await window.tronWeb.contract(abi, address);
+            let wlEnabled = await HEOParameters.methods.intParameterValue(11).call();
+            if(wlEnabled > 0) {
+                console.log('WL enabled')
+                //is user white listed?
+                let whiteListed = await HEOParameters.methods.addrParameterValue(5, window.tronWeb.toHex(window.tronAdapter.address).toLowerCase()).call();
+                if(whiteListed > 0) {
+                    this.setState({
+                        isLoggedInTron : true,
+                        whiteListed: true,
+                        beneficiaryAddress: window.tronWeb.toHex(window.tronAdapter.address),
+                        showModal: false,
+                        goHome: false
+                    });
+                    this.loadCampaigns();
+                } else {
+                    console.log(`User not in WL`)
+                    //user is not in the white list
+                    this.setState({
+                        goHome: true,
+                        showModal:true,
+                        isLoggedInTron: true,
+                        whiteListed: false,
+                        modalTitle: 'nonWLTitle',
+                        modalMessage: 'nonWLMessage',
+                        modalIcon: 'XCircle', modalButtonMessage: 'closeBtn',
+                        modalButtonVariant: "#E63C36", waitToClose: false
+                    });
+                }
+            } else {
+                this.loadCampaigns();
+                //white list is disabled
+                this.setState({
+                    isLoggedInTron : true,
+                    whiteListed: true,
+                    goHome: false,
+                    showModal: false
+                });
+            }
+        } catch (err) {
+            console.log(err);
+            this.setState({
+                showModal: true, modalTitle: 'Failed',
+                errorIcon: 'XCircle', modalButtonMessage: 'closeBtn',
+                modalButtonVariant: '#E63C36', waitToClose: false,
+                modalMessage: 'blockChainConnectFailed'
+            });
+        }
+    }
+
+
     //is white list enabled?
     async checkWL(chainId) {
         try {
@@ -91,24 +156,35 @@ class UserCampaigns extends Component {
     async componentDidMount() {
         ReactGA.send({ hitType: "pageview", page: this.props.location.pathname });
         let chainId = config.get("CHAIN");
+        let tronChainId = config.get("TRON_CHAIN");
+        this.setState({
+            chainId: chainId,
+            tronChainId: tronChainId,
+        });
         await initWeb3Modal(chainId, this);
         // is the user logged in?
-        if(!this.state.isLoggedIn) {
+        if((!this.state.isLoggedIn)&&(window.ethereum)) {
            await checkAuth(chainId, this);
         }
-        if(this.state.isLoggedIn) {
-           await this.checkWL(chainId);
-        } else {
+        if((!this.state.isLoggedInTron)&&(window.tron)) {
+            await checkAuthTron(tronChainId, this);
+         }
+        if((this.state.isLoggedIn)&&(window.ethereum))  await this.checkWL(chainId);
+        if((this.state.isLoggedInTron)&&(window.tron))  await this.checkWLTron(tronChainId); 
+        if((!this.state.isLoggedIn)&&(!this.state.isLoggedInTron)) {
             //need to log in first
             this.setState({
-                showModal: true,
                 isLoggedIn : false,
+                isLoggedInTron: false,
                 whiteListed: false,
                 goHome: false,
                 modalTitle: 'pleaseLogInTitle',
                 modalMessage: 'pleaseLogInToCreateMessage',
                 modalIcon: 'XCircle', modalButtonMessage: 'login',
-                modalButtonVariant: "#E63C36", waitToClose: false});
+                modalButtonVariant: "#E63C36", waitToClose: false
+            });
+                if ((window.tron)&&(window.ethereum)) this.setState({showModalDialog : true,showModal:false});
+                else this.setState({showModalDialog : false, showModal : true});
         }
     }
 
@@ -158,8 +234,6 @@ class UserCampaigns extends Component {
                 campaign["raisedAmount"] = Math.round((raisedAmount + fiatDonations + raisedOnCoinbase + raisedDonations) * 100)/100;
             }
         })
-        console.log("Компания");
-        console.log(campaigns);
         this.setState({
             showModal: false,
             campaigns: campaigns
@@ -236,69 +310,180 @@ class UserCampaigns extends Component {
                     }
                 </Container>
                 <Modal show={this.state.showModal} onHide={()=>{}} className='myModal' centered>
-                    <Modal.Body><p className='errorIcon'>
-                        {this.state.errorIcon == 'CheckCircle' && <CheckCircle style={{color:'#588157'}} />}
-                        {this.state.errorIcon == 'ExclamationTriangle' && <ExclamationTriangle style={{color: '#E63C36'}}/>}
-                        {this.state.errorIcon == 'HourglassSplit' && <HourglassSplit style={{color: 'gold'}}/>}
-                        {this.state.errorIcon == 'XCircle' && <XCircle style={{color: '#E63C36'}}/>}
-                    </p>
+                    <Modal.Body><p className='modalIcon'>
+                        {this.state.modalIcon == 'CheckCircle' && <CheckCircle style={{color:'#588157'}} />}
+                        {this.state.modalIcon == 'ExclamationTriangle' && <ExclamationTriangle/>}
+                        {this.state.modalIcon == 'HourglassSplit' && <HourglassSplit style={{color: 'gold'}}/>}
+                        {this.state.modalIcon == 'XCircle' && <XCircle style={{color: '#E63C36'}}/>}
+                        </p>
                         <p className='modalTitle'><Trans i18nKey={this.state.modalTitle}/></p>
-                        <p className='modalMessage'>
-                            <Trans i18nKey={this.state.modalMessage}>
+                        <p className='modalMessage'><Trans i18nKey={this.state.modalMessage}>
                             Your account has not been cleared to create campaigns.
                             Please fill out this
-                                <a target='_blank' href='https://docs.google.com/forms/d/e/1FAIpQLSdTo_igaNjF-1E51JmsjJgILv68RN2v5pisTcqTLvZvuUvLDQ/viewform'>form</a>
-                                to be granted permission to fundraise on HEO Platform
-                            </Trans>
-                        </p>
-                        {this.state.showTwoButtons &&
-                            <Container>
-                                <Button id='closeCampaign' onClick={() => this.closeCampaign()}>{i18n.t('yes')}</Button>
-                                <Button id='cancelClose' onClick={() => this.setState({showModal:false})}>{i18n.t('no')}</Button>
-                            </Container>
-                        }
+                            <a target='_blank' href='https://docs.google.com/forms/d/e/1FAIpQLSdTo_igaNjF-1E51JmsjJgILv68RN2v5pisTcqTLvZvuUvLDQ/viewform'>form</a>
+                            to ne granted permission to fundraise on HEO Platform
+                        </Trans></p>
                         {!this.state.waitToClose &&
                         <UserContext.Consumer>
-                            {({isLoggedIn, toggleLoggedIn}) => (
+                            {() => (
                                 <Button className='myModalButton'
-                                        style={{backgroundColor : this.state.modalButtonVariant, borderColor : this.state.modalButtonVariant}}
-                                        onClick={ async () => {
-                                            let chainId = config.get("CHAIN");
+                                    style={{backgroundColor : this.state.modalButtonVariant, borderColor : this.state.modalButtonVariant}}
+                                    onClick={ async () => {
+                                       
+                                           if (!window.tron){
+                                            window.blockChainOrt = "ethereum";
                                             this.setState({showModal:false})
                                             if(this.state.goHome) {
                                                 this.props.history.push('/');
                                             } else if(!this.state.isLoggedIn) {
                                                 try {
                                                     if(!this.state.accounts || !this.state.web3) {
-                                                        await initWeb3(chainId, this);
+                                                        await initWeb3(this.state.chainId, this);
                                                     }
                                                     await LogIn(this.state.accounts[0], this.state.web3, this);
                                                     if(this.state.isLoggedIn) {
-                                                        //toggleLoggedIn(true);
-                                                        await this.checkWL(chainId);
+                                                        await this.checkWL(this.state.chainId);
                                                     }
                                                 } catch (err) {
+                                                    console.log(err);
                                                     this.setState({showModal:true,
                                                         goHome: true,
-                                                        isLoggedIn: false,
                                                         waitToClose: false,
-                                                        campaigns: [],
+                                                        isLoggedIn: false,
                                                         modalTitle: 'authFailedTitle',
                                                         modalMessage: 'authFailedMessage',
                                                         modalButtonMessage: 'closeBtn',
                                                         modalButtonVariant: "#E63C36"}
                                                     );
                                                 }
-                                            } else {
-                                                this.loadCampaigns();
                                             }
-                                        }}>
+                                           } else if (window.tron){
+                                            window.blockChainOrt = "tron";
+                                            if(this.state.goHome) {
+                                                this.props.history.push('/');
+                                            } else if(!this.state.isLoggedInTron) {
+                                                try {
+                                                    if(!window.tronWeb) {
+                                                        await initTron(this.state.tronChainId , this);
+                                                    } 
+                                                    await  LogInTron(this); 
+                                                    if(this.state.isLoggedInTron) {
+                                                    await this.checkWLTron(this.state.tronChainId);
+                                                    }  
+                                                } catch (err) {
+                                                    console.log(err);
+                                                    this.setState({showModal:true,
+                                                        goHome: true,
+                                                        waitToClose: false,
+                                                        isLoggedInTron: false,
+                                                        modalTitle: 'authFailedTitle',
+                                                        modalMessage: 'authFailedMessage',
+                                                        modalButtonMessage: 'closeBtn',
+                                                        modalButtonVariant: "#E63C36"}
+                                                    );
+                                                }
+                                            }
+                                           } 
+                                       
+                                        
+                                    }}>
                                     <Trans i18nKey={this.state.modalButtonMessage} />
                                 </Button>
-                            )}
+                                )}
                         </UserContext.Consumer>
                         }
                     </Modal.Body>
+                </Modal>
+                <Modal show={this.state.showModalDialog} onHide={()=>{}} className='myModal' centered>
+                    <Modal.Body><p className='modalIcon'>
+                        {this.state.modalIcon == 'XCircle' && <XCircle style={{color: '#E63C36'}}/>}
+                        </p>
+                        <p className='modalTitle'><Trans i18nKey={this.state.modalTitle}/></p>
+                        <p className='modalMessage'><Trans i18nKey={'pleaseLogInToCreateMessageDuo'}>
+                            Your account has not been cleared to create campaigns.
+                            Please fill out this
+                            <a target='_blank' href='https://docs.google.com/forms/d/e/1FAIpQLSdTo_igaNjF-1E51JmsjJgILv68RN2v5pisTcqTLvZvuUvLDQ/viewform'>form</a>
+                            to ne granted permission to fundraise on HEO Platform
+                        </Trans></p>
+                        {!this.state.waitToClose &&
+                        <UserContext.Consumer>
+                            {() => (
+                                <Modal.Dialog>
+                                <Row lg = {2}> 
+                                <Col md = '6'>       
+                                 <Button className='myModalButton'  
+                                    style={{backgroundColor : this.state.modalButtonVariant, borderColor : this.state.modalButtonVariant}}
+                                    onClick={ async () => {
+                                        window.blockChainOrt = "ethereum";
+                                        this.setState({showModalDialog:false})
+                                        if(this.state.goHome) {
+                                            this.props.history.push('/');
+                                        } else if(!this.state.isLoggedIn) {
+                                            try {
+                                                if(!this.state.accounts || !this.state.web3) {
+                                                    await initWeb3(this.state.chainId, this);
+                                                }
+                                                await LogIn(this.state.accounts[0], this.state.web3, this);
+                                                if(this.state.isLoggedIn) {
+                                                    await this.checkWL(this.state.chainId);
+                                                }
+                                            } catch (err) {
+                                                console.log(err);
+                                                this.setState({showModal:true,
+                                                    goHome: true,
+                                                    waitToClose: false,
+                                                    isLoggedIn: false,
+                                                    modalTitle: 'authFailedTitle',
+                                                    modalMessage: 'authFailedMessage',
+                                                    modalButtonMessage: 'closeBtn',
+                                                    modalButtonVariant: "#E63C36"}
+                                                );
+                                            }
+                                        }
+                                    }}>
+                                    Ethereum
+                                </Button>
+                                </Col>
+                                <Col  md = '6'> 
+                                <Button className='myModalButton'
+                                style={{backgroundColor : this.state.modalButtonVariant, borderColor : this.state.modalButtonVariant}}
+                                onClick={ async () => {
+                                    this.setState({showModalDialog:false});
+                                    window.blockChainOrt = "tron";
+                                    if(this.state.goHome) {
+                                        this.props.history.push('/');
+                                    } else if(!this.state.isLoggedInTron) {
+                                        try {
+                                            if(!window.tronWeb) {
+                                                await initTron(this.state.tronChainId , this);
+                                            } 
+                                            await  LogInTron(this); 
+                                            if(this.state.isLoggedInTron) {
+                                            await this.checkWLTron(this.state.tronChainId);
+                                            }  
+                                        } catch (err) {
+                                            console.log(err);
+                                            this.setState({showModal:true,
+                                                goHome: true,
+                                                waitToClose: false,
+                                                isLoggedInTron: false,
+                                                modalTitle: 'authFailedTitle',
+                                                modalMessage: 'authFailedMessage',
+                                                modalButtonMessage: 'closeBtn',
+                                                modalButtonVariant: "#E63C36"}
+                                            );
+                                        }
+                                    }
+                                }}>
+                            Tron
+                            </Button>
+                            </Col>
+                            </Row> 
+                            </Modal.Dialog>
+                            )}
+                        </UserContext.Consumer>
+                        }
+                   </Modal.Body>
                 </Modal>
                 <div id="campaingListMainDiv">
                     <Container>

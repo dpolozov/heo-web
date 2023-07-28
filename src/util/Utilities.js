@@ -25,36 +25,49 @@ const clearWeb3Provider= async (that) => {
     }
 }
 
-const clearTronProvider = async (that) => {
-    await that.state.tronAdapter.disconnect();  
+const clearTronProvider = async () => {
+  if(window.tronAdapter)  
+    await window.tronAdapter.disconnect();  
 }
 
 const LogInTron = async (that) => {
-    if (window.blockChainOrt == "ethereum") return;
-    that.setState({showModal:true, modalTitle: '',
-        modalMessage: 'signThePhrase', modalIcon: 'HourglassSplit',
-        modalButtonVariant: "#E63C36", waitToClose: false, modalButtonMessage: 'abortBtn',
-            onModalClose: function() {
-             clearTronProvider(that);
-          }
-       });
-    let dataToSign= await axios.get('/api/auth/msg');
-    let hexStrWithout0x = that.state.tronWeb.toHex(dataToSign).replace(/^0x/, '');
-    let byteArray = that.state.tronWeb.utils.code.hexStr2byteArray(hexStrWithout0x);
-    let strHash = that.state.tronWeb.sha3(byteArray).replace(/^0x/, '');
-    await that.state.tronAdapter.connect();
-    let signature = await that.state.tronAdapter.signMessage(strHash);
+    if(!window.tronWeb)
+    {
+        window.tronWeb = await getTronWeb();
+    }
+    if(!window.tronAdapter){
+        await initTronadapter();
+    }
+    let res = await axios.get('/api/auth/msg');
+    let dataToSign = res.data.dataToSign;
+    let hexStrWithout0x = window.tronWeb.toHex(dataToSign).replace(/^0x/, '');
+    let byteArray = window.tronWeb.utils.code.hexStr2byteArray(hexStrWithout0x);
+    let strHash= window.tronWeb.sha3(byteArray).replace(/^0x/, '');
+    await window.tronAdapter.connect();
+    let accounts = window.tronWeb.address.toHex(window.tronAdapter.address);
+    that.setState({accounts: accounts});
+    that.setState({beneficiaryAddress:window.tronWeb.address.toHex(window.tronAdapter.address)});
+    let signedStr = await window.tronWeb.trx.sign(strHash);
+    let authRes = await axios.post('/api/auth/jwt_tron',
+            {signature: signedStr, addr: window.tronWeb.address.toHex(window.tronAdapter.address)},
+            {headers: {"Content-Type": "application/json"}});
+    signedStr = signedStr.replace(/^0x/, '');
+    var tail = signedStr.substring(128, 130);
+    if(tail == '01')
+    {
+      signedStr = signedStr.substring(0,128)+'1c';
+    }
+    else if(tail == '00')
+    {
+      signedStr = signedStr.substring(0,128)+'1b';
+    }
+    res = await window.tronWeb.trx.verifyMessage(strHash,signedStr,window.tronAdapter.address);
     that.setState({
             isLoggedInTron: true, showModal: true, modalMessage: 'logInSuccess', modalTitle: 'success',
             modalIcon: 'CheckCircle', modalButtonVariant: "#588157", waitToClose: false, showModalDialog:false,
             modalButtonMessage: 'closeBtn'
         });
-    let authRes = await axios.post('/api/auth/jwt/tron',
-       {signature: signature, addr: that.state.tronAdapter._address},
-       {headers: {"Content-Type": "application/json"}});    
-       console.log("Метка 19");
-           
-    return authRes.data.success;
+    return res;
 } 
 
 const LogIn = async (accountAdd, web3, that) => {
@@ -70,8 +83,6 @@ const LogIn = async (accountAdd, web3, that) => {
     let dataToSign = res.data.dataToSign;
     if(window.web3Modal.cachedProvider == "binancechainwallet") {
         let signature = await window.BinanceChain.bnbSign(accountAdd,dataToSign);
-        console.log("Signature:");
-        console.log(signature);
         let authRes = await axios.post('/api/auth/jwt',
             {signature: signature, addr: accountAdd},
             {headers: {"Content-Type": "application/json"}});
@@ -141,22 +152,34 @@ function GetLanguage() {
     return language;
 }
 
+const getTronWeb = async () => {
+    let tronWeb;
+    if (window.tronLink.ready) {
+        tronWeb = window.tronLink.tronWeb;
+    } else {
+        const res = await window.tronLink.request({ method: 'tron_requestAccounts' });
+        if (res.code === 200) {
+            tronWeb = window.tronLink.tronWeb;
+        }
+    }
+    return tronWeb;
+}
+
 const initTron = async (chainId, that) => {
     
-    if(!that.state.tronAdapter){
-        await initTronadapter(chainId, that);
+    if(!window.tronAdapter){
+        await initTronadapter();
     }
+    let provider = await window.tronAdapter.connect();
+    /*
+    provider.on("disconnect", (code, reason) => {
+        that.setState({accounts: null});
+    });
+    */
     let chainConfig = config.get("CHAINS")[chainId];
     if(!chainConfig) {
       throw(`Unsupported blockchain: ${chainId}`);
     }
-    let fullNode = chainConfig.FULL_NODE;
-    let solidityNode = chainConfig.SOLIDITY_NODE;
-    let eventServer = chainConfig.EVRNT_SERVER;
-    let privateKey = '';
-    let tronWeb = await new TronWeb(fullNode, solidityNode, eventServer, privateKey);
-    tronWeb.setAddress(that.state.tronAdapter.address);
-    await that.setState({tronWeb: tronWeb});
     try {
         ReactGA.event({
             category: "provider",
@@ -164,14 +187,8 @@ const initTron = async (chainId, that) => {
             label: chainConfig["CHAIN_NAME"],
             nonInteraction: false
         });
-        /*
-        await window.ethereum.request({
-            method: 'wallet_switchEthereumChain',
-            params: [{ chainId: hexChainID }],
-        });
-        */
     } catch (switchError) {
-        // This error code indicates that the chain has not been added to MetaMask.
+        // This error code indicates that the chain has not been added to Tronlink.
         if (switchError.code === 4902) {
             try {
                 ReactGA.event({
@@ -180,16 +197,7 @@ const initTron = async (chainId, that) => {
                     label: chainConfig["CHAIN_NAME"],
                     nonInteraction: false
                 });
-                /*
-                await window.ethereum.request({
-                    method: 'wallet_addEthereumChain',
-                    params: [{
-                        chainId: hexChainID,
-                        rpcUrls: [chainConfig["WEB3_RPC_NODE_URL"]],
-                        chainName: chainConfig["CHAIN_NAME"],
-                    }],
-                });
-                */
+               
             } catch (addError) {
                 console.log(`Failed to add provider for ${chainId} and ${chainConfig["WEB3_RPC_NODE_URL"]}`)
                 console.log(addError);
@@ -209,9 +217,9 @@ const initTron = async (chainId, that) => {
 
 const initWeb3 = async (chainId, that) => {
     
-    if(!window.web3Modal) {
+    //if(!window.web3Modal) {
         await initWeb3Modal(chainId);
-    }
+   // }
     let provider = await window.web3Modal.connect();
     provider.on("disconnect", (code, reason) => {
         that.setState({web3:null, accounts: null});
@@ -288,14 +296,14 @@ const initWeb3 = async (chainId, that) => {
 
 const checkAuthTron = async (chainId, that, skipError=false) => {
     try {
-        if(that.state.tronAdapter._address) {
-            if(!that.state.tronWeb) {
-                await initTron(chainId, that);
+        if(window.tronAdapter.address) {
+            if(!window.tronWeb) {
+                await LogInTron(that);
             }
           that.setState({isLoggedInTron: false, showModal: false});
         } else {
                 that.setState({isLoggedInTron: false, showModal: false});
-                await axios.post('/api/auth/logoutTron');
+                await axios.post('/api/auth/logout');
         }
     } catch (err) {
         if(!skipError) {
@@ -344,53 +352,51 @@ const checkAuth = async (chainId, that, skipError=false) => {
     }
 }
 
-const initTronadapter = async(that, chainId) => {
+const initTronadapter = async() => {
 
-    let tronAdapter = new TronLinkAdapter();
-    that.setState({tronAdapter: tronAdapter});
-    that.state.tronAdapter.on('connect', () => {
-     tronAdapter.setAccount(that.state.tronAdapter._address);
-    });
+    window.tronAdapter = new TronLinkAdapter();
 }
 
 const initWeb3Modal = async(chainId) => {
-
-    let rpc = [];
-    let chains = config.get("CHAINS");
-    let chainConfig = chains[chainId];
-    if(!chainConfig) {
-        throw(`Unsupported blockchain: ${chainId}`);
-    }
-    for(let chainId in chains) {
-        rpc[chains[chainId]["WEB3_RPC_CHAIN_ID"]] = chains[chainId]["WEB3_RPC_NODE_URL"];
-    }
-    rpc[chainConfig["WEB3_RPC_CHAIN_ID"]] = chainConfig["WEB3_RPC_NODE_URL"];
-    window.web3Modal = new Web3Modal({
-        cacheProvider: false,
-        providerOptions: {
-            walletconnect: {
-                package: WalletConnectProvider,
-                options: {
-                    rpc: rpc,
-                    chainId: chainConfig["WEB3_RPC_CHAIN_ID"],
-                    bridge: chainConfig["WC_BRIDGE_URL"],
-                    network: chainConfig["WC_CHAIN_NAME"],
-                    qrcodeModalOptions:{
-                        mobileLinks:[
-                            "metamask",
-                            "trust",
-                            "safepalwallet",
-                            "valora",
-                            "mathwallet"
-                        ]
-                    }
-                }
-            },
-            binancechainwallet: {
-                package: (chainId == "bsctest" || chainId == "bsc")
-            }
+   if((window.blockChainOrt) && (window.blockChainOrt == "ethereum"))
+     {
+        let rpc = [];
+        let chains = config.get("CHAINS");
+        let chainConfig = chains[chainId];
+        if(!chainConfig) {
+            throw(`Unsupported blockchain: ${chainId}`);
         }
-    });
+        for(let chainId in chains) {
+            rpc[chains[chainId]["WEB3_RPC_CHAIN_ID"]] = chains[chainId]["WEB3_RPC_NODE_URL"];
+        }
+        rpc[chainConfig["WEB3_RPC_CHAIN_ID"]] = chainConfig["WEB3_RPC_NODE_URL"];
+        window.web3Modal = new Web3Modal({
+            cacheProvider: false,
+            providerOptions: {
+                walletconnect: {
+                    package: WalletConnectProvider,
+                    options: {
+                        rpc: rpc,
+                        chainId: chainConfig["WEB3_RPC_CHAIN_ID"],
+                        bridge: chainConfig["WC_BRIDGE_URL"],
+                        network: chainConfig["WC_CHAIN_NAME"],
+                        qrcodeModalOptions:{
+                            mobileLinks:[
+                                "metamask",
+                                "trust",
+                                "safepalwallet",
+                                "valora",
+                                "mathwallet"
+                            ]
+                        }
+                    }
+                },
+                binancechainwallet: {
+                    package: (chainId == "bsctest" || chainId == "bsc")
+                }
+            }
+        });
+    }
 }
 
 const getPCIPublicKey = async() => {
@@ -404,6 +410,6 @@ const encryptCardData = async(keyData, cardData) => {
     const encrypted = await encrypt({message, encryptionKeys: decodedPublicKey});
     return btoa(encrypted);
 }
-export {DescriptionPreview, i18nString, GetLanguage, LogIn, initWeb3, checkAuth, initWeb3Modal, clearWeb3Provider, 
-    getPCIPublicKey, encryptCardData, LogInTron, initTronadapter, initTron, checkAuthTron };
+export {DescriptionPreview, i18nString, GetLanguage, LogIn, initWeb3, checkAuth, initWeb3Modal, clearWeb3Provider,clearTronProvider, 
+    getPCIPublicKey, encryptCardData, LogInTron, initTronadapter, checkAuthTron, initTron };
 export default Utilities;

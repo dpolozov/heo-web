@@ -10,7 +10,7 @@ import { ChevronLeft, CheckCircle, ExclamationTriangle, HourglassSplit, XCircle 
 import { Link } from 'react-router-dom';
 import { compress, decompress } from 'shrink-string';
 import TextEditor, { setEditorState, getEditorState, editorStateHasChanged } from '../components/TextEditor';
-import { initWeb3, checkAuth, initWeb3Modal } from '../util/Utilities';
+import { initWeb3, checkAuth, initWeb3Modal, initTronadapter, checkAuthTron, initTron } from '../util/Utilities';
 import '../css/createCampaign.css';
 import '../css/modal.css';
 import Web3 from 'web3';
@@ -21,6 +21,8 @@ import usdcIcon from '../images/usd-coin-usdc-logo.png';
 import ethIcon from '../images/eth-diamond-purple.png';
 import cusdIcon from '../images/cusd-celo-logo.png';
 import usdcAurora from '../images/usd-coin-aurora-logo.png';
+const TronWeb = require('tronweb');
+//import TronWeb from "tronweb";
 const IMG_MAP = {"BUSD-0xe9e7cea3dedca5984780bafc599bd69add087d56": busdIcon,
     "BNB-0x0000000000000000000000000000000000000000": bnbIcon,
     "USDC-0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48": usdcIcon,
@@ -70,6 +72,7 @@ class EditCampaign extends React.Component {
             defDonationAmount: 0,
             fiatPayments: true
         };
+
     }
 
    onSubmit = (e) => {
@@ -101,13 +104,22 @@ class EditCampaign extends React.Component {
 
 
     handleClick = async (chainId) => {
-        await initWeb3Modal(chainId, this);
-        await initWeb3(chainId, this);
-        // is the user logged in?
-        if(!this.state.isLoggedIn) {
-            await checkAuth(chainId, this);
+        if (window.blockChainOrt == "ethereum"){
+            await initWeb3Modal(chainId, this);
+            await initWeb3(chainId, this);
+            // is the user logged in?
+            if(!this.state.isLoggedIn) {
+                await checkAuth(chainId, this);
+            }
         }
-
+        else if (window.blockChainOrt == "tron"){
+            await initTronadapter();
+            await initTron(chainId, this);
+            // is the user logged in?
+            if(!this.state.isLoggedInTron) {
+                await checkAuthTron(chainId, this);
+            }
+        }
         //check if this campaign belongs to this user
         if(editorStateHasChanged()) {
             this.state.updateMeta = true;
@@ -177,9 +189,9 @@ class EditCampaign extends React.Component {
                 return;
             }
         }
-
         //updating existing HEOCampaign
         if(this.state.updateMeta) {
+          if (window.blockChainOrt == "ethereum"){
             if(!(await this.updateCampaign(chainId))) {
                 this.setState({showModal : true,
                     modalTitle: 'updatingAmountFailed',
@@ -188,18 +200,95 @@ class EditCampaign extends React.Component {
                     modalButtonVariant: "#E63C36", waitToClose: false});
                 return;
             }
+          } 
+          else if (window.blockChainOrt == "tron"){
+            if(!(await this.updateCampaignTron(chainId))) {
+                this.setState({showModal : true,
+                    modalTitle: 'updatingAmountFailed',
+                    modalMessage: this.state.currentError,
+                    errorIcon:'XCircle', modalButtonMessage: 'closeBtn',
+                    modalButtonVariant: "#E63C36", waitToClose: false});
+                return;
+            }
+          }  
         }
-
-
         this.setState({
-            showModal: true, modalTitle: 'complete',
+            showModal: true, modalTitle: 'complete', goHome: true,
             modalMessage: 'updateSuccessfull',
             errorIcon: 'CheckCircle', modalButtonMessage: 'closeBtn',
             modalButtonVariant: '#588157', waitToClose: false
         });
     }
 
-
+    async updateCampaignTron(chainId) {
+        this.setState({showModal:true,
+            modalMessage: 'confirmMetamask', errorIcon:'HourglassSplit',
+            modalButtonVariant: "gold", waitToClose: true})
+        try {
+            var data = {
+                mainImageURL: this.state.mainImageURL,
+                coinbaseCommerceURL: this.state.coinbaseCommerceURL,
+                fn: this.state.fn,
+                ln: this.state.ln,
+                cn: this.state.cn,
+                vl: this.state.vl,
+                defaultDonationAmount: this.state.defDonationAmount,
+                fiatPayments: this.state.fiatPayments
+            };
+            data.description = this.state.ogDescription;
+            data.description[i18n.language] = data.description["default"] = this.state.description;
+            data.title = this.state.ogTitle;
+            data.title[i18n.language] = data.title["default"] = this.state.title;
+            data.descriptionEditor = this.state.ogDescriptionEditor;
+            data.descriptionEditor[i18n.language] = data.descriptionEditor["default"] = getEditorState();
+            data.org = this.state.ogOrg;
+            data.org[i18n.language] = data.org["default"] = this.state.org;
+            console.log(`Updating title to`);
+            console.log(data.title);
+            console.log(`Updating org to`);
+            console.log(data.org);
+            data.maxAmount = this.state.maxAmount;
+            data.defaultDonationAmount = this.state.defDonationAmount;
+            var that = this;
+            let compressed_meta = await compress(JSON.stringify(data));
+            let HEOCampaign = (await import("../remote/"+ chainId + "/HEOCampaign")).default;
+            CAMPAIGNINSTANCE = await window.tronWeb.contract(HEOCampaign, window.tronWeb.address.fromHex(this.state.addresses[chainId]));
+            await CAMPAIGNINSTANCE.update(window.tronWeb.toSun(this.state.maxAmount), compressed_meta)
+              .send({from:window.tronAdapter.address,callValue:0,feeLimit:15000000000,shouldPollResponse:false})
+              .then((result) => {
+                    that.setState({showModal:true, modalTitle: 'processingWait',
+                    modalMessage: 'updatingCampaignOnBlockchain', errorIcon:'HourglassSplit',
+                    modalButtonVariant: "gold", waitToClose: true});
+                    window.tronWeb.trx.getTransaction(result)
+                    .then((txnObject) => {
+                       if(txnObject.ret[0].contractRet != "SUCCESS") return false;
+                    });    
+              });
+              let dataForDB = {address: this.state.campaignId, dataToUpdate: data};
+              try {
+                  await axios.post('/api/campaign/update', {mydata : dataForDB},
+                      {headers: {"Content-Type": "application/json"}});
+                  return true;
+              } catch (err) {
+                  console.log(err);
+                  if(err.response) {
+                      this.setState({currentError : 'technicalDifficulties'});
+                  } else if (err.request) {
+                      this.setState({currentError : 'checkYourConnection'});
+                  } else {
+                      this.setState({currentError : ''});
+                  }
+                  return false;
+              }            
+                   
+        } catch (error) {
+            this.setState({currentError : 'checkMetamask'});
+            console.log("updating maxAmount transaction failed");
+            console.log(error);
+            return false;
+        }
+    }
+  
     async updateCampaign(chainId) {
         this.setState({showModal:true,
             modalMessage: 'confirmMetamask', errorIcon:'HourglassSplit',
@@ -227,14 +316,14 @@ class EditCampaign extends React.Component {
             console.log(data.title);
             console.log(`Updating org to`);
             console.log(data.org);
-
             let compressed_meta = await compress(JSON.stringify(data));
 
             if(this.state.addresses[chainId]) {
                 console.log(`Campaign already deployed on ${chainId} - updating`);
                 let HEOCampaign = (await import("../remote/"+ chainId + "/HEOCampaign")).default;
+                let result; 
                 CAMPAIGNINSTANCE = new this.state.web3.eth.Contract(HEOCampaign, this.state.addresses[chainId]);
-                let result = await CAMPAIGNINSTANCE.methods.update(
+                result = await CAMPAIGNINSTANCE.methods.update(
                     this.state.web3.utils.toWei(this.state.maxAmount), compressed_meta).send({from:this.state.accounts[0]}, () => {
                     this.setState({showModal:true, modalTitle: 'processingWait',
                         modalMessage: 'updatingCampaignOnBlockchain', errorIcon:'HourglassSplit',
@@ -246,8 +335,8 @@ class EditCampaign extends React.Component {
                 var web3 = this.state.web3;
                 let abi = (await import("../remote/" + chainId + "/HEOCampaignFactory")).abi;
                 let address = (await import("../remote/" + chainId + "/HEOCampaignFactory")).address;
-                var HEOCampaignFactory = new this.state.web3.eth.Contract(abi, address);
-
+                
+                var HEOCampaignFactory = new this.state.web3.eth.Contract(abi, address); 
                 let result = await HEOCampaignFactory.methods.createCampaign(
                     this.state.web3.utils.toWei(`${this.state.maxAmount}`), this.state.chains[chainId].currencyOptions.value, this.state.accounts[0], compressed_meta)
                     .send({from:this.state.accounts[0]})
@@ -447,8 +536,6 @@ class EditCampaign extends React.Component {
         );
     }
 
-
-
     async getCampaignFromDB(id) {
         var campaign = {};
         var modalMessage = 'failedToLoadCampaign';
@@ -493,36 +580,43 @@ class EditCampaign extends React.Component {
                     modalMessage,
                 })
             })
-
-
         let dbCampaignObj = await this.getCampaignFromDB(id);
-        let chains = config.get("CHAINS");
-        let chainId = config.get("CHAIN");
-        let chainConfig = chains[chainId];
+        let chains;
+        let chainId;
+        let chainConfig;
+        if (window.blockChainOrt == "ethereum"){
+            chains = config.get("CHAINS");
+            chainId = config.get("CHAIN");
+            chainConfig = chains[chainId];
+        }
+        else if (window.blockChainOrt == "tron"){         
+            chains = config.get("CHAINS");
+            chainId = config.get("TRON_CHAIN");
+            chainConfig = chains[chainId];
+        }
         let address = id;
         if(dbCampaignObj && dbCampaignObj.addresses && dbCampaignObj.addresses[chainId]) {
             address = dbCampaignObj.addresses[chainId];
         }
         let web3 = new Web3(chainConfig["WEB3_RPC_NODE_URL"]);
         let HEOCampaign = (await import("../remote/"+ chainId + "/HEOCampaign")).default;
-        console.log(`chainId`);
-        console.log(chainId);
-        CAMPAIGNINSTANCE = new web3.eth.Contract(HEOCampaign, address);
-        console.log(`Campaign instance`);
-        console.log(CAMPAIGNINSTANCE);
-        let compressedMetaData = await CAMPAIGNINSTANCE.methods.metaData().call();
-        console.log(`Compressed metadata`);
-        console.log(compressedMetaData);
+        if ( window.blockChainOrt == "ethereum") CAMPAIGNINSTANCE = new web3.eth.contract(HEOCampaign, address);
+        else if ( window.blockChainOrt === "tron") CAMPAIGNINSTANCE = await window.tronWeb.contract(HEOCampaign, window.tronWeb.address.fromHex(address));
+        let beneficiary = await CAMPAIGNINSTANCE.methods.beneficiary().call();
+        let owner = await CAMPAIGNINSTANCE.methods.owner().call();
+        let account = window.tronWeb.address.toHex(window.tronAdapter.address);
+        let compressedMetaData = await CAMPAIGNINSTANCE.methods.metaData().call();; 
         let rawMetaData = await decompress(compressedMetaData);
         let metaData = JSON.parse(rawMetaData);
-        let maxAmount = web3.utils.fromWei(await CAMPAIGNINSTANCE.methods.maxAmount().call());
+        let maxAmount;
+        if ( window.blockChainOrt === "ethereum") maxAmount = web3.utils.fromWei(await CAMPAIGNINSTANCE.methods.maxAmount().call());
+        else if (window.blockChainOrt === "tron") maxAmount = window.tronWeb.fromSun(await CAMPAIGNINSTANCE.maxAmount().call());
         if(metaData.mainImageURL) {
             let splits = metaData.mainImageURL.split("/");
             if(splits && splits.length) {
                 metaData.imgID = splits[splits.length-1];
             }
         }
-
         var orgObj = {};
         if(typeof metaData.org == "string") {
             orgObj.default = metaData.org;

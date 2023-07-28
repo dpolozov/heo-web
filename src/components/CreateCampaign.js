@@ -9,7 +9,7 @@ import axios from 'axios';
 import { Trans } from 'react-i18next';
 import i18n from '../util/i18n';
 import {UserContext} from './UserContext';
-import { LogIn, initWeb3, checkAuth, initWeb3Modal, LogInTron, initTronadapter, initTron, checkAuthTron } from '../util/Utilities';
+import { LogIn, initWeb3, checkAuth, initWeb3Modal, LogInTron, initTronadapter, checkAuthTron, initTron } from '../util/Utilities';
 import TextEditor, { getEditorState, setEditorState } from '../components/TextEditor';
 import { ChevronLeft, CheckCircle, ExclamationTriangle, HourglassSplit, XCircle } from 'react-bootstrap-icons';
 import { compress } from 'shrink-string';
@@ -101,7 +101,48 @@ class CreateCampaign extends React.Component {
     qrfileSelected = e => {
         this.setState({qrCodeImageFile:e.target.files[0], qrCodeImageURL: URL.createObjectURL(e.target.files[0])});
     };
- 
+
+CheckEvent(txnObject, transEvent){
+    if(transEvent.length > 0){
+      this.addCampaignToDb({
+        address: transEvent[0].result.campaignAddress,
+        beneficiaryId: this.state.beneficiaryAddress
+     });
+    } else {
+        var that =  this;
+        window.tronWeb.getEventByTransactionID(txnObject.txID)
+        .then((transEventNew) => {
+           that.CheckEvent(txnObject, transEventNew);
+        });
+    }
+};
+
+checkTransactionTron (txnObject) {
+    if(txnObject) {
+        var that =  this; 
+        if (txnObject.ret[0].contractRet == "SUCCESS"){
+            window.tronWeb.getEventByTransactionID(txnObject.txID)
+            .then((transEvent) => {
+                that.CheckEvent(txnObject, transEvent); 
+            });  
+        } else {
+          this.setState({showModal: true, goHome: true,
+                    modalTitle: 'addToDbFailedTitle',
+                    modalMessage: 'addToDbFailedMessage',
+                    modalIcon: 'CheckCircle',
+                    modalButtonMessage: 'returnHome',
+                    modalButtonVariant: "#588157", waitToClose: false
+          });
+          return false;
+        }
+    } else {
+        var that1 =  this;
+        window.tronWeb.trx.getTransaction(txnObject.txID)
+        .then((txnObject) => {
+           that1.checkTransactionTron(txnObject);
+        });
+    }
+}
 
     async handleClick (event) {
         //this.showHtml();
@@ -128,7 +169,7 @@ class CreateCampaign extends React.Component {
             }
             if(!this.state.cn) {
                 this.setState(
-                    {showModal:true, modalTitle: 'requiredFieldsTitle',
+                    {showModal:true, modalTitle: 'requiredFieldsTitle', 
                         modalMessage: 'cnRequired', modalIcon: 'ExclamationTriangle',
                         waitToClose: false,
                         modalButtonMessage: 'closeBtn', modalButtonVariant: '#E63C36'
@@ -162,30 +203,24 @@ class CreateCampaign extends React.Component {
                     });
                 return false;
             }
-           
             let qrImgUrl = '';
-           /*  let imgUrl = await this.uploadImageS3('main', imgID);
+            let imgUrl = await this.uploadImageS3('main', imgID);
             if(this.state.qrCodeImageURL) {
-                qrImgUrl = await this.uploadImageS3('qrCode', qrImgID);
+              qrImgUrl = await this.uploadImageS3('qrCode', qrImgID);
             }
-            */
-            let imgUrl = '';
-         // if(imgUrl) {
-                let campaignData;
-                if (String(window.blockChainOrt) === "ethereum"){
-                    if(window.web3Modal.cachedProvider !== "binancechainwallet"){
-                        campaignData = await this.createCampaign(imgUrl, qrImgUrl);
-                        if (campaignData)  await this.addCampaignToDb(campaignData);
-                    } else {
-                        this.createCampaign(imgUrl);
-                    }
-
-                } else if (String(window.blockChainOrt) === "tron") {
-                    campaignData = await this.createCampaignTron(imgUrl, qrImgUrl);
-                    if (campaignData)  await this.addCampaignToDb(campaignData);
-                } 
-           // }
             
+            if(imgUrl) {
+                let campaignData;
+                
+                if (String(window.blockChainOrt) === "ethereum"){
+                  if(window.web3Modal.cachedProvider !== "binancechainwallet"){
+                        campaignData = await this.createCampaign(imgUrl, qrImgUrl);
+                  } else {this.createCampaign(imgUrl);}
+                } 
+                else if (String(window.blockChainOrt) === "tron") campaignData = await this.createCampaignTron(imgUrl, qrImgUrl);
+                if (campaignData)  await this.addCampaignToDb(campaignData);
+                
+            }
         } catch(error)  {
             console.log(error);
         }
@@ -196,7 +231,8 @@ class CreateCampaign extends React.Component {
             campaignData.title = {"default": this.state.title};
             campaignData.title[i18n.language] = this.state.title;
             campaignData.addresses = {};
-            campaignData.addresses[this.state.chainId] = campaignData.address;
+            if (window.blockChainOrt == "ethereum") campaignData.addresses[this.state.chainId] = campaignData.address;
+            else if (window.blockChainOrt == "tron") campaignData.addresses[this.state.tronChainId] = campaignData.address;
             campaignData.description = {"default": this.state.description};
             campaignData.description[i18n.language] = this.state.description;
             campaignData.mainImageURL = this.state.mainImageURL;
@@ -238,6 +274,8 @@ class CreateCampaign extends React.Component {
         }
     }
 
+    
+
     async createCampaignTron(imgUrl, qrImgUrl) {
         var titleObj = {"default": this.state.title};
         titleObj[i18n.language] = this.state.title;
@@ -272,23 +310,28 @@ class CreateCampaign extends React.Component {
                 modalButtonVariant: "#E63C36", waitToClose: false});
             var that = this;
             let abi = (await import("../remote/" + this.state.tronChainId + "/HEOCampaignFactory")).abi;
-            let address = (await import("../remote/" + this.state.tronChainId + "/HEOCampaignFactory")).address;
-            address = this.state.tronWeb.address.toHex(address); 
-            var HEOCampaignFactory = await this.state.tronWeb.contract(abi, address);
-            let result = await HEOCampaignFactory.methods.createCampaign(this.state.tronWeb.toSun(this.state.maxAmount), 
-                this.state.beneficiaryAddress, compressed_meta)
-                .send({from:this.state.beneficiaryAddress, feeLimit:100000000,callValue:0,shouldPollResponse:true,tokenValue:100})
-                .once('transactionId', function(transactionHash) {
-                    that.setState({showModal:true, modalTitle: 'processingWait',
-                        modalMessage: 'waitingForNetwork', modalIcon: 'HourglassSplit',
-                        modalButtonVariant: "gold", waitToClose: true}
-                    );
-                    that.tronWeb.getTransaction(transactionHash).then(
-                        function(txnObject) {
-                            checkTransactionTron(txnObject, that);
-                        }
-                    );
-                });
+            var address = (await import("../remote/" + this.state.tronChainId + "/HEOCampaignFactory")).address;
+            address = window.tronWeb.address.toHex(address); 
+            var HEOCampaignFactory = await window.tronWeb.contract(abi, address);
+            try {
+                await HEOCampaignFactory.methods.createCampaign(window.tronWeb.toSun(this.state.maxAmount), 
+                    this.state.beneficiaryAddress, compressed_meta)
+                    .send({from:this.state.beneficiaryAddress,callValue:0,feeLimit:15000000000,shouldPollResponse:false})
+                    .then((result) =>{
+                        that.setState({showModal:true, modalTitle: 'processingWait',
+                            modalMessage: 'waitingForNetwork', modalIcon: 'HourglassSplit',
+                            modalButtonVariant: "gold", waitToClose: true}
+                        );
+                       window.tronWeb.trx.getTransaction(result)
+                       .then((txnObject) => {
+                        that.checkTransactionTron(txnObject);
+                       })
+                    });
+            } catch (err) {
+                console.log("error caught");
+                console.log(err);
+                return false;
+            }
         } catch (error) {
             this.setState({showModal: true,
                 modalTitle: 'blockChainTransactionFailed',
@@ -334,12 +377,10 @@ class CreateCampaign extends React.Component {
                 modalMessage: 'confirmMetamask', modalIcon:'HourglassSplit',
                 modalButtonMessage: 'closeBtn',
                 modalButtonVariant: "#E63C36", waitToClose: false});
-            if((!this.state.web3 || !this.state.accounts)&&(window.blockChainOrt == "ethereum")) {
+            if((!this.state.web3 || !this.state.accounts)) {
                 await initWeb3(this.state.chainId, this);
             }
-            if((!this.state.tronWeb)&&(window.blockChainOrt == "tron")) {
-                await initTron(this.state.tronChainId, this);
-            }
+            
             var that = this;
             var web3 = this.state.web3;
             let abi = (await import("../remote/" + this.state.chainId + "/HEOCampaignFactory")).abi;
@@ -395,7 +436,6 @@ class CreateCampaign extends React.Component {
     }
 
     async uploadImageS3 (type, imgID) {
-        
         this.setState(
             {showModal:true, modalTitle: 'processingWait',
             modalMessage: 'uploadingImageWait', modalIcon: 'HourglassSplit',
@@ -413,7 +453,6 @@ class CreateCampaign extends React.Component {
         let fileType;
         const formData = new FormData();
         if(type === 'main') {
-            console.log("Type main");
             fileType = this.state.mainImageFile.type.split("/")[1];
             formData.append(
                 "myFile",
@@ -421,7 +460,6 @@ class CreateCampaign extends React.Component {
                 `${imgID}.${fileType}`,
             );
         } else if(type === 'qrCode') {
-            console.log("Type qrCode");
             fileType = this.state.qrCodeImageFile.type.split("/")[1];
             formData.append(
                 "myFile",
@@ -429,16 +467,18 @@ class CreateCampaign extends React.Component {
                 `${imgID}.${fileType}`,
             );
         }
-        
         try {
-            let res = await axios.post('/api/uploadimage', formData);
+            let res;
+            //if (window.blockChainOrt == "ethereum") 
+            res = await axios.post('/api/uploadimage', formData);
+            //else if (window.blockChainOrt == "tron") res = await axios.post('/api/uploadimage_tron', formData);
             if(type === 'main') {
                 this.setState({showModal:false, mainImageURL: res.data});
             } else if(type === 'qrCode') {
                 this.setState({showModal:false, qrCodeImageURL: res.data});
             }
             if(res.data) {
-               return res.data;
+                return res.data;
             } else {
                 console.log('error uploading image: res.data is empty');
                 this.setState({showModal: true, goHome: false,
@@ -451,7 +491,6 @@ class CreateCampaign extends React.Component {
         }  catch(err) {
             if (err.response) {
                 console.log('response error in uploading main image- ' + err.response.status);
-                console.log(err.response);
                 this.setState({showModal: true, goHome: false,
                     modalTitle: 'imageUploadFailed',
                     modalMessage: 'technicalDifficulties',
@@ -496,12 +535,12 @@ class CreateCampaign extends React.Component {
                         </Trans></p>
                         {!this.state.waitToClose &&
                         <UserContext.Consumer>
-                            {({isLoggedIn}) => (
+                            {() => (
                                 <Button className='myModalButton'
                                     style={{backgroundColor : this.state.modalButtonVariant, borderColor : this.state.modalButtonVariant}}
                                     onClick={ async () => {
-                                        if (!window.blockChainOrt)
-                                        {
+                                        this.setState({showModal:false});
+                                           if (!window.tron){
                                             window.blockChainOrt = "ethereum";
                                             this.setState({showModal:false})
                                             if(this.state.goHome) {
@@ -528,10 +567,34 @@ class CreateCampaign extends React.Component {
                                                     );
                                                 }
                                             }
-                                        }
-                                        else{
-                                            this.setState({showModal:false}); 
-                                        }
+                                           } else if (window.tron){
+                                            window.blockChainOrt = "tron";
+                                            if(this.state.goHome) {
+                                                this.props.history.push('/');
+                                            } else if(!this.state.isLoggedInTron) {
+                                                try {
+                                                    if(!window.tronWeb) {
+                                                        await initTron(this.state.tronChainId , this);
+                                                    } 
+                                                    await  LogInTron(this); 
+                                                    if(this.state.isLoggedInTron) {
+                                                    await this.checkWLTron(this.state.tronChainId);
+                                                    }  
+                                                } catch (err) {
+                                                    console.log(err);
+                                                    this.setState({showModal:true,
+                                                        goHome: true,
+                                                        waitToClose: false,
+                                                        isLoggedInTron: false,
+                                                        modalTitle: 'authFailedTitle',
+                                                        modalMessage: 'authFailedMessage',
+                                                        modalButtonMessage: 'closeBtn',
+                                                        modalButtonVariant: "#E63C36"}
+                                                    );
+                                                }
+                                            }
+                                           } 
+                                       
                                         
                                     }}>
                                     <Trans i18nKey={this.state.modalButtonMessage} />
@@ -558,7 +621,7 @@ class CreateCampaign extends React.Component {
                                 <Modal.Dialog>
                                 <Row lg = {2}> 
                                 <Col md = '6'>       
-                                 <Button className='myModalButton'
+                                 <Button className='myModalButton'  
                                     style={{backgroundColor : this.state.modalButtonVariant, borderColor : this.state.modalButtonVariant}}
                                     onClick={ async () => {
                                         window.blockChainOrt = "ethereum";
@@ -601,9 +664,9 @@ class CreateCampaign extends React.Component {
                                         this.props.history.push('/');
                                     } else if(!this.state.isLoggedInTron) {
                                         try {
-                                            if(!this.state.tronWeb) {
+                                            if(!window.tronWeb) {
                                                 await initTron(this.state.tronChainId , this);
-                                            }  
+                                            } 
                                             await  LogInTron(this); 
                                             if(this.state.isLoggedInTron) {
                                             await this.checkWLTron(this.state.tronChainId);
@@ -752,21 +815,21 @@ class CreateCampaign extends React.Component {
     async checkWLTron(chainId) {
         //is white list enabled?
         try {
-            console.log(`Tron initialized. Account1: ${this.state.tronWeb.toHex(this.state.tronAdapter.address)}`);
+            console.log(`Tron initialized. Account1: ${window.tronWeb.toHex(window.tronAdapter.address)}`);
             console.log(`Loading HEOParameters on ${chainId}`);
             let abi = (await import("../remote/" + chainId + "/HEOParameters")).abi;
             let address = (await import("../remote/" + chainId + "/HEOParameters")).address;
-            var HEOParameters = await this.state.tronWeb.contract(abi, address);
+            var HEOParameters = await window.tronWeb.contract(abi, address);
             let wlEnabled = await HEOParameters.methods.intParameterValue(11).call();
             if(wlEnabled > 0) {
                 console.log('WL enabled')
                 //is user white listed?
-                let whiteListed = await HEOParameters.methods.addrParameterValue(5, this.state.tronWeb.toHex(this.state.tronAdapter.address).toLowerCase()).call();
+                let whiteListed = await HEOParameters.methods.addrParameterValue(5, window.tronWeb.toHex(window.tronAdapter.address).toLowerCase()).call();
                 if(whiteListed > 0) {
                     this.setState({
                         isLoggedInTron : true,
                         whiteListed: true,
-                        beneficiaryAddress: this.state.tronWeb.address.toHex(this.state.tronAdapter.address),
+                        beneficiaryAddress: window.tronWeb.toHex(window.tronAdapter.address),
                         showModal: false,
                         goHome: false
                     });
@@ -792,8 +855,7 @@ class CreateCampaign extends React.Component {
                     isLoggedInTron : true,
                     whiteListed: true,
                     goHome: false,
-                    showModal: false,
-                    beneficiaryAddress: this.state.tronAdapter.address
+                    showModal: false
                 });
             }
         } catch (err) {
@@ -880,7 +942,7 @@ class CreateCampaign extends React.Component {
         let chainConfig = chains[chainId];
         let tronChainConfig = chains[tronChainId];
         if(window.ethereum) await initWeb3Modal(chainId, this);
-        if(window.tron) await initTronadapter(this, tronChainId );
+        if(window.tron) await initTronadapter();
         // is the user logged in?
         if((!this.state.isLoggedIn)&&(window.ethereum)) {
            console.log(`User not logged in. Checking authentication on ${chainId}.`)
@@ -933,33 +995,9 @@ class CreateCampaign extends React.Component {
                 modalIcon: 'XCircle', modalButtonMessage: 'login',
                 modalButtonVariant: "#E63C36", waitToClose: false});
         }
-        if (window.tron) this.setState({showModalDialog : true,showModal:false});
+        
+        if ((window.tron)&&(window.ethereum)) this.setState({showModalDialog : true,showModal:false});
         else this.setState({showModalDialog : false, showModal : true});
-    }
-}
-
-function checkTransactionTron(txnObject, that) {
-    if(txnObject.blockNumber) {
-        that.state.tronWeb.trx.getTransactionInfo(txnObject.id).then(function(txnObject) {
-            if(txnObject.logs && txnObject.logs.length >2 && txnObject.logs[2] && txnObject.logs[2].topics && txnObject.logs[2].topics.length > 3) {
-                that.addCampaignToDb({
-                    address: txnObject.logs[2].topics[1],
-                    beneficiaryId: txnObject.logs[2].topics[3]
-                });
-            } else {
-                this.setState({showModal: true, goHome: true,
-                    modalTitle: 'addToDbFailedTitle',
-                    modalMessage: 'addToDbFailedMessage',
-                    modalIcon: 'CheckCircle',
-                    modalButtonMessage: 'returnHome',
-                    modalButtonVariant: "#588157", waitToClose: false
-                });
-            }
-        });
-    } else {
-        that.state.tronWeb.trx.getTransactionInfo(txnObject.id).then(function(txnObject) {
-            checkTransaction(txnObject, that);
-        });
     }
 }
 
