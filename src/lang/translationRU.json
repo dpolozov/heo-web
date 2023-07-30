@@ -81,6 +81,8 @@
     "pleaseLogInTitle": "Необходима авторизация",
     "pleaseLogInMessage": "Пожалуйста, войдите, чтобы видеть созданные вами кампании",
     "pleaseLogInToCreateMessage": "Пожалуйста, войдите, чтобы создать кампанию",
+    "pleaseLogInToCreateMessageDuo": "Пожалуйста, выберите тип блокчейна и войдите, чтобы создать компанию ",
+    "pleaseLogInMessageDuo": "Пожалуйста, выберите тип блокчейна и войдите, чтобы видеть созданные вами кампании",
     "notAllowed": "Операция запрещена",
     "donateToYourSelf": "Пожертвование самому себе невозможно",
     "logInSuccess": "Успешная аутентификация",
@@ -175,6 +177,5 @@
     "defDonationAmount": "Сумма пожертвования по умолчанию",
     "fiatPayments": "Использовать банковские карточки для пожертвований",
     "withdrawDonations" : "Снять пожертвования",
-    "donationsSize" : "Доступно для снятия",
-    "failedConnectCoinbaseCommerce":"Не удалось подключиться к Coinbase Commerce"
+    "donationsSize" : "Размер пожертвований"
 }

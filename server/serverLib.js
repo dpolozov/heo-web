@@ -232,8 +232,9 @@ class ServerLib {
 
     async handleLoadUserCampaigns(req, res, Sentry, DB) {
         try{
+            const key = "addresses." + req.body.fieldName;
             const myCollection = await DB.collection('campaigns');
-            const campaigns = await myCollection.find({"ownerId" : {$eq: req.user.address}, active: true});
+            const campaigns = await myCollection.find({"ownerId" : {$eq: req.user.address},[key]:{ $exists : true }, active: true});
             const result = await campaigns.toArray();
             res.send(result);
         } catch (err) {

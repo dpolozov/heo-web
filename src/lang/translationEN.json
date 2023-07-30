@@ -66,6 +66,8 @@
     "pleaseLogInTitle": "Authentication Required",
     "pleaseLogInMessage": "Please log in to see your campaigns",
     "pleaseLogInToCreateMessage": "Please log in to create a campaign",
+    "pleaseLogInToCreateMessageDuo": "Please select a blockchain type and log in to create a company",
+    "pleaseLogInMessageDuo": "Please select the blockchain type and log in to see the campaigns you created",
     "failedToLoadCampaigns": "Failed to load campaigns",
     "failedToLoadCampaign": "Failed to load campaign",
     "nonWLTitle": "Account not whitelisted",
@@ -177,7 +179,6 @@
     "defDonationAmount": "Default donation amount",
     "fiatPayments": "Use bank cards for donations",
     "withdrawDonations" : "Withdraw donations",
-    "donationsSize" : "Available to withdraw",
-    "failedConnectCoinbaseCommerce":"Failed to connect to Coinbase Commerce"
+    "donationsSize" : "Donations size"
 }
 

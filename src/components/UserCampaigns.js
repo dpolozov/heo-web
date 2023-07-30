@@ -95,7 +95,6 @@ class UserCampaigns extends Component {
         }
     }
 
-
     //is white list enabled?
     async checkWL(chainId) {
         try {
@@ -154,6 +153,7 @@ class UserCampaigns extends Component {
     }
 
     async componentDidMount() {
+        console.log("Метка 1");
         ReactGA.send({ hitType: "pageview", page: this.props.location.pathname });
         let chainId = config.get("CHAIN");
         let tronChainId = config.get("TRON_CHAIN");
@@ -161,31 +161,20 @@ class UserCampaigns extends Component {
             chainId: chainId,
             tronChainId: tronChainId,
         });
-        await initWeb3Modal(chainId, this);
+        //await initWeb3Modal(chainId, this);
         // is the user logged in?
-        if((!this.state.isLoggedIn)&&(window.ethereum)) {
-           await checkAuth(chainId, this);
-        }
-        if((!this.state.isLoggedInTron)&&(window.tron)) {
-            await checkAuthTron(tronChainId, this);
-         }
-        if((this.state.isLoggedIn)&&(window.ethereum))  await this.checkWL(chainId);
-        if((this.state.isLoggedInTron)&&(window.tron))  await this.checkWLTron(tronChainId); 
-        if((!this.state.isLoggedIn)&&(!this.state.isLoggedInTron)) {
-            //need to log in first
-            this.setState({
-                isLoggedIn : false,
-                isLoggedInTron: false,
-                whiteListed: false,
-                goHome: false,
-                modalTitle: 'pleaseLogInTitle',
-                modalMessage: 'pleaseLogInToCreateMessage',
-                modalIcon: 'XCircle', modalButtonMessage: 'login',
-                modalButtonVariant: "#E63C36", waitToClose: false
-            });
-                if ((window.tron)&&(window.ethereum)) this.setState({showModalDialog : true,showModal:false});
-                else this.setState({showModalDialog : false, showModal : true});
-        }
+        this.setState({
+            isLoggedIn : false,
+            isLoggedInTron: false,
+            whiteListed: false,
+            goHome: false,
+            modalTitle: 'pleaseLogInTitle',
+            modalMessage: 'pleaseLogInToCreateMessage',
+            modalIcon: 'XCircle', modalButtonMessage: 'login',
+            modalButtonVariant: "#E63C36", waitToClose: false
+         });
+        if ((window.tron)&&(window.ethereum)) this.setState({showModalDialog : true,showModal:false});
+        else this.setState({showModalDialog : false, showModal : true});
     }
 
     async loadCampaigns() {
@@ -207,8 +196,12 @@ class UserCampaigns extends Component {
                 errorIcon:'XCircle', modalButtonMessage: 'returnHome',
                 modalButtonVariant: "#E63C36", waitToClose: false});
         })
+        let chainName;
+        if(window.blockChainOrt == "ethereum") chainName = this.state.chainId;
+        else if(window.blockChainOrt == "tron") chainName = this.state.tronChainId;
+        let data = {fieldName : chainName};
         var modalTitle = 'failedToLoadCampaigns';
-        await axios.post('/api/campaign/loadUserCampaigns', {}, {headers: {"Content-Type": "application/json"}})
+        await axios.post('/api/campaign/loadUserCampaigns', data, {headers: {"Content-Type": "application/json"}})
         .then(res => {
             campaigns = res.data;
             this.setState({
@@ -399,7 +392,7 @@ class UserCampaigns extends Component {
                         {this.state.modalIcon == 'XCircle' && <XCircle style={{color: '#E63C36'}}/>}
                         </p>
                         <p className='modalTitle'><Trans i18nKey={this.state.modalTitle}/></p>
-                        <p className='modalMessage'><Trans i18nKey={'pleaseLogInToCreateMessageDuo'}>
+                        <p className='modalMessage'><Trans i18nKey={'pleaseLogInMessageDuo'}>
                             Your account has not been cleared to create campaigns.
                             Please fill out this
                             <a target='_blank' href='https://docs.google.com/forms/d/e/1FAIpQLSdTo_igaNjF-1E51JmsjJgILv68RN2v5pisTcqTLvZvuUvLDQ/viewform'>form</a>

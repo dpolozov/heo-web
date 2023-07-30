@@ -253,34 +253,29 @@ class EditCampaign extends React.Component {
             let compressed_meta = await compress(JSON.stringify(data));
             let HEOCampaign = (await import("../remote/"+ chainId + "/HEOCampaign")).default;
             CAMPAIGNINSTANCE = await window.tronWeb.contract(HEOCampaign, window.tronWeb.address.fromHex(this.state.addresses[chainId]));
-            await CAMPAIGNINSTANCE.update(window.tronWeb.toSun(this.state.maxAmount), compressed_meta)
-              .send({from:window.tronAdapter.address,callValue:0,feeLimit:15000000000,shouldPollResponse:false})
-              .then((result) => {
-                    that.setState({showModal:true, modalTitle: 'processingWait',
-                    modalMessage: 'updatingCampaignOnBlockchain', errorIcon:'HourglassSplit',
-                    modalButtonVariant: "gold", waitToClose: true});
-                    window.tronWeb.trx.getTransaction(result)
-                    .then((txnObject) => {
-                       if(txnObject.ret[0].contractRet != "SUCCESS") return false;
-                    });    
-              });
-              let dataForDB = {address: this.state.campaignId, dataToUpdate: data};
-              try {
-                  await axios.post('/api/campaign/update', {mydata : dataForDB},
-                      {headers: {"Content-Type": "application/json"}});
-                  return true;
-              } catch (err) {
-                  console.log(err);
-                  if(err.response) {
-                      this.setState({currentError : 'technicalDifficulties'});
-                  } else if (err.request) {
-                      this.setState({currentError : 'checkYourConnection'});
-                  } else {
-                      this.setState({currentError : ''});
-                  }
-                  return false;
-              }            
-                   
+            let result =await CAMPAIGNINSTANCE.update(window.tronWeb.toSun(this.state.maxAmount), compressed_meta)
+              .send({from:window.tronAdapter.address,callValue:0,feeLimit:15000000000,shouldPollResponse:false});
+            let txnObject;
+            do{
+               txnObject = await window.tronWeb.trx.getTransaction(result);  
+            }while(!txnObject.ret);  
+            if(txnObject.ret[0].contractRet != "SUCCESS") return false;
+            let dataForDB = {address: this.state.campaignId, dataToUpdate: data};
+            try {
+               await axios.post('/api/campaign/update', {mydata : dataForDB},
+                 {headers: {"Content-Type": "application/json"}});
+               return true;
+            } catch (err) {
+               console.log(err);
+               if(err.response) {
+                   this.setState({currentError : 'technicalDifficulties'});
+               } else if (err.request) {
+                   this.setState({currentError : 'checkYourConnection'});
+               } else {
+                   this.setState({currentError : ''});
+               }
+               return false;
+            }            
         } catch (error) {
             this.setState({currentError : 'checkMetamask'});
             console.log("updating maxAmount transaction failed");
@@ -600,11 +595,8 @@ class EditCampaign extends React.Component {
         }
         let web3 = new Web3(chainConfig["WEB3_RPC_NODE_URL"]);
         let HEOCampaign = (await import("../remote/"+ chainId + "/HEOCampaign")).default;
-        if ( window.blockChainOrt == "ethereum") CAMPAIGNINSTANCE = new web3.eth.contract(HEOCampaign, address);
+        if ( window.blockChainOrt == "ethereum") CAMPAIGNINSTANCE = new web3.eth.Contract(HEOCampaign, address);
         else if ( window.blockChainOrt === "tron") CAMPAIGNINSTANCE = await window.tronWeb.contract(HEOCampaign, window.tronWeb.address.fromHex(address));
-        let beneficiary = await CAMPAIGNINSTANCE.methods.beneficiary().call();
-        let owner = await CAMPAIGNINSTANCE.methods.owner().call();
-        let account = window.tronWeb.address.toHex(window.tronAdapter.address);
         let compressedMetaData = await CAMPAIGNINSTANCE.methods.metaData().call();; 
         let rawMetaData = await decompress(compressedMetaData);
         let metaData = JSON.parse(rawMetaData);
