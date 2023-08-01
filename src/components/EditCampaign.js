@@ -21,7 +21,7 @@ import usdcIcon from '../images/usd-coin-usdc-logo.png';
 import ethIcon from '../images/eth-diamond-purple.png';
 import cusdIcon from '../images/cusd-celo-logo.png';
 import usdcAurora from '../images/usd-coin-aurora-logo.png';
-const TronWeb = require('tronweb');
+//const TronWeb = require('tronweb');
 //import TronWeb from "tronweb";
 const IMG_MAP = {"BUSD-0xe9e7cea3dedca5984780bafc599bd69add087d56": busdIcon,
     "BNB-0x0000000000000000000000000000000000000000": bnbIcon,
@@ -255,11 +255,19 @@ class EditCampaign extends React.Component {
             CAMPAIGNINSTANCE = await window.tronWeb.contract(HEOCampaign, window.tronWeb.address.fromHex(this.state.addresses[chainId]));
             let result =await CAMPAIGNINSTANCE.update(window.tronWeb.toSun(this.state.maxAmount), compressed_meta)
               .send({from:window.tronAdapter.address,callValue:0,feeLimit:15000000000,shouldPollResponse:false});
-            let txnObject;
-            do{
-               txnObject = await window.tronWeb.trx.getTransaction(result);  
-            }while(!txnObject.ret);  
-            if(txnObject.ret[0].contractRet != "SUCCESS") return false;
+            this.setState({showModal:true,
+                modalMessage: 'waitingForNetwork', errorIcon:'HourglassSplit',
+                modalButtonVariant: "gold", waitToClose: true});  
+                let txnObject;
+                let m = 1;
+                do{
+                    console.log("Waiting for transaction record");
+                    txnObject = await window.tronWeb.trx.getTransactionInfo(result);
+                    if(txnObject){
+                      if (txnObject.receipt)  break;   
+                    }
+                }while(m != 2);  
+            if(txnObject.receipt.result != "SUCCESS") return false;
             let dataForDB = {address: this.state.campaignId, dataToUpdate: data};
             try {
                await axios.post('/api/campaign/update', {mydata : dataForDB},

@@ -4,9 +4,7 @@ import Web3 from 'web3';
 import Web3Modal from 'web3modal';
 import WalletConnectProvider from '@walletconnect/web3-provider';
 import ReactGA from "react-ga4";
-import { CheckCircle, HourglassSplit, XCircle } from 'react-bootstrap-icons';
 import { createMessage, encrypt, readKey } from 'openpgp';
-import { WalletDisconnectedError, WalletNotFoundError, WalletError } from '@tronweb3/tronwallet-abstract-adapter';
 import {TronLinkAdapter} from '@tronweb3/tronwallet-adapter-tronlink';
 
 const TronWeb = require('tronweb');

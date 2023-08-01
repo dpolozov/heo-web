@@ -16,8 +16,7 @@ import {
     getPCIPublicKey,
     clearTronProvider,
     initTronadapter,
-    initTron,
-    LogInTron
+    initTron
 } from '../util/Utilities';
 import i18n from '../util/i18n';
 import { Editor, EditorState, convertFromRaw, CompositeDecorator } from "draft-js";
@@ -36,8 +35,7 @@ import ltcLogo from '../images/ltc-logo.png'
 import visaMcLogo from '../images/visa-mc-logo.png';
 import usdtLogo from '../images/usdt-logo.png';
 import CCData from '../components/CCData';
-import TronWeb from "tronweb";
-const BN = require('bn.js');
+//import TronWeb from "tronweb";
 
 const IMG_MAP = {"BUSD": busdIcon,
     "BNB": bnbIcon,
@@ -415,13 +413,20 @@ class CampaignPage extends Component {
             }
             let result = await coinInstance.methods.transfer(campaignAddress, toDonate)
             .send({from:window.tronAdapter.address,callValue:0,feeLimit:15000000000,shouldPollResponse:false});
+            this.setState({showModal:true,
+                modalMessage: 'waitingForNetwork', errorIcon:'HourglassSplit',
+                modalButtonVariant: "gold", waitToClose: true});
             let txnObject;
+            let m = 1;
             do{
-                txnObject = await window.tronWeb.trx.getTransaction(result);  
-            }while(!txnObject.ret);
-            if (txnObject.ret[0].contractRet == "SUCCESS"){
-                this.setState({modalMessage: "waitingForNetwork"});
-                this.setState({
+                console.log("Waiting for transaction record");
+                txnObject = await window.tronWeb.trx.getTransactionInfo(result);
+                if(txnObject){
+                  if (txnObject.receipt)  break;   
+                }
+            }while(m != 2);  
+            if (txnObject.receipt.result == "SUCCESS"){
+               this.setState({
                    showModal: true, modalTitle: 'complete',
                    modalMessage: 'thankYouDonation',
                    errorIcon: 'CheckCircle', modalButtonMessage: 'closeBtn',

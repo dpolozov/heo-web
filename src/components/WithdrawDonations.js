@@ -28,13 +28,12 @@ import busdIcon from '../images/binance-usd-busd-logo.png';
 import usdcIcon from '../images/usd-coin-usdc-logo.png';
 import ethIcon from '../images/eth-diamond-purple.png';
 import cusdIcon from '../images/cusd-celo-logo.png';
-import btcLogo from '../images/bitcoin-logo.png';
-import daiLogo from '../images/dai-logo.png';
-import ltcLogo from '../images/ltc-logo.png'
-import visaMcLogo from '../images/visa-mc-logo.png';
-import coinBaseLogo from '../images/coinbase-c-logo.png';
+//import btcLogo from '../images/bitcoin-logo.png';
+//import daiLogo from '../images/dai-logo.png';
+//import ltcLogo from '../images/ltc-logo.png'
+//import visaMcLogo from '../images/visa-mc-logo.png';
 import CCData from '../components/CCData';
-import TronWeb from "tronweb";
+//import TronWeb from "tronweb";
 
 const IMG_MAP = {"BUSD": busdIcon,
     "BNB": bnbIcon,
@@ -276,18 +275,22 @@ class WithdrawDonations extends Component {
             });
            
             try {
-                 
                 let result = await campaignInstance.methods.donateToBeneficiary(coin_adres)
                 .send({from:window.tronAdapter.address,callValue:0,feeLimit:15000000000,shouldPollResponse:false});
-                let txnObject;
+                this.setState({showModal:true,
+                    modalMessage: 'waitingForNetwork', errorIcon:'HourglassSplit',
+                    modalButtonVariant: "gold", waitToClose: true});
+                    let txnObject;    
+                let m = 1;
                 do{
-                    txnObject = await window.tronWeb.trx.getTransaction(result);  
-                }while(!txnObject.ret);
-                if (txnObject.ret[0].contractRet == "SUCCESS"){
-                    console.log(`transaction hash for donateToBeneficiary ${result}`);
-                    that.setState({modalMessage: "waitingForNetwork"})
-                    console.log(`Done with transactions`);
-                }else {
+                    console.log("Waiting for transaction record");
+                    txnObject = await window.tronWeb.trx.getTransactionInfo(result);
+                    if(txnObject){
+                      if (txnObject.receipt)  break;   
+                    }
+                }while(m != 2);  
+               
+                if (txnObject.receipt.result != "SUCCESS"){
                     this.setState({
                         showModal: true, modalTitle: 'failed',
                         errorIcon: 'XCircle', modalButtonMessage: 'closeBtn',
@@ -300,8 +303,7 @@ class WithdrawDonations extends Component {
                         label: `Metamask transaction failed with code ${result.code}`,
                         nonInteraction: false
                     });
-                    clearWeb3Provider(this);
-                    return; 
+                   return; 
                 }
                 for (let j = 0; j < chains_coins.length; j++){
                     if ((chains_coins.chain == chainId)&&(chains_coins.coin.address == coin_adres)){

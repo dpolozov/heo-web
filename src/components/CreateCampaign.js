@@ -15,11 +15,7 @@ import { ChevronLeft, CheckCircle, ExclamationTriangle, HourglassSplit, XCircle 
 import { compress } from 'shrink-string';
 import '../css/createCampaign.css';
 import '../css/modal.css';
-import TronWeb from "tronweb";
-import { WalletDisconnectedError, WalletNotFoundError, WalletError } from '@tronweb3/tronwallet-abstract-adapter';
-import  {TronLinkAdapter}  from '@tronweb3/tronwallet-adapter-tronlink';
-//import { WalletConnectAdapter } from '@tronweb3/tronwallet-adapter-walletconnect';
-
+//import TronWeb from "tronweb";
 import ReactGA from "react-ga4";
 ReactGA.initialize("G-C657WZY5VT");
 
@@ -101,48 +97,6 @@ class CreateCampaign extends React.Component {
     qrfileSelected = e => {
         this.setState({qrCodeImageFile:e.target.files[0], qrCodeImageURL: URL.createObjectURL(e.target.files[0])});
     };
-
-CheckEvent(txnObject, transEvent){
-    if(transEvent.length > 0){
-      this.addCampaignToDb({
-        address: transEvent[0].result.campaignAddress,
-        beneficiaryId: this.state.beneficiaryAddress
-     });
-    } else {
-        var that =  this;
-        window.tronWeb.getEventByTransactionID(txnObject.txID)
-        .then((transEventNew) => {
-           that.CheckEvent(txnObject, transEventNew);
-        });
-    }
-};
-
-checkTransactionTron (txnObject) {
-    if(txnObject) {
-        var that =  this; 
-        if (txnObject.ret[0].contractRet == "SUCCESS"){
-            window.tronWeb.getEventByTransactionID(txnObject.txID)
-            .then((transEvent) => {
-                that.CheckEvent(txnObject, transEvent); 
-            });  
-        } else {
-          this.setState({showModal: true, goHome: true,
-                    modalTitle: 'addToDbFailedTitle',
-                    modalMessage: 'addToDbFailedMessage',
-                    modalIcon: 'CheckCircle',
-                    modalButtonMessage: 'returnHome',
-                    modalButtonVariant: "#588157", waitToClose: false
-          });
-          return false;
-        }
-    } else {
-        var that1 =  this;
-        window.tronWeb.trx.getTransaction(txnObject.txID)
-        .then((txnObject) => {
-           that1.checkTransactionTron(txnObject);
-        });
-    }
-}
 
     async handleClick (event) {
         //this.showHtml();
@@ -308,25 +262,50 @@ checkTransactionTron (txnObject) {
                 modalMessage: 'confirmMetamask', modalIcon:'HourglassSplit',
                 modalButtonMessage: 'closeBtn',
                 modalButtonVariant: "#E63C36", waitToClose: false});
-            var that = this;
             let abi = (await import("../remote/" + this.state.tronChainId + "/HEOCampaignFactory")).abi;
             var address = (await import("../remote/" + this.state.tronChainId + "/HEOCampaignFactory")).address;
             address = window.tronWeb.address.toHex(address); 
             var HEOCampaignFactory = await window.tronWeb.contract(abi, address);
             try {
-                await HEOCampaignFactory.methods.createCampaign(window.tronWeb.toSun(this.state.maxAmount), 
+                let result = await HEOCampaignFactory.methods.createCampaign(window.tronWeb.toSun(this.state.maxAmount), 
                     this.state.beneficiaryAddress, compressed_meta)
-                    .send({from:this.state.beneficiaryAddress,callValue:0,feeLimit:15000000000,shouldPollResponse:false})
-                    .then((result) =>{
-                        that.setState({showModal:true, modalTitle: 'processingWait',
-                            modalMessage: 'waitingForNetwork', modalIcon: 'HourglassSplit',
-                            modalButtonVariant: "gold", waitToClose: true}
-                        );
-                       window.tronWeb.trx.getTransaction(result)
-                       .then((txnObject) => {
-                        that.checkTransactionTron(txnObject);
-                       })
-                    });
+                .send({from:this.state.beneficiaryAddress,callValue:0,feeLimit:15000000000,shouldPollResponse:false});
+                this.setState({showModal:true,
+                    modalMessage: 'waitingForNetwork', errorIcon:'HourglassSplit',
+                    modalButtonVariant: "gold", waitToClose: true});
+                let txnObject;
+                let m = 1;
+                do{
+                    console.log("Waiting for transaction record");
+                    txnObject = await window.tronWeb.trx.getTransactionInfo(result);
+                    if(txnObject){
+                      if (txnObject.receipt)  break;   
+                    }
+                }while(m != 2);  
+                if (txnObject.receipt.result == "SUCCESS"){
+                  m = 1;
+                  let transEvent;
+                  do{
+                     console.log("Waiting for event to be recorded per transaction");
+                     transEvent = await window.tronWeb.getEventByTransactionID(result);
+                     if (transEvent){
+                       if (transEvent.length > 0) break; 
+                     }
+                  }while(m != 2);   
+                  return{
+                    address: transEvent[0].result.campaignAddress,
+                    beneficiaryId: this.state.beneficiaryAddress
+                  };
+                } else {
+                  this.setState({showModal: true, goHome: true,
+                    modalTitle: 'addToDbFailedTitle',
+                    modalMessage: 'addToDbFailedMessage',
+                    modalIcon: 'CheckCircle',
+                    modalButtonMessage: 'returnHome',
+                    modalButtonVariant: "#588157", waitToClose: false
+                  });
+                  return false;
+                }
             } catch (err) {
                 console.log("error caught");
                 console.log(err);
